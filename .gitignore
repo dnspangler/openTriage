@@ -1,0 +1,11 @@
+.vscode
+*.pyc
+*__pycache__
+set_source*
+lib/ssl/*
+!lib/ssl/openssl.cnf
+**/WIP*
+*.Rproj
+.Rproj.user
+.Rhistory  
+.env

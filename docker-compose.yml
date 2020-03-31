@@ -1,0 +1,25 @@
+version: '3'
+services:
+  redis_db:
+    image: redis
+    restart: always
+  opentriage:
+    build: .
+    ports:
+     - 443:5000
+    links:
+     - redis_db
+    environment:
+     - FRAMEWORK=${FRAMEWORK}
+     - DEV_MODE=${DEV_MODE}
+     - SECRET=${SECRET}
+     - DEFAULT_FRAMEWORK=news_adhoc
+     - DEFAULT_DEV_MODE=True
+     - REDIS_URL=redis://redis_db:6379
+     - SSL_CERT_PATH=./lib/ssl/certificate.pem
+     - SSL_KEY_PATH=./lib/ssl/key.pem
+    volumes:
+      - .:/openTriage/.
+    entrypoint: python api.py
+
+    # TODO: Use kubernetes instead of docker-compose?

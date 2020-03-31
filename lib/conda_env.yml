@@ -1,0 +1,25 @@
+name: openTriage
+channels:
+  - anaconda
+dependencies:
+  - python
+  - numpy
+  - pandas
+  - xlrd
+  - flask
+  - requests
+  - gevent
+  - scikit-learn
+  - matplotlib
+  - pip
+  - pip:
+    - flask-api
+    - python-dotenv
+    - gunicorn
+    - watchdog
+    - fasttext
+    - xgboost
+    - redis
+    - bayesian-optimization
+  
+

@@ -57,7 +57,7 @@ The primary functionality of openTriage is accessed via the `/predict/` endpoint
 
 The system is designed such that the specifics of how data are to be handled are defined by a *framework*. The API expects each framework to contain a `main` python module with a `Main` class containing a number of required methods. These are:
 
-* **\__init__**: Is executed upon initialization of the class (either upon starting the server or by a get request to the /reload endpoint), and should load a model into memory.
+* **\_\_init__**: Is executed upon initialization of the class (either upon starting the server or by a get request to the /reinit endpoint), and should load a model into memory.
 * **input_function**: Transforms the data provided via the API into a 'clean' format expected by the model
 * **predict_function**: Applies the loaded model to the clean data, and returns a prediction
 * **output_function**: Applies any necessary transformations to the prediction before returning it via the API. If implementing a UI, the function should cache the prediction.
@@ -104,7 +104,7 @@ We hope that if you use this software to implement triage models at your organiz
 
 Below we briefly review how we have implemented the functions:
 
-### \__init__ (loading/training the model)
+### \_\_init__ (loading/training the model)
 
 In the uppsala_alitis framework, upon initialization the class will attempt to load a stored model into memory. If no model files are present, it will look for training and testing datasets to use (`data/train/data.csv` and `data/train/labels.csv` respectively), and then train models. If no testing/training data is available, it will attempt to clean data exported from our databases (stored in `data/raw`) before proceeding. Models are trained for each provided label (using bayesian optimization to identify optimal hyperparameters), and stored as serialized objects (using pickle) along with some ancillary human-readable JSON data in the `models` folder. It will also print some basic performance metrics based on testing datasets and labels (`data/test/data.csv` and `data/test/labels.csv`). Note that a script to initialize the main class is provided as run.py, and new models can thus be trained outside of a docker container by running `python -m frameworks.uppsala_alitis.run`.
 

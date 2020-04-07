@@ -32,7 +32,9 @@ from frameworks.uppsala_alitis.utils import (
     get_model_props,
     clean_data,
     generate_ui_data,
-    generate_names
+    generate_names,
+    parse_text_to_bow,
+    get_stopword_set
     )
 
 class Main:
@@ -89,15 +91,20 @@ class Main:
         instrument_trans = 'logit',
         filter_str = "_Bedmt_tillstnd_|_Nej",
         randomize = False,
+        # Data parsing stuff
         overwrite_models = False,
         overwrite_data = False,
+        parse_text = True,
+        max_ngram = 2, 
+        text_prefix = "text_", 
+        min_terms = 500,
         prod_ui_cols = ['value','mean_shap']
         ):
 
         """
             Class should handle loading the model file upon initiation.
         """
-        
+
         self.code_dir = code_dir
         self.log = log
         self.cache = cache
@@ -110,6 +117,10 @@ class Main:
         self.filter_str = filter_str
         self.instrument_trans = instrument_trans
         self.randomize = randomize
+        self.parse_text = parse_text
+        self.max_ngram = max_ngram
+        self.text_prefix = text_prefix
+        self.min_terms = min_terms
         self.prod_ui_cols = prod_ui_cols
 
         # Make and check full paths
@@ -146,7 +157,7 @@ class Main:
                 self.log.warning("Missing data file(s)! Parsing data...")
                 data = clean_data(code_dir, raw_data_path_dict, clean_data_path_dict, full_name_path, self.key, self.filter_str, self.log)
                 self._save_data(data, full_data_paths) # Write data to disk
-                self.data = data
+                self.data = self._load_data(full_data_paths)
             
             # Once data has (hopefully) been loaded, train a model on it.
             try:
@@ -292,16 +303,45 @@ class Main:
 
     def _load_data(self,data_path_dict):
 
-        #TODO: Implement parsing text to BOW for terms and bigrams, and append to 
-        # datasets. Simple, but works as well as anything else I've tried in our data!
-
+        self.log.info("Splitting data...")
         train_data = pd.read_csv(data_path_dict['train_data'],index_col='caseid')
         train_labels = pd.read_csv(data_path_dict['train_labels'],index_col='caseid')
-        #train_text = pd.read_csv(data_path_dict['train_text'],index_col='caseid')
 
         test_data = pd.read_csv(data_path_dict['test_data'],index_col='caseid')
         test_labels = pd.read_csv(data_path_dict['test_labels'],index_col='caseid')
-        #test_text = pd.read_csv(data_path_dict['test_text'],index_col='caseid')
+
+        if self.parse_text:
+            self.log.info("Parsing text data...")
+            # Load text data
+            train_text = pd.read_csv(data_path_dict['train_text'],index_col='caseid')
+            test_text = pd.read_csv(data_path_dict['test_text'],index_col='caseid')
+
+            # Get strop words - Note that we keep some clinically relevant negation terms here
+            stopword_url = "https://gist.githubusercontent.com/hannseman/5608626/raw/7b11a75d393a68d0145bdcefb06fc06d2764daa8/swedish_stopwords.txt"
+            neg_set = set(["inte","ej","icke","ingen","blir","bli","blev","blivit","mycket","nu","utan","var"])
+            stopword_set = get_stopword_set(stopword_url,neg_set)
+            
+            # Generate bag of words embedding for terms (yes yes, I know there are more sohpisticated ways of doing this)
+            # Note that for test data, we use only the features included in the training set.
+            train_bow = parse_text_to_bow(
+                train_text,
+                self.max_ngram, 
+                self.text_prefix, 
+                self.min_terms, 
+                stopword_set)
+
+            test_bow = parse_text_to_bow(
+                test_text,
+                self.max_ngram, 
+                self.text_prefix, 
+                self.min_terms, 
+                stopword_set,
+                term_list=list(train_bow.columns))
+
+            self.log.info(len(train_bow.columns),len(test_bow.columns))
+
+            train_data = train_data.join(train_bow)
+            test_data = test_data.join(test_bow)
         
         data = {
             'train':{

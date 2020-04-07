@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import scipy
+import requests
 import matplotlib.pyplot as plt
 import json
 import io
@@ -14,6 +15,7 @@ import time
 import itertools
 import collections
 import random
+import nltk
 
 from pathlib import Path
 from datetime import date, datetime
@@ -189,6 +191,8 @@ def parse_json_data(inputData,model,log):
     qa_wide = pd.DataFrame(qa_dict, index=[0])
     # update the full feature set
     data.update(qa_wide)
+
+    #TODO: Parse freetext data here
 
     return data
 
@@ -659,12 +663,6 @@ def load_alitis_mbs_data(incl_caseids, alitis_answers_path, alitis_neg_groups_pa
 
     return answers, neg_groups
 
-def process_text_token(text):
-    out_text = []
-    for i in text:
-        out_text.append(' '.join([word.lower() for word in re.findall(r"[\w]+", str(i))]))
-    return out_text
-
 def get_categories(df,key_table):
 
     """ Get the number of answers provided for each category and return them as a dict """
@@ -946,3 +944,80 @@ def generate_names(code_dir, data, key_table):
 
 
         return out_dict
+
+# Text parsng -------------------------------------------------------
+
+def ngrams(words, n):
+    # Nice solution https://stackoverflow.com/questions/17531684/n-grams-in-python-four-five-six-grams
+    d = collections.deque(maxlen=n)
+    d.extend(words[:n])
+    words = words[n:]
+    out_list = []
+    for window, word in zip(itertools.cycle((d,)), words):
+        out_list.append('_'.join(window))
+        d.append(word)
+    
+    return out_list
+
+def process_text_token(text,max_ngram,text_prefix,stopword_set = None):
+    out_tokens = []
+    for i in text:
+        t = ' '.join([word.lower() for word in re.findall(r"[\w]+", str(i))]).split()
+        t = [x for x in t if not x.isdigit()]
+        if stopword_set:
+            t = [x for x in t if x not in stopword_set]
+
+        allgrams = []
+        for i in range(max_ngram):
+            allgrams = allgrams + ngrams(t,i+1)
+
+        allgrams = [text_prefix + i for i in allgrams]
+        out_tokens.append(allgrams)
+    return out_tokens
+
+def get_count_dict(in_list):
+    out_dict = {}
+    for i in in_list:
+        if i in out_dict.keys():
+            out_dict[i] += 1
+        else:
+            out_dict[i] = 1
+    return out_dict
+
+def get_stopword_set(stopword_url,neg_set):
+    
+    response = requests.get(stopword_url)
+    stopword_list = response.text.splitlines()
+    stopword_set = set([x for x in stopword_list if x not in neg_set])
+
+    return stopword_set 
+
+def parse_text_to_bow(text_df, max_ngram, text_prefix, min_terms, stopword_set = None, term_list=None):
+
+    text_df['tokens'] = process_text_token(
+        text_df['FreeText'],
+        max_ngram, 
+        text_prefix,
+        stopword_set
+        )
+    
+    if term_list is not None:
+        terms = term_list
+    else:
+        corpus_list = list(itertools.chain.from_iterable(text_df['tokens']))
+        corpus_dict = get_count_dict(corpus_list)
+        if min_terms:
+            corpus_dict = {k:v for k,v in corpus_dict.items() if v > min_terms}
+        terms = corpus_dict.keys()
+
+    full_term_dict = {}
+    for i in text_df.index:
+        term_list = text_df['tokens'][i]
+        term_dict = dict(zip(terms,[0]*len(terms)))
+        term_dict.update(get_count_dict(term_list))
+        term_dict = {k:v for k,v in term_dict.items() if k in terms}
+        full_term_dict[i] = term_dict
+
+    bow_df = pd.DataFrame(full_term_dict).fillna(0).transpose()
+
+    return bow_df

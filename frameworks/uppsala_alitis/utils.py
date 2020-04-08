@@ -34,9 +34,10 @@ from bayes_opt import UtilityFunction
 def render_densplot(pred,dist,other_preds):
     """ Render a density plot of prediction distribution in population with vertical lines indicating predicted values """
     d = pd.Series(dist)
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(6,3))
     d.plot.kde(bw_method=1)
-
+    ax.axes.get_yaxis().set_visible(False)
+    
     for i in other_preds:
         plt.axvline(i, color = 'grey', dashes = [10,10])
 

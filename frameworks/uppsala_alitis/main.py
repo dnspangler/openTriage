@@ -150,7 +150,7 @@ class Main:
         else:
             if all(data_paths_exist.values()) and not overwrite_data:
                 self.log.info("Data found! Loading...")
-                self.data = self._load_data(full_data_paths,stopword_path)
+                self.data = self._load_data(full_data_paths,full_stopword_path)
 
             # If no clean data is available, try to parse clean data
             else:

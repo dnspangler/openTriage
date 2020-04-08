@@ -5,7 +5,9 @@ set_source*
 lib/ssl/*
 !lib/ssl/openssl.cnf
 **/WIP*
+.env
+# protect R users
 *.Rproj
 .Rproj.user
 .Rhistory  
-.env
+.Rdata

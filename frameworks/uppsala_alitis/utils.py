@@ -15,7 +15,6 @@ import time
 import itertools
 import collections
 import random
-import nltk
 
 from pathlib import Path
 from datetime import date, datetime
@@ -54,7 +53,7 @@ def fig_to_base64(fig):
 
     return base64.b64encode(img.getvalue())
 
-def generate_ui_data(store,other_scores,feat_imp_cols,model,log):
+def generate_ui_data(store,other_scores,feat_imp_cols,text_prefix,model,log):
 
     """ Generate the graphs and tables used by the UI from cached prediction data """
 
@@ -88,12 +87,12 @@ def generate_ui_data(store,other_scores,feat_imp_cols,model,log):
 
     pd.set_option('display.float_format', lambda x: '%.3f' % x)
     
-    if not os.environ['DEV_MODE']:
+    if os.environ['DEV_MODE']:
         feat_imp_table = feat_imp.style
     
     else:
         if 'names' in model:
-            feat_imp = feat_imp[feat_imp.index.isin(model['names'])]
+            feat_imp = feat_imp[feat_imp.index.isin(model['names']) | feat_imp.index.str.startswith(text_prefix)]
             feat_imp.index = pd.Series(feat_imp.index).replace(to_replace=model['names'])
 
         #Show all positive answers and negtive answers with high shap values
@@ -191,8 +190,6 @@ def parse_json_data(inputData,model,log):
     qa_wide = pd.DataFrame(qa_dict, index=[0])
     # update the full feature set
     data.update(qa_wide)
-
-    #TODO: Parse freetext data here
 
     return data
 
@@ -971,7 +968,9 @@ def process_text_token(text,max_ngram,text_prefix,stopword_set = None):
         for i in range(max_ngram):
             allgrams = allgrams + ngrams(t,i+1)
 
-        allgrams = [text_prefix + i for i in allgrams]
+        if text_prefix:
+            allgrams = [text_prefix + i for i in allgrams]
+
         out_tokens.append(allgrams)
     return out_tokens
 
@@ -992,7 +991,7 @@ def get_stopword_set(stopword_url,neg_set):
 
     return stopword_set 
 
-def parse_text_to_bow(text_df, max_ngram, text_prefix, min_terms, stopword_set = None, term_list=None):
+def parse_text_to_bow(text_df, max_ngram, text_prefix = None, min_terms = None, stopword_set = None, term_list=None,log = None):
 
     text_df['tokens'] = process_text_token(
         text_df['FreeText'],

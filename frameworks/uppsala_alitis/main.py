@@ -46,6 +46,7 @@ class Main:
         # Paths for all the things
         key_path ='models/mbs_key.csv',
         name_path ='models/pretty_names.json',
+        stopword_path = 'models/stopwords.json',
         model_path_dict = {
             'models':'models/models.p',
             'model_props':'models/model_props.json'
@@ -108,7 +109,6 @@ class Main:
         self.code_dir = code_dir
         self.log = log
         self.cache = cache
-        self.data_path_dict = data_path_dict
         self.params_ranges = params_ranges
         self.opt_rounds = opt_rounds
         self.init_rounds = init_rounds
@@ -125,8 +125,8 @@ class Main:
 
         # Make and check full paths
         full_key_path = f'{self.code_dir}/{key_path}'
-
         full_name_path = f'{self.code_dir}/{name_path}'
+        full_stopword_path = f'{self.code_dir}/{stopword_path}'
 
         full_data_paths = {k:f'{self.code_dir}/{v}' for k,v in data_path_dict.items()}
         data_paths_exist = {k:os.path.exists(v) for k,v in full_data_paths.items()}
@@ -150,14 +150,14 @@ class Main:
         else:
             if all(data_paths_exist.values()) and not overwrite_data:
                 self.log.info("Data found! Loading...")
-                self.data = self._load_data(full_data_paths)
+                self.data = self._load_data(full_data_paths,stopword_path)
 
             # If no clean data is available, try to parse clean data
             else:
                 self.log.warning("Missing data file(s)! Parsing data...")
                 data = clean_data(code_dir, raw_data_path_dict, clean_data_path_dict, full_name_path, self.key, self.filter_str, self.log)
                 self._save_data(data, full_data_paths) # Write data to disk
-                self.data = self._load_data(full_data_paths)
+                self.data = self._load_data(full_data_paths,full_stopword_path)
             
             # Once data has (hopefully) been loaded, train a model on it.
             try:
@@ -172,7 +172,7 @@ class Main:
             except NameError:
                 self.log.exception("No data or models found!")
         
-        # Load pretty names for display in UI
+        # Maybe load pretty names for display in UI
         if os.path.exists(full_name_path):
             self.log.info("Pretty names found! Loading...")
             with open(full_name_path, "r") as f:
@@ -180,6 +180,15 @@ class Main:
             self.model['names'] = names
         else:
             self.log.info("No pretty names found!")
+        
+        # Maybe load stopwords for text parsing
+        if os.path.exists(full_stopword_path):
+            self.log.info("Stopwords found! Loading...")
+            with open(full_stopword_path, "r") as f:
+                    stopwords = json.load(f)
+            self.stopword_set = set(stopwords)
+        else:
+            self.log.info("No stopwords found!")
 
     def input_function(self, request_data):
         """input_function is a required function to parse incoming data"""
@@ -190,6 +199,21 @@ class Main:
             # Apply a parsing function (from functions.py) to each item
             results[id] = parse_json_data(value,self.model,log = self.log)
 
+            if self.parse_text:
+                
+                text_df = pd.DataFrame({'FreeText':value['FreeText']}, index=[0])
+                term_list = results[id].loc[:,results[id].columns.str.startswith(self.text_prefix)]
+                
+                bow_df = parse_text_to_bow(
+                    text_df, 
+                    max_ngram = self.max_ngram, 
+                    text_prefix = self.text_prefix, 
+                    stopword_set = self.stopword_set, 
+                    term_list = term_list,
+                    log = self.log)
+
+                results[id].update(bow_df)
+                
         return results
 
     def predict_function(self, input_data):
@@ -292,7 +316,14 @@ class Main:
             op = json.loads(self.cache.get(oid))
             other_scores.append(op['score'])
 
-        ui_data = generate_ui_data(store,other_scores,self.prod_ui_cols,self.model,self.log)
+        ui_data = generate_ui_data(
+            store,
+            other_scores,
+            self.prod_ui_cols,
+            self.text_prefix,
+            self.model,
+            self.log
+            )
 
         return render_template(
             "testui.html", 
@@ -301,7 +332,7 @@ class Main:
             components = ui_data['components'].render(), 
             feat_imp = ui_data['feat_imp_table'].render())
 
-    def _load_data(self,data_path_dict):
+    def _load_data(self,data_path_dict,stopword_path):
 
         self.log.info("Splitting data...")
         train_data = pd.read_csv(data_path_dict['train_data'],index_col='caseid')
@@ -316,11 +347,15 @@ class Main:
             train_text = pd.read_csv(data_path_dict['train_text'],index_col='caseid')
             test_text = pd.read_csv(data_path_dict['test_text'],index_col='caseid')
 
-            # Get strop words - Note that we keep some clinically relevant negation terms here
+            # Get stop words - Note that we keep some clinically relevant negation terms here
             stopword_url = "https://gist.githubusercontent.com/hannseman/5608626/raw/7b11a75d393a68d0145bdcefb06fc06d2764daa8/swedish_stopwords.txt"
             neg_set = set(["inte","ej","icke","ingen","blir","bli","blev","blivit","mycket","nu","utan","var"])
             stopword_set = get_stopword_set(stopword_url,neg_set)
-            
+
+            # Save to disk for later use in API
+            with open(stopword_path,'w', encoding='utf-8') as f:
+                json.dump(list(stopword_set), f, ensure_ascii=False, indent=4)
+
             # Generate bag of words embedding for terms (yes yes, I know there are more sohpisticated ways of doing this)
             # Note that for test data, we use only the features included in the training set.
             train_bow = parse_text_to_bow(
@@ -338,7 +373,7 @@ class Main:
                 stopword_set,
                 term_list=list(train_bow.columns))
 
-            self.log.info(len(train_bow.columns),len(test_bow.columns))
+            assert len(train_bow.columns) == len(test_bow.columns)
 
             train_data = train_data.join(train_bow)
             test_data = test_data.join(test_bow)
@@ -410,8 +445,8 @@ class Main:
         # everything to make the model properties human-readable 
         # for debugging purposes
 
-        with open(model_paths['model_props'], "w") as f:
-            json.dump(model['model_props'],f,indent=4)
+        with open(model_paths['model_props'], "w", encoding='utf-8') as f:
+            json.dump(model['model_props'],f,ensure_ascii=False,indent=4)
 
         with open(model_paths['models'], "wb") as f:
             pickle.dump(model['models'],f)

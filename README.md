@@ -1,6 +1,6 @@
 # openTriage
 
-openTriage is a platform for deploying machine learning models for use in Clinical Decision Support Systems (CDSS). This software is developed and maintained by the [Uppsala Center for Prehospital Research](http://ucpr.se/projects/emdai/) at Uppsala University, and was developed as part of a project funded by the [Swedish Agency for Innovation](https://www.vinnova.se/en/p/emdai-a-machine-learning-based-decision-support-tool-for-emergency-medical-dispatch/). The purpose of this software is to implement the methods described in the research paper [*A validation of machine learning-based risk scores in the prehospital setting*](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0226518) in an API for use in an upcoming randomized clinical trial in Uppsala, Sweden. The software is designed to be:
+openTriage is a platform for deploying machine learning models for use in Clinical Decision Support Systems (CDSS). This software is developed and maintained by the [Uppsala Center for Prehospital Research](http://ucpr.se/projects/emdai/) at Uppsala University, and was developed as part of a project funded by the [Swedish Agency for Innovation](https://www.vinnova.se/en/p/emdai-a-machine-learning-based-decision-support-tool-for-emergency-medical-dispatch/). The purpose of this software is to implement the methods described in the research paper [*A validation of machine learning-based risk scores in the prehospital setting*](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0226518) in an API for use in an upcoming randomized clinical trial in Uppsala, Sweden. The source code for this research may be found [here](https://github.com/dnspangler/openTriage_validation), and a demonstration app based on public-release versions of the models may be found [here](https://ucpr.shinyapps.io/openTriage_demo/). The software is designed to be:
 
 * Free of charge
 * Open-source
@@ -10,7 +10,7 @@ openTriage is a platform for deploying machine learning models for use in Clinic
 
 This software is provided to the public with the intent of providing transparency in the methods we employ to process patient data, and to encourage the further use of open-source software in the healthcare sector. The primary intended users of this software are researchers and public sector IT departments seeking to serve relatively light-weight, open machine learning models to proprietary user-facing medical record systems. Technically, openTriage implements an SSL encrypted REST API using Python in a docker container, and is provided under the terms of the [GPLv3 license](https://www.gnu.org/licenses/gpl-3.0.en.html). The functions used by the API are organized into frameworks which contain context-specific functionality for parsing data and performing model training, inference, and testing. Currently openTriage includes the following frameworks:
 
-* [**uppsala_alitis**](frameworks/uppsala_alitis): An implementation of the gradient boosting methods described in our research, designed to interface with the [Alitis](https://www.alecom.se/) Emergency Medical Dispatching system.
+* [**uppsala_alitis**](frameworks/uppsala_alitis): An implementation of the gradient boosting methods described in our research, designed to interface with the [Alitis](https://www.alecom.se/) Emergency Medical Dispatching system. 
 
 * [**news_adhoc**](frameworks/news_adhoc): An implementation of the [National Emergency Warning System](https://www.rcplondon.ac.uk/projects/outputs/national-early-warning-score-news-2) algorithm to parse data in an ad-hoc JSON format. (Planning to implement parsing of [NEMSIS3](https://nemsis.org/)-formatted data)
 
@@ -57,7 +57,7 @@ The primary functionality of openTriage is accessed via the `/predict/` endpoint
 
 The system is designed such that the specifics of how data are to be handled are defined by a *framework*. The API expects each framework to contain a `main` python module with a `Main` class containing a number of required methods. These are:
 
-* **\__init__**: Is executed upon initialization of the class (either upon starting the server or by a get request to the /reload endpoint), and should load a model into memory.
+* **\_\_init__**: Is executed upon initialization of the class (either upon starting the server or by a get request to the /reinit endpoint), and should load a model into memory.
 * **input_function**: Transforms the data provided via the API into a 'clean' format expected by the model
 * **predict_function**: Applies the loaded model to the clean data, and returns a prediction
 * **output_function**: Applies any necessary transformations to the prediction before returning it via the API. If implementing a UI, the function should cache the prediction.
@@ -104,7 +104,7 @@ We hope that if you use this software to implement triage models at your organiz
 
 Below we briefly review how we have implemented the functions:
 
-### \__init__ (loading/training the model)
+### \_\_init__ (loading/training the model)
 
 In the uppsala_alitis framework, upon initialization the class will attempt to load a stored model into memory. If no model files are present, it will look for training and testing datasets to use (`data/train/data.csv` and `data/train/labels.csv` respectively), and then train models. If no testing/training data is available, it will attempt to clean data exported from our databases (stored in `data/raw`) before proceeding. Models are trained for each provided label (using bayesian optimization to identify optimal hyperparameters), and stored as serialized objects (using pickle) along with some ancillary human-readable JSON data in the `models` folder. It will also print some basic performance metrics based on testing datasets and labels (`data/test/data.csv` and `data/test/labels.csv`). Note that a script to initialize the main class is provided as run.py, and new models can thus be trained outside of a docker container by running `python -m frameworks.uppsala_alitis.run`.
 

@@ -155,7 +155,7 @@ class Main:
             # If no clean data is available, try to parse clean data
             else:
                 self.log.warning("Missing data file(s)! Parsing data...")
-                data = clean_data(code_dir, raw_data_path_dict, clean_data_path_dict, full_name_path, self.key, self.filter_str, self.log)
+                data = clean_data(code_dir, raw_data_path_dict, clean_data_path_dict, full_name_path, overwrite_data, self.key, self.filter_str, self.log)
                 self._save_data(data, full_data_paths) # Write data to disk
                 self.data = self._load_data(full_data_paths,full_stopword_path)
             

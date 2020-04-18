@@ -798,7 +798,7 @@ def generate_mbs_dicts(answers,neg_groups,key_table,filter_str):
 
     return out_dict, unparsed_dict
  
-def parse_export_data(code_dir, raw_data_paths, key_table, filter_str, log, sample = None):
+def parse_export_data(code_dir, raw_data_paths, key_table, filter_str, log):
 
     """ Parse raw export data into a clean format for further processing """
 
@@ -823,35 +823,39 @@ def parse_export_data(code_dir, raw_data_paths, key_table, filter_str, log, samp
         
     label_df, data_df, text_df = separate_flat_data(full_df,label_dict,predictors)
 
-    # Use an intermediate dictionary of mbs tokens (this is pretty 
-    # inefficient code, takes an hour or two to parse ~100k records)
-    if os.path.exists(data_paths['mbs_dict']):
+    # Check for intermediate dictionary of mbs tokens
+    unparsed_dict = {}
+    try:
         with open(data_paths['mbs_dict']) as f:
             mbs_dict = json.load(f)
-    else:
-        if sample:
-            print("Sampling!")
-            mbs_ids = random.sample(list(data_df.index),sample)
-        else:
-            print("No sampling!")
-            mbs_ids = data_df.index
+    except:
+        mbs_dict = {}
 
+    # Only new, unparsed ids
+
+    mbs_ids = np.setdiff1d(list(data_df.index),list(mbs_dict.keys()))
+    log.info(f'Parsing {len(mbs_ids)} new mbs entries...')
+
+    if len(mbs_ids) >0:
         answers, neg_groups = load_alitis_mbs_data(
             mbs_ids,
             data_paths['mbs_answers'],
             data_paths['mbs_neg_groups']
             )
 
-        mbs_dict, unparsed_dict = generate_mbs_dicts(answers,neg_groups,key_table,filter_str)
+        # inefficient code here, takes an hour or two to parse ~100k records)
+        new_mbs_dict, unparsed_dict = generate_mbs_dicts(answers,neg_groups,key_table,filter_str)
+        mbs_dict.update(new_mbs_dict)
+        log.info(len(mbs_dict.keys()))
 
-        with open(data_paths['mbs_dict'], 'w') as f:
-            json.dump(mbs_dict, f, indent=4)
-            
-        with open(f'{code_dir}/data/clean/unparsed_dict.json', 'w') as f:
-            json.dump(unparsed_dict, f, indent=4)
+    with open(data_paths['mbs_dict'], 'w') as f:
+        json.dump(mbs_dict, f, indent=4)
+        
+    with open(f'{code_dir}/data/clean/unparsed_dict.json', 'w') as f:
+        json.dump(unparsed_dict, f, indent=4)
 
     mbs_df = pd.DataFrame(mbs_dict, dtype='int8').transpose()
-    data_df = data_df.join(mbs_df,how='left')
+    data_df = data_df.join(mbs_df,how='left') 
 
     # A bit of feature engineering
     case_dt = pd.to_datetime(data_df['CreatedOn'],format='%Y/%m/%d %H:%M:%S')
@@ -865,7 +869,7 @@ def parse_export_data(code_dir, raw_data_paths, key_table, filter_str, log, samp
 
     return data_df, label_df, text_df
 
-def clean_data(code_dir, raw_data_paths, clean_data_paths, full_name_path, key_table, filter_str, log):
+def clean_data(code_dir, raw_data_paths, clean_data_paths, full_name_path, overwrite_data, key_table, filter_str,  log):
     
     """ Try to load clean data or parse raw export data if necessary, then generate final test/train data. """
 
@@ -877,10 +881,36 @@ def clean_data(code_dir, raw_data_paths, clean_data_paths, full_name_path, key_t
         label_df = pd.read_csv(full_paths['clean_labels'], index_col='caseid')
         data_df = pd.read_csv(full_paths['clean_data'], index_col='caseid')
         text_df = pd.read_csv(full_paths['clean_text'], index_col='caseid')
+
+        # Only parse new 
+        if overwrite_data:
+            log.info("Updating clean data...")
+            new_data_df, new_label_df, new_text_df = parse_export_data(
+                code_dir, 
+                raw_data_paths, 
+                key_table, 
+                filter_str, 
+                log
+                )
+
+            label_df = label_df.append(new_label_df)
+            data_df = data_df.append(new_data_df)
+            text_df = text_df.append(new_text_df)
+
+            label_df.to_csv(full_paths['clean_labels'])
+            data_df.to_csv(full_paths['clean_data'])
+            text_df.to_csv(full_paths['clean_text'])
+
+
     else:
         log.warning("No clean data found! Parsing....")
-        data_df, label_df, text_df = parse_export_data(code_dir, raw_data_paths, key_table, filter_str, log)
-
+        data_df, label_df, text_df = parse_export_data(
+            code_dir, 
+            raw_data_paths, 
+            filter_str, 
+            key_table, 
+            log
+            )
         label_df.to_csv(full_paths['clean_labels'])
         data_df.to_csv(full_paths['clean_data'])
         text_df.to_csv(full_paths['clean_text'])

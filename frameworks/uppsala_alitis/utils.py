@@ -800,23 +800,11 @@ def generate_mbs_dicts(answers,neg_groups,key_table,filter_str):
 
     return out_dict, unparsed_dict
  
-def parse_export_data(code_dir, raw_data_paths, key_table, filter_str, log):
+def parse_export_data(code_dir, raw_data_paths,inclusion_criteria, label_dict, predictors, key_table, filter_str, log):
 
     """ Parse raw export data into a clean format for further processing """
 
     data_paths = {k:f'{code_dir}/{v}' for k,v in raw_data_paths.items()}
-
-    # Define inclusion criteria for qs data
-    inclusion_criteria = ["valid_pin","exists_amb"]
-
-    # Define composite measures defined as any one of several variables:
-    label_dict = {
-        "amb_intervention" : ["amb_meds", "amb_cpr", "amb_o2", "amb_immob", "amb_crit", "amb_alert", "amb_ecg"],
-        "amb_prio" : ["amb_prio"],
-        "hosp_critcare" : ["hosp_icu","hosp_30daymort"]}
-
-    # Define predictors to extract
-    predictors = ["disp_age","disp_gender","disp_lon","disp_lat","CreatedOn","Priority","RecomendedPriority","IsValid"]
 
     full_df = parse_flat_data(
         f"{data_paths['qliksense_export']}",
@@ -871,7 +859,7 @@ def parse_export_data(code_dir, raw_data_paths, key_table, filter_str, log):
 
     return data_df, label_df, text_df
 
-def clean_data(code_dir, raw_data_paths, clean_data_paths, full_name_path, overwrite_data, key_table, filter_str, log):
+def clean_data(code_dir, raw_data_paths, clean_data_paths, full_name_path, overwrite_data, inclusion_criteria, label_dict, predictors, key_table, filter_str, log):
     
     """ Try to load clean data or parse raw export data if necessary, then generate final test/train data. """
 
@@ -889,6 +877,9 @@ def clean_data(code_dir, raw_data_paths, clean_data_paths, full_name_path, overw
         data_df, label_df, text_df = parse_export_data(
             code_dir, 
             raw_data_paths, 
+            inclusion_criteria, 
+            label_dict, 
+            predictors,
             key_table, 
             filter_str, 
             log

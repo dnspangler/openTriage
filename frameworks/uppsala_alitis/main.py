@@ -96,6 +96,15 @@ class Main:
         # Data parsing stuff
         overwrite_models = False,
         overwrite_data = False,
+        # Define inclusion criteria for qs data
+        inclusion_criteria = ["valid_pin","valid_geo_dest","exists_amb"],
+        # Define composite measures defined as any one of several variables:
+        label_dict = {
+            "amb_intervention" : ["amb_meds", "amb_cpr", "amb_o2", "amb_immob", "amb_crit", "amb_alert", "amb_ecg"],
+            "amb_prio" : ["amb_prio"],
+            "hosp_critcare" : ["hosp_icu","hosp_30daymort"]},
+        # Define predictors to extract
+        predictors = ["disp_age","disp_gender","disp_lon","disp_lat","CreatedOn","Priority","RecomendedPriority","IsValid"],
         parse_text = 'FreeText',
         max_ngram = 2, 
         text_prefix = 'text_', 
@@ -171,6 +180,9 @@ class Main:
                     clean_data_paths=clean_data_path_dict, 
                     full_name_path=full_name_path, 
                     overwrite_data=overwrite_data, 
+                    inclusion_criteria=inclusion_criteria, 
+                    label_dict=label_dict, 
+                    predictors=predictors,
                     key_table=self.key, 
                     filter_str=self.filter_str, 
                     log=self.log

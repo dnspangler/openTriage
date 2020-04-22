@@ -23,5 +23,7 @@ if __name__ == '__main__':
         opt_rounds = 2,
         max_estimators = 10,
         overwrite_models = True,
-        overwrite_data = True
+        overwrite_data = False,
+        test_cutoff_ymd='20200319',
+        test_sample=0.5
         )

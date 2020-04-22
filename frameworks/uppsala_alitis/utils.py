@@ -15,6 +15,8 @@ import time
 import itertools
 import collections
 import random
+import time
+import calendar
 
 from pathlib import Path
 from datetime import date, datetime
@@ -595,7 +597,7 @@ def join_flat_data(qs_df,alit_df):
 def load_qliksense_data(qs_excel_path,incl_vars):
 
     """ load and filter data exported from Qliksense """
-    qs_df = pd.read_excel(qs_excel_path,index_col=0,na_values='-')
+    qs_df = pd.read_excel(qs_excel_path,index_col='caseid',na_values='-')
 
     for i in incl_vars:
         inclobs = qs_df[i].eq(1)
@@ -846,7 +848,6 @@ def parse_export_data(code_dir, raw_data_paths, key_table, filter_str, log):
         # inefficient code here, takes an hour or two to parse ~100k records)
         new_mbs_dict, unparsed_dict = generate_mbs_dicts(answers,neg_groups,key_table,filter_str)
         mbs_dict.update(new_mbs_dict)
-        log.info(len(mbs_dict.keys()))
 
     with open(data_paths['mbs_dict'], 'w') as f:
         json.dump(mbs_dict, f, indent=4)
@@ -855,6 +856,7 @@ def parse_export_data(code_dir, raw_data_paths, key_table, filter_str, log):
         json.dump(unparsed_dict, f, indent=4)
 
     mbs_df = pd.DataFrame(mbs_dict, dtype='int8').transpose()
+    log.info(f'Joining {len(mbs_df.index)} mbs {len(data_df.index)} flat data entries...')
     data_df = data_df.join(mbs_df,how='left') 
 
     # A bit of feature engineering
@@ -869,48 +871,29 @@ def parse_export_data(code_dir, raw_data_paths, key_table, filter_str, log):
 
     return data_df, label_df, text_df
 
-def clean_data(code_dir, raw_data_paths, clean_data_paths, full_name_path, overwrite_data, key_table, filter_str,  log):
+def clean_data(code_dir, raw_data_paths, clean_data_paths, full_name_path, overwrite_data, key_table, filter_str, log):
     
     """ Try to load clean data or parse raw export data if necessary, then generate final test/train data. """
 
     full_paths = {k:f'{code_dir}/{v}' for k,v in clean_data_paths.items()}
     paths_exist = {k:os.path.exists(v) for k,v in full_paths.items()}
 
-    if all(paths_exist.values()):
+    if all(paths_exist.values()) and not overwrite_data:
         log.info("Clean data found! Loading...")
         label_df = pd.read_csv(full_paths['clean_labels'], index_col='caseid')
         data_df = pd.read_csv(full_paths['clean_data'], index_col='caseid')
         text_df = pd.read_csv(full_paths['clean_text'], index_col='caseid')
 
-        # Only parse new 
-        if overwrite_data:
-            log.info("Updating clean data...")
-            new_data_df, new_label_df, new_text_df = parse_export_data(
-                code_dir, 
-                raw_data_paths, 
-                key_table, 
-                filter_str, 
-                log
-                )
-
-            label_df = label_df.append(new_label_df)
-            data_df = data_df.append(new_data_df)
-            text_df = text_df.append(new_text_df)
-
-            label_df.to_csv(full_paths['clean_labels'])
-            data_df.to_csv(full_paths['clean_data'])
-            text_df.to_csv(full_paths['clean_text'])
-
-
     else:
-        log.warning("No clean data found! Parsing....")
+        log.warning("Parsing export data....")
         data_df, label_df, text_df = parse_export_data(
             code_dir, 
             raw_data_paths, 
-            filter_str, 
             key_table, 
+            filter_str, 
             log
             )
+
         label_df.to_csv(full_paths['clean_labels'])
         data_df.to_csv(full_paths['clean_data'])
         text_df.to_csv(full_paths['clean_text'])
@@ -923,34 +906,45 @@ def clean_data(code_dir, raw_data_paths, clean_data_paths, full_name_path, overw
         with open(full_name_path, "w") as f:
                 json.dump(names,f,indent=4,ensure_ascii=False)
 
+    return {'data':data_df,
+            'labels':label_df,
+            'text':text_df}
+
+def split_data(data, test_cutoff_ymd, test_sample, test_criteria):
+    
     # A major update to the user interface was implemented in May 2019 which 
     # substantially impacted the structure of the collected data (primarily 
     # by reducing the rate of missingness). These changes included a validation 
     # system to indicate whether a record is complete or not, and risk prediction
     # tools will only be available for complete calls per IsValid.
 
-    mbs_complete = data_df.index[data_df.IsValid.notna() & data_df.IsValid]
+    cutoff_date_epoch = calendar.timegm(time.strptime(test_cutoff_ymd, "%Y%m%d")) / 86400
 
-    test_ids = list(random.sample(list(mbs_complete),int(len(mbs_complete)*0.3)))
+    valid_ids = data['data'].index[data['data'].disp_date >= cutoff_date_epoch]
+    print(f"{len(valid_ids)} observations after {test_cutoff_ymd}")
 
-    #TODO: Add functionality to automate monthly update process, ie: clean all files 
-    # in raw, add new observations to cleaned data, and do train/test split to test 
-    # on data from the last month.
+    for i in test_criteria:
+        crit_incl = data['data'][i].eq(1)
+        criteria_ids = data['data'].index[crit_incl]
+        valid_ids = [j for j in valid_ids if j in criteria_ids]
+        print(f"{len(valid_ids)} observations after excluding {i}")
 
-    data = {
+    test_ids = list(random.sample(list(valid_ids),int(len(valid_ids)*test_sample)))
+
+    out_data = {
         'train':{
-            'data':data_df[~data_df.index.isin(test_ids)],
-            'labels':label_df[~label_df.index.isin(test_ids)],
-            'text':text_df[~text_df.index.isin(test_ids)],
+            'data':data['data'][~data['data'].index.isin(test_ids)],
+            'labels':data['labels'][~data['labels'].index.isin(test_ids)],
+            'text':data['text'][~data['text'].index.isin(test_ids)]
         },
         'test':{
-            'data':data_df[data_df.index.isin(test_ids)],
-            'labels':label_df[label_df.index.isin(test_ids)],
-            'text':text_df[text_df.index.isin(test_ids)]
+            'data':data['data'][data['data'].index.isin(test_ids)],
+            'labels':data['labels'][data['labels'].index.isin(test_ids)],
+            'text':data['text'][data['text'].index.isin(test_ids)]
         }
     }
 
-    return data
+    return out_data
 
 def generate_names(code_dir, data, key_table):
 

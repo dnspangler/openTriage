@@ -31,6 +31,7 @@ from frameworks.uppsala_alitis.utils import (
     xgb_cv_fun,
     get_model_props,
     clean_data,
+    split_data,
     generate_ui_data,
     generate_names,
     parse_text_to_bow,
@@ -90,15 +91,20 @@ class Main:
             'hosp_critcare':1
         },
         instrument_trans = 'logit',
-        filter_str = "_Bedmt_tillstnd_|_Nej",
+        filter_str = '_Bedmt_tillstnd_|_Nej',
         randomize = False,
         # Data parsing stuff
         overwrite_models = False,
         overwrite_data = False,
-        parse_text = True,
+        parse_text = 'FreeText',
         max_ngram = 2, 
-        text_prefix = "text_", 
+        text_prefix = 'text_', 
         min_terms = 500,
+        # Test/train sample splitting
+        test_cutoff_ymd = '20200319',
+        test_sample = 0.3,
+        test_criteria = ['IsValid'],
+        # UI stuff
         prod_ui_cols = ['value','mean_shap']
         ):
 
@@ -121,6 +127,9 @@ class Main:
         self.max_ngram = max_ngram
         self.text_prefix = text_prefix
         self.min_terms = min_terms
+        self.test_cutoff_ymd = test_cutoff_ymd
+        self.test_sample = test_sample
+        self.test_criteria = test_criteria
         self.prod_ui_cols = prod_ui_cols
 
         # Make and check full paths
@@ -154,9 +163,27 @@ class Main:
 
             # If no clean data is available, try to parse clean data
             else:
-                self.log.warning("Missing data file(s)! Parsing data...")
-                data = clean_data(code_dir, raw_data_path_dict, clean_data_path_dict, full_name_path, overwrite_data, self.key, self.filter_str, self.log)
-                self._save_data(data, full_data_paths) # Write data to disk
+                self.log.warning("Missing data file(s)! Cleaning data...")
+
+                data_clean = clean_data(
+                    code_dir=code_dir, 
+                    raw_data_paths=raw_data_path_dict, 
+                    clean_data_paths=clean_data_path_dict, 
+                    full_name_path=full_name_path, 
+                    overwrite_data=overwrite_data, 
+                    key_table=self.key, 
+                    filter_str=self.filter_str, 
+                    log=self.log
+                    )
+
+                data_split = split_data(
+                    data = data_clean, 
+                    test_cutoff_ymd = self.test_cutoff_ymd, 
+                    test_sample = self.test_sample, 
+                    test_criteria = self.test_criteria)
+
+                self._save_data(data_split, full_data_paths) # Write data to disk
+                # Load it from disk (to avoid making stupid mistakes)
                 self.data = self._load_data(full_data_paths,full_stopword_path)
             
             # Once data has (hopefully) been loaded, train a model on it.
@@ -201,7 +228,7 @@ class Main:
 
             if self.parse_text:
                 
-                text_df = pd.DataFrame({'FreeText':value['FreeText']}, index=[0])
+                text_df = pd.DataFrame({self.parse_text:value[self.parse_text]}, index=[0])
                 term_list = results[id].loc[:,results[id].columns.str.startswith(self.text_prefix)]
                 
                 bow_df = parse_text_to_bow(
@@ -334,7 +361,7 @@ class Main:
 
     def _load_data(self,data_path_dict,stopword_path):
 
-        self.log.info("Splitting data...")
+        self.log.info("Loading data...")
         train_data = pd.read_csv(data_path_dict['train_data'],index_col='caseid')
         train_labels = pd.read_csv(data_path_dict['train_labels'],index_col='caseid')
 

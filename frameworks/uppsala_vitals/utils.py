@@ -183,17 +183,6 @@ def parse_json_data(inputData,model,log):
     data['disp_lat'] = inputData['Coord_n']
     data['disp_lon'] = inputData['Coord_e']
 
-    # Process main answers
-    ma_dict, unparsed_ma = parse_json_mainanswers(inputData['MainAnswers'],model,log)
-    # Process mbs categories
-    qa_dict, unparsed_cat = parse_json_categories(inputData['Categories'],model,log)
-    #Combine dicts
-    qa_dict.update(ma_dict)
-    # Transpose the dict to a single-row df and reset the index values
-    qa_wide = pd.DataFrame(qa_dict, index=[0])
-    # update the full feature set
-    data.update(qa_wide)
-
     return data
 
 def parse_json_mainanswers(mainanswers,model,log):
@@ -624,7 +613,7 @@ def load_alitis_cases_data(alitis_cases_path):
 
     return alit_df
 
-def separate_flat_data(full_df,label_dict,predictor_list,text_col = "FreeText"):
+def separate_flat_data(full_df,label_dict,predictor_list,text_col):
 
     """ generate composite labels and separate flat data """
 
@@ -635,7 +624,10 @@ def separate_flat_data(full_df,label_dict,predictor_list,text_col = "FreeText"):
 
     data_df = full_df[predictor_list]
 
-    text_df = full_df[text_col]
+    if text_col is not None:
+        text_df = full_df[text_col]
+    else:
+        text_df = None
 
     return label_df, data_df, text_df
 
@@ -800,66 +792,28 @@ def generate_mbs_dicts(answers,neg_groups,key_table,filter_str):
 
     return out_dict, unparsed_dict
  
-def parse_export_data(code_dir, raw_data_paths,inclusion_criteria, label_dict, predictors, key_table, filter_str, log):
+def parse_export_data(code_dir, raw_data_paths,inclusion_criteria, label_dict, predictors, text_col, key_table, filter_str, log):
 
     """ Parse raw export data into a clean format for further processing """
 
     data_paths = {k:f'{code_dir}/{v}' for k,v in raw_data_paths.items()}
 
-    full_df = parse_flat_data(
-        f"{data_paths['qliksense_export']}",
-        f"{data_paths['mbs_cases']}",
-        inclusion_criteria)
-        
-    label_df, data_df, text_df = separate_flat_data(full_df,label_dict,predictors)
-
-    # Check for intermediate dictionary of mbs tokens
-    unparsed_dict = {}
-    try:
-        with open(data_paths['mbs_dict']) as f:
-            mbs_dict = json.load(f)
-    except:
-        mbs_dict = {}
-
-    # Only new, unparsed ids
-
-    mbs_ids = np.setdiff1d(list(data_df.index),list(mbs_dict.keys()))
-    log.info(f'Parsing {len(mbs_ids)} new mbs entries...')
-
-    if len(mbs_ids) >0:
-        answers, neg_groups = load_alitis_mbs_data(
-            mbs_ids,
-            data_paths['mbs_answers'],
-            data_paths['mbs_neg_groups']
-            )
-
-        # inefficient code here, takes an hour or two to parse ~100k records)
-        new_mbs_dict, unparsed_dict = generate_mbs_dicts(answers,neg_groups,key_table,filter_str)
-        mbs_dict.update(new_mbs_dict)
-
-    with open(data_paths['mbs_dict'], 'w') as f:
-        json.dump(mbs_dict, f, indent=4)
-        
-    with open(f'{code_dir}/data/clean/unparsed_dict.json', 'w') as f:
-        json.dump(unparsed_dict, f, indent=4)
-
-    mbs_df = pd.DataFrame(mbs_dict, dtype='int8').transpose()
-    log.info(f'Joining {len(mbs_df.index)} mbs {len(data_df.index)} flat data entries...')
-    data_df = data_df.join(mbs_df,how='left') 
+    full_df = load_qliksense_data(data_paths['qliksense_export'],inclusion_criteria)
+    label_df, data_df, text_df = separate_flat_data(full_df,label_dict,predictors,text_col)
 
     # A bit of feature engineering
-    case_dt = pd.to_datetime(data_df['CreatedOn'],format='%Y/%m/%d %H:%M:%S')
+    data_df['ymd'] = [i.split('-')[0] for i in list(data_df.index)]  #TODO: Use a specific date column instead of relying on index format
+    case_dt = pd.to_datetime(data_df['ymd'],format='%Y%m%d')
     data_df = data_df.assign(
         # Number of days since jan 1 1970 (unix time)
         disp_date = (case_dt.dt.date - dt.date(1970, 1, 1)).astype('timedelta64[D]').astype(int),
         disp_hour = case_dt.dt.hour.astype(int),
-        disp_month = case_dt.dt.month.astype(int),
-        IsValid = [1 if x and not np.isnan(x) else 0 for x in data_df.IsValid])
-    data_df = data_df.drop('CreatedOn',axis=1)
+        disp_month = case_dt.dt.month.astype(int))
+    data_df = data_df.drop('ymd',axis=1)
 
     return data_df, label_df, text_df
 
-def clean_data(code_dir, raw_data_paths, clean_data_paths, full_name_path, overwrite_data, inclusion_criteria, label_dict, predictors, key_table, filter_str, log):
+def clean_data(code_dir, raw_data_paths, clean_data_paths, full_name_path, overwrite_data, inclusion_criteria, label_dict, predictors, text_col, key_table, filter_str, log):
     
     """ Try to load clean data or parse raw export data if necessary, then generate final test/train data. """
 
@@ -870,16 +824,16 @@ def clean_data(code_dir, raw_data_paths, clean_data_paths, full_name_path, overw
         log.info("Clean data found! Loading...")
         label_df = pd.read_csv(full_paths['clean_labels'], index_col='caseid')
         data_df = pd.read_csv(full_paths['clean_data'], index_col='caseid')
-        text_df = pd.read_csv(full_paths['clean_text'], index_col='caseid')
 
     else:
         log.warning("Parsing export data....")
-        data_df, label_df, text_df = parse_export_data(
+        data_df, label_df = parse_export_data(
             code_dir, 
             raw_data_paths, 
             inclusion_criteria, 
             label_dict, 
             predictors,
+            text_col,
             key_table, 
             filter_str, 
             log
@@ -887,19 +841,11 @@ def clean_data(code_dir, raw_data_paths, clean_data_paths, full_name_path, overw
 
         label_df.to_csv(full_paths['clean_labels'])
         data_df.to_csv(full_paths['clean_data'])
-        text_df.to_csv(full_paths['clean_text'])
-
     # Generate dict of pretty names of predictors and labels for display in ui
-    # Load pretty names for display in UI
-    if not os.path.exists(full_name_path):
-        log.info("No pretty names found! Generating...")
-        names = generate_names(full_name_path,data_df,key_table)
-        with open(full_name_path, "w") as f:
-                json.dump(names,f,indent=4,ensure_ascii=False)
+    #TODO: generate this
 
     return {'data':data_df,
-            'labels':label_df,
-            'text':text_df}
+            'labels':label_df}
 
 def split_data(data, test_cutoff_ymd, test_sample, test_criteria):
     
@@ -925,13 +871,11 @@ def split_data(data, test_cutoff_ymd, test_sample, test_criteria):
     out_data = {
         'train':{
             'data':data['data'][~data['data'].index.isin(test_ids)],
-            'labels':data['labels'][~data['labels'].index.isin(test_ids)],
-            'text':data['text'][~data['text'].index.isin(test_ids)]
+            'labels':data['labels'][~data['labels'].index.isin(test_ids)]
         },
         'test':{
             'data':data['data'][data['data'].index.isin(test_ids)],
-            'labels':data['labels'][data['labels'].index.isin(test_ids)],
-            'text':data['text'][data['text'].index.isin(test_ids)]
+            'labels':data['labels'][data['labels'].index.isin(test_ids)]
         }
     }
 

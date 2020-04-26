@@ -18,7 +18,7 @@ from io import StringIO
 from datetime import datetime
 from sklearn import metrics
 
-from frameworks.uppsala_alitis.utils import (
+from frameworks.uppsala_vitals.utils import (
     parse_json_data, 
     predict_instrument, 
     generate_trialid, 
@@ -45,7 +45,6 @@ class Main:
         log,
         cache,
         # Paths for all the things
-        key_path ='models/mbs_key.csv',
         name_path ='models/pretty_names.json',
         stopword_path = 'models/stopwords.json',
         model_path_dict = {
@@ -55,22 +54,15 @@ class Main:
         data_path_dict = {
             'train_labels':'data/train/labels.csv',
             'train_data':'data/train/data.csv',
-            'train_text':'data/train/text.csv',
             'test_labels':'data/test/labels.csv',
-            'test_data':'data/test/data.csv',
-            'test_text':'data/test/text.csv'
+            'test_data':'data/test/data.csv'
             }, 
         clean_data_path_dict = {
             'clean_labels':'data/clean/labels.csv',
-            'clean_data':'data/clean/data.csv',
-            'clean_text':'data/clean/text.csv'
+            'clean_data':'data/clean/data.csv'
             },
         raw_data_path_dict = {
-            'mbs_answers':'data/raw/mbs_answers.csv',
-            'mbs_cases':'data/raw/mbs_cases.csv',
-            'mbs_neg_groups':'data/raw/mbs_neg_groups.csv',
-            'qliksense_export':'data/raw/qliksense_export.xlsx',
-            'mbs_dict':'data/raw/mbs_dict.json'
+            'qliksense_export':'data/raw/qliksense_export.xlsx'
             },
         # Hyperparameter tuning stuff
         params_ranges = {
@@ -91,7 +83,7 @@ class Main:
             'hosp_critcare':1
         },
         instrument_trans = 'logit',
-        filter_str = '_Bedmt_tillstnd_|_Nej',
+        filter_str = '',
         randomize = False,
         # Data parsing stuff
         overwrite_models = False,
@@ -104,15 +96,15 @@ class Main:
             "amb_prio" : ["amb_prio"],
             "hosp_critcare" : ["hosp_icu","hosp_30daymort"]},
         # Define predictors to extract
-        predictors = ["disp_age","disp_gender","disp_lon","disp_lat","CreatedOn","Priority","RecomendedPriority","IsValid"],
-        parse_text = 'FreeText',
+        predictors = ['disp_age','disp_gender','eval_breaths', 'eval_spo2','eval_sbp', 'eval_pulse', 'eval_temp'],
+        parse_text = None,
         max_ngram = 2, 
         text_prefix = 'text_', 
         min_terms = 500,
         # Test/train sample splitting
         test_cutoff_ymd = '20200319',
         test_sample = 0.3,
-        test_criteria = ['IsValid'],
+        test_criteria = [],
         # UI stuff
         prod_ui_cols = ['value','mean_shap']
         ):
@@ -142,7 +134,6 @@ class Main:
         self.prod_ui_cols = prod_ui_cols
 
         # Make and check full paths
-        full_key_path = f'{self.code_dir}/{key_path}'
         full_name_path = f'{self.code_dir}/{name_path}'
         full_stopword_path = f'{self.code_dir}/{stopword_path}'
 
@@ -151,12 +142,6 @@ class Main:
 
         full_model_paths = {k:f'{self.code_dir}/{v}' for k,v in model_path_dict.items()}
         model_paths_exist = {k:os.path.exists(v) for k,v in full_model_paths.items()}
-
-        # Load key file needed for parsing API calls
-        try:
-            self.key = self._load_key(full_key_path)
-        except NameError:
-            self.log.exception("No key found!")
         
         # If a serialized model is available, load it
 
@@ -183,7 +168,8 @@ class Main:
                     inclusion_criteria=inclusion_criteria, 
                     label_dict=label_dict, 
                     predictors=predictors,
-                    key_table=self.key, 
+                    text_col=parse_text,
+                    key_table=None, 
                     filter_str=self.filter_str, 
                     log=self.log
                     )
@@ -434,28 +420,9 @@ class Main:
 
         data['test']['data'].to_csv(data_paths['test_data'])
         data['test']['labels'].to_csv(data_paths['test_labels'])
-        data['test']['text'].to_csv(data_paths['test_text'])
 
         data['train']['data'].to_csv(data_paths['train_data'])
         data['train']['labels'].to_csv(data_paths['train_labels'])
-        data['train']['text'].to_csv(data_paths['train_text'])
-
-    def _load_key(self, key_path):
-        
-        with open(key_path) as f:
-            key = pd.read_csv(f, encoding='utf-8').fillna('')
-        
-        # Generate tokens corresponding to each possible question/answer combination
-        # Note that in general, we try to conform with the variable prefixing 
-        # scheme used in this article: https://doi.org/10.1371/journal.pone.0226518
-
-        key['cat_token'], key['qa_token'], key['qa_name'] = generate_tokens(key_table = key)
-
-        # We remove some unnecessary tokens (in our case, inactivated questions and 
-        # "no" answers which are colinear with "yes" answers)
-        key = key[~key['qa_token'].str.contains(self.filter_str)]
-
-        return key
 
     def _load_model(self, model_paths):
 
@@ -469,8 +436,7 @@ class Main:
             models = pickle.load(f)
 
         mod_dict = {'models': models, 
-                    'model_props': model_props,
-                    'key':self.key}
+                    'model_props': model_props}
 
         # Return model function or object.
         return mod_dict

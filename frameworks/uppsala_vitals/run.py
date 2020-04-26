@@ -1,13 +1,13 @@
 
 import logging
 
-from frameworks.uppsala_alitis.main import Main
+from frameworks.uppsala_vitals.main import Main
 
 #TODO: Write shell script to automate model updating
 
 if __name__ == '__main__':
 
-    code_dir = "frameworks/uppsala_alitis"
+    code_dir = "frameworks/uppsala_vitals"
 
     # Instantiate logger
     logger = logging.getLogger(__name__)

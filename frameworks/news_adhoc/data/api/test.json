@@ -15,10 +15,10 @@
   {
     "respiration_rate": 18,
     "oxygen_saturation": 96,
-    "supplemental_oxygen": "Air",
+    "supplemental_oxygen": "Oxygen",
     "systolic_blood_pressure": 108,
     "pulse":88,
-    "consciousness":"Alert",
+    "consciousness":"Verbal",
     "temperature":37.8,
     "reference":"https://www.rcplondon.ac.uk/file/9434/download"
   }

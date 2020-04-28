@@ -6,7 +6,7 @@ import logging
 from gevent.pywsgi import WSGIServer
 from importlib import import_module
 from pathlib import Path
-from flask import request
+from flask import request, Response
 from flask.logging import default_handler
 from flask_api import FlaskAPI, status, exceptions
 from redis import Redis
@@ -88,7 +88,8 @@ if __name__ == "__main__":
             logger.exception("Error upon generating output data:")
             return f"Server error upon generating output data: {e}", status.HTTP_500_INTERNAL_SERVER_ERROR
         
-        return output_data, status.HTTP_201_CREATED
+        #return output_data, status.HTTP_201_CREATED
+        return Response(output_data, status=status.HTTP_201_CREATED, mimetype='application/json')
 
     # Add ui endpoint if ui_function is defined by framework
     @app.route("/ui/", methods=['GET'])

@@ -96,7 +96,7 @@ class Main:
             "amb_prio" : ["amb_prio"],
             "hosp_critcare" : ["hosp_icu","hosp_30daymort"]},
         # Define predictors to extract
-        predictors = ['disp_age','disp_gender','eval_breaths', 'eval_spo2','eval_sbp', 'eval_pulse', 'eval_temp'],
+        predictors = ['CreatedOn','disp_age','disp_gender','disp_cats', 'disp_prio', 'eval_breaths', 'eval_spo2','eval_sbp', 'eval_pulse', 'eval_temp','eval_avpu'],
         parse_text = None,
         max_ngram = 2, 
         text_prefix = 'text_', 
@@ -224,7 +224,7 @@ class Main:
             # Apply a parsing function (from functions.py) to each item
             results[id] = parse_json_data(value,self.model,log = self.log)
 
-            if self.parse_text:
+            if self.parse_text is not None:
                 
                 text_df = pd.DataFrame({self.parse_text:value[self.parse_text]}, index=[0])
                 term_list = results[id].loc[:,results[id].columns.str.startswith(self.text_prefix)]

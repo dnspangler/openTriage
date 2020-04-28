@@ -98,11 +98,11 @@ def generate_ui_data(store,other_scores,feat_imp_cols,text_prefix,model,log):
             feat_imp = feat_imp[feat_imp.index.isin(model['names']) | feat_imp.index.str.startswith(text_prefix)]
             feat_imp.index = pd.Series(feat_imp.index).replace(to_replace=model['names'])
 
-        #Show all positive answers and negtive answers with high shap values
-        feat_imp_table = feat_imp[(feat_imp.mean_abs_shap > 0.02) | (feat_imp.value != 0)][feat_imp_cols]
+    #Show all positive answers and negtive answers with high shap values
+    feat_imp_table = feat_imp[(feat_imp.mean_abs_shap > 0.02) | (feat_imp.value != 0)][feat_imp_cols]
 
-        feat_imp_table = feat_imp_table.style.format({'value': "{:.0f}", 'mean_shap': '{:.2f}'}).set_properties(**{'text-align': 'center'})
-        feat_imp_table = feat_imp_table.bar(subset=['mean_shap'], align='mid', color=['#5fba7d','#d65f5f'])
+    feat_imp_table = feat_imp_table.style.format({'value': "{:.0f}", 'mean_shap': '{:.2f}'}).set_properties(**{'text-align': 'center'})
+    feat_imp_table = feat_imp_table.bar(subset=['mean_shap'], align='mid', color=['#5fba7d','#d65f5f'])
     
     return {
         'fig_base64':fig_base64,
@@ -136,6 +136,11 @@ def sub_utf8_ascii(text_series, symbol = ''):
     
     return pd.Series(out_list)
 
+def string_to_dummies(df,string_col):
+    dummies = df[string_col].str.get_dummies()
+    dummies.columns = string_col + '_' + sub_utf8_ascii(dummies.columns)
+    return(dummies)
+
 def generate_tokens(key_table):
 
     """ Generate ascii tokens and clean names in key table for each possible question/answer combo"""
@@ -165,24 +170,36 @@ def parse_json_data(inputData,model,log):
     """
     # Load features with all missing values
     data = pd.DataFrame(model['model_props']['feat_props']['gain'], index=[0])
+    input_df = pd.DataFrame(inputData, index=[0])
     data.loc[0, :] = np.nan
 
-    #log.debug(data)
-    #parse unnested values
-    data['disp_age'] = inputData['Age']
-    data['Priority'] = inputData['Priority']
-    data['RecomendedPriority'] = inputData['RecomendedPriority']
-    if inputData['Gender'] == 'Male':
+    data['disp_age'] = inputData['disp_age']
+    data['disp_prio'] = inputData['disp_prio']
+    if inputData['disp_gender'] == 'Male':
         data['disp_gender'] = 0
-    elif inputData['Gender'] == 'Female':
+    elif inputData['disp_gender'] == 'Female':
         data['disp_gender'] = 1
-    #data['disp_postupdate'] = 1
-    data['disp_date'] = (date.today() - date(1970, 1, 1)).days
-    data['disp_hour'] = datetime.now().hour
-    data['disp_month'] = date.today().month
-    data['disp_lat'] = inputData['Coord_n']
-    data['disp_lon'] = inputData['Coord_e']
 
+    data['eval_breaths'] = inputData['eval_breaths']
+    data['eval_spo2'] = inputData['eval_spo2']
+    data['eval_sbp'] = inputData['eval_sbp']
+    data['eval_pulse'] = inputData['eval_pulse']
+    data['eval_temp'] = inputData['eval_temp']    
+
+    # A bit of feature engineering
+    # dates
+    case_dt = pd.to_datetime(input_df['timestamp'],format='%Y-%m-%d %H:%M:%S')
+    data = data.assign(
+        # Number of days since jan 1 1970 (unix time)
+        disp_date = (case_dt.dt.date - dt.date(1970, 1, 1)).astype('timedelta64[D]').astype(int),
+        disp_hour = case_dt.dt.hour.astype(int),
+        disp_month = case_dt.dt.month.astype(int))
+
+    #data[data.columns[pd.Series(data.columns).str.startswith('eval_avpu')]] = 0
+
+    data.update(string_to_dummies(input_df,'eval_avpu'))
+    data.update(string_to_dummies(input_df,'disp_cats'))
+    log.debug(data)
     return data
 
 def parse_json_mainanswers(mainanswers,model,log):
@@ -802,16 +819,20 @@ def parse_export_data(code_dir, raw_data_paths,inclusion_criteria, label_dict, p
     label_df, data_df, text_df = separate_flat_data(full_df,label_dict,predictors,text_col)
 
     # A bit of feature engineering
-    data_df['ymd'] = [i.split('-')[0] for i in list(data_df.index)]  #TODO: Use a specific date column instead of relying on index format
-    case_dt = pd.to_datetime(data_df['ymd'],format='%Y%m%d')
+    # dates
+    case_dt = pd.to_datetime(data_df['CreatedOn'],format='%Y-%m-%d %H:%M:%S')
     data_df = data_df.assign(
         # Number of days since jan 1 1970 (unix time)
         disp_date = (case_dt.dt.date - dt.date(1970, 1, 1)).astype('timedelta64[D]').astype(int),
         disp_hour = case_dt.dt.hour.astype(int),
         disp_month = case_dt.dt.month.astype(int))
-    data_df = data_df.drop('ymd',axis=1)
+    data_df = data_df.drop('CreatedOn',axis=1)
 
-    return data_df, label_df, text_df
+    data_df = data_df.join(string_to_dummies(data_df,'eval_avpu'))
+    data_df = data_df.join(string_to_dummies(data_df,'disp_cats'))
+    data_df = data_df.drop(['eval_avpu','disp_cats'],axis = 1)
+
+    return data_df, label_df
 
 def clean_data(code_dir, raw_data_paths, clean_data_paths, full_name_path, overwrite_data, inclusion_criteria, label_dict, predictors, text_col, key_table, filter_str, log):
     

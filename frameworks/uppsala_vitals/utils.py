@@ -168,10 +168,9 @@ def parse_json_data(inputData,model,log):
     Takes dictionary of input data, request['data'] 
     Returns a dictionary of features
     """
-    # Load features with all missing values
-    data = pd.DataFrame(model['model_props']['feat_props']['gain'], index=[0])
+    # Load features with all missing values (uses features from first model, assumes all are built on the same dataset)
+    data = pd.DataFrame({k:np.nan for k in model['models'][next(iter(model['models']))].feature_names}, index=[0])
     input_df = pd.DataFrame(inputData, index=[0])
-    data.loc[0, :] = np.nan
 
     data['disp_age'] = inputData['disp_age']
     data['disp_prio'] = inputData['disp_prio']
@@ -379,13 +378,14 @@ def predict_instrument(model,new_data,log):
 
     # Loop over each model included in the risk score
     for k,v in model['models'].items():
-        
+
         new_dmatrix = xgboost.DMatrix(new_data)
         # Estimate probability
         pred = float(v.predict(new_dmatrix))
-        shap = v.predict(new_dmatrix, pred_contribs=True).tolist()
-        shap = shap[0][:-1] # remove bias term
-        feat_imp[f'shap_{k}'] = shap
+        shap = v.predict(new_dmatrix, pred_contribs=True)
+        shap = dict(zip(v.feature_names,shap[0][:-1])) # remove bias term
+        shap = pd.DataFrame(shap,index=[f'shap_{k}']).transpose()
+        feat_imp = feat_imp.join(shap)
 
         # Transform estimate as appropriate (logit for us by default)
         trans_pred = trans_fun(pred, model['model_props']['scale_params']['trans'])
@@ -560,7 +560,7 @@ def get_model_props(
     gainsum_df = gain_df.groupby(['name']).sum()
 
     median_values_df = pd.DataFrame({'median' : data['train']['data'].median(axis = 0, skipna = True)})
-    feat_props = median_values_df.join(gainsum_df)
+    feat_props = median_values_df.join(gainsum_df).dropna()
 
     model_props = {
         'names': list(data['train']['labels'].columns),

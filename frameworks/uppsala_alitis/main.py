@@ -535,7 +535,11 @@ class Main:
 
             self.log.info(f"Training {name}")
 
-            train_dmatrix = xgboost.DMatrix(self.data['train']['data'], label = values, weight=obs_weights)
+            train_dmatrix = xgboost.DMatrix(
+                self.data['train']['data'], 
+                label = values, 
+                weight=obs_weights, 
+                feature_names=self.data['train']['data'].columns)
 
             # Get best hyperparameters for label from log 
             log_best = log_params[name][max(log_params[name].keys())]

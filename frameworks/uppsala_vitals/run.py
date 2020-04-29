@@ -21,7 +21,7 @@ if __name__ == '__main__':
         cache = None,
         init_rounds = 1, #NOTE: Low for testing, use maybe 10/40/400
         opt_rounds = 2,
-        max_estimators = 10,
+        max_estimators = 100,
         overwrite_models = True,
         overwrite_data = False,
         test_cutoff_ymd='20200101',

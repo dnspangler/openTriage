@@ -1,2 +1,5 @@
 *
 !.gitignore
+!model_props.json
+!models.p
+!pretty_names.json

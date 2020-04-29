@@ -88,14 +88,14 @@ def generate_ui_data(store,other_scores,feat_imp_cols,text_prefix,model,log):
 
     pd.set_option('display.float_format', lambda x: '%.3f' % x)
     
-    if os.environ['DEV_MODE']:
+    if os.environ['DEV_MODE'] == True:
         feat_imp_table = feat_imp.style
-        log.debug(store)
     
     else:
         if 'names' in model:
             feat_imp.index = pd.Series(feat_imp.index).replace(to_replace=model['names'])
-            feat_imp_table = feat_imp[feat_imp_cols]
+
+        feat_imp_table = feat_imp[feat_imp_cols]
 
         #Show all positive answers and negtive answers with high shap values
         #feat_imp_table = feat_imp[(feat_imp.mean_abs_shap > 0.02) | (feat_imp.value != 0)][feat_imp_cols]
@@ -186,7 +186,7 @@ def parse_json_data(inputData,model,log):
 
     # A bit of feature engineering
     # dates
-    case_dt = pd.to_datetime(input_df['timestamp'],format='%Y-%m-%d %H:%M:%S')
+    case_dt = pd.to_datetime(input_df['disp_created'],format='%Y-%m-%d %H:%M:%S')
     data = data.assign(
         # Number of days since jan 1 1970 (unix time)
         disp_date = (case_dt.dt.date - dt.date(1970, 1, 1)).astype('timedelta64[D]').astype(int),

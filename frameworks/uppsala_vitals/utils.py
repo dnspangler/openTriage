@@ -88,8 +88,9 @@ def generate_ui_data(store,other_scores,feat_imp_cols,text_prefix,model,log):
 
     pd.set_option('display.float_format', lambda x: '%.3f' % x)
     
-    if not os.environ['DEV_MODE']:
+    if os.environ['DEV_MODE']:
         feat_imp_table = feat_imp.style
+        log.debug(store)
     
     else:
         if 'names' in model:

@@ -1,0 +1,33 @@
+
+{
+"3141592":
+  {
+    "region":"Uppsala",
+    "disp_created":"2020-03-15 21:32:46",
+    "disp_age":48,
+    "disp_gender":"Female",
+    "disp_cats":"Bröstsmärta",
+    "disp_prio":2,
+    "eval_breaths": 22,
+    "eval_spo2": 96,
+    "eval_sbp": 120,
+    "eval_pulse":110,
+    "eval_avpu":"A",
+    "eval_temp":35.8
+  },
+"271828":
+  {
+    "region":"Uppsala",
+    "disp_created":"2020-02-21 18:21:44",
+    "disp_age":72,
+    "disp_gender":"Male",
+    "disp_cats":"Infektion|Buk-, flanksmärta",
+    "disp_prio":3,
+    "eval_breaths": 18,
+    "eval_spo2": 92,
+    "eval_sbp": 108,
+    "eval_pulse":88,
+    "eval_avpu":"V",
+    "eval_temp":37.8
+  }
+}

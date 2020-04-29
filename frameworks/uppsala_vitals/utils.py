@@ -86,24 +86,22 @@ def generate_ui_data(store,other_scores,feat_imp_cols,text_prefix,model,log):
     feat_imp['mean_abs_shap'] = shaps.mean(axis=1).abs()
     feat_imp = feat_imp.sort_values(by = 'mean_abs_shap', ascending = False)
 
-    #TODO: Get pretty names if available
-
     pd.set_option('display.float_format', lambda x: '%.3f' % x)
     
-    if os.environ['DEV_MODE']:
+    if not os.environ['DEV_MODE']:
         feat_imp_table = feat_imp.style
     
     else:
         if 'names' in model:
-            feat_imp = feat_imp[feat_imp.index.isin(model['names']) | feat_imp.index.str.startswith(text_prefix)]
             feat_imp.index = pd.Series(feat_imp.index).replace(to_replace=model['names'])
+            feat_imp_table = feat_imp[feat_imp_cols]
 
-    #Show all positive answers and negtive answers with high shap values
-    feat_imp_table = feat_imp[(feat_imp.mean_abs_shap > 0.02) | (feat_imp.value != 0)][feat_imp_cols]
+        #Show all positive answers and negtive answers with high shap values
+        #feat_imp_table = feat_imp[(feat_imp.mean_abs_shap > 0.02) | (feat_imp.value != 0)][feat_imp_cols]
 
-    feat_imp_table = feat_imp_table.style.format({'value': "{:.0f}", 'mean_shap': '{:.2f}'}).set_properties(**{'text-align': 'center'})
-    feat_imp_table = feat_imp_table.bar(subset=['mean_shap'], align='mid', color=['#5fba7d','#d65f5f'])
-    
+        feat_imp_table = feat_imp_table.style.format({'value': "{:.0f}", 'mean_shap': '{:.2f}'}).set_properties(**{'text-align': 'center'})
+        feat_imp_table = feat_imp_table.bar(subset=['mean_shap'], align='mid', color=['#5fba7d','#d65f5f'])
+        
     return {
         'fig_base64':fig_base64,
         'components':components,
@@ -863,7 +861,12 @@ def clean_data(code_dir, raw_data_paths, clean_data_paths, full_name_path, overw
         label_df.to_csv(full_paths['clean_labels'])
         data_df.to_csv(full_paths['clean_data'])
     # Generate dict of pretty names of predictors and labels for display in ui
-    #TODO: generate this
+    # Load pretty names for display in UI
+    if not os.path.exists(full_name_path):
+        log.info("No pretty names found! Generating...")
+        names = generate_names(full_name_path,data_df)
+        with open(full_name_path, "w") as f:
+                json.dump(names,f,indent=4,ensure_ascii=False)
 
     return {'data':data_df,
             'labels':label_df}
@@ -902,11 +905,10 @@ def split_data(data, test_cutoff_ymd, test_sample, test_criteria):
 
     return out_data
 
-def generate_names(code_dir, data, key_table):
+def generate_names(code_dir, data):
 
-    """ Generate a dict containing user-friendly variable names for display in the UI. 
-    Note that any features not in the key_table will have a null value and can be added 
-    manually to the JSON file generated based on the dict later."""
+    """ Generate a dict containing user-friendly variable names for display in the UI.
+    This only generates a json file with the correct keys, needs to be filled in manually."""
     
     name_path = f'{code_dir}/models/pretty_names.json'
 
@@ -914,14 +916,9 @@ def generate_names(code_dir, data, key_table):
 
         out_dict = dict(zip(data.columns,data.columns))
 
-        qa_dict = dict(zip(key_table['qa_token'],key_table['qa_name']))
-        out_dict.update(qa_dict)
-
-        cat_dict = dict(zip(key_table['cat_token'].drop_duplicates(),key_table['category_name'].drop_duplicates()))
-        out_dict.update(cat_dict)
-
-
         return out_dict
+    
+    pass
 
 # Text parsng -------------------------------------------------------
 

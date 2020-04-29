@@ -256,7 +256,7 @@ class Main:
             
             # Apply a prediction function to the parsed data
             prediction = predict_instrument(model = self.model,new_data = value, log = self.log)
-            # self.logdebug(prediction)
+            # self.log.debug(prediction)
             # Add the score to a dictionary to be returned for further processing
             preds[id] = prediction
 
@@ -264,9 +264,6 @@ class Main:
 
     def output_function(self, prediction):
         """output_function prepares predictions to be sent back in response"""
-
-        # Generate a trial ID to keep track of which records were compared with eachother
-        trialID = generate_trialid(prediction.keys())
 
         # Generate IDs for storage in db (with 32 byte secret to prevent guessing ids)
         store_ids = {key : append_secret(key) for key in prediction.keys()}
@@ -285,43 +282,12 @@ class Main:
 
         # Get scores for each prediction
         scores = {key : value['score'] for key, value in prediction.items()}
-        # Compare the scores of each call and rank them (Highest score = 1)
-        ranks = {key : rank for rank, key in enumerate(sorted(scores, key=scores.get, reverse=True), 1)}
-        # Loop through each score
-        out_dict = {}
 
         for id,value in scores.items():
             # Add items which should be returned regardless of inclusion in control/intervention arm
-            out_dict[id] = {'score':value,'trialID':trialID}
-
-        # Apply randomization procedure (i.e., generate a 0/1 randomly with equal likelihoods) if desired
-        if self.randomize:
-            group = round(np.random.uniform()) # Randomize
-        else:
-            group = 1 # Don't Randomize
-
-        if group == 0:
-            # Add control arm output data to dict
-            for id,value in prediction.items():
-                out_dict[id]['text'] = '-'
-                out_dict[id]['color'] = '#c0c0c0'
-                out_dict[id]['link'] = f'/ui?id=control'
-                out_dict[id]['group'] = 'control'
-
-        else:
-                
-            for id,value in ranks.items():
-                # Mark the highest ranked call with a red color (This is the one that should get an ambulance first!), and grey for all others
-                if value == 1: 
-                    col = '#ff0000'
-                else:
-                    col = '#c0c0c0'
-                
-                # Add output data to be displayed in intervention arm
-                out_dict[id]['text'] = str(value)
-                out_dict[id]['color'] = col
-                out_dict[id]['link'] = f'/ui?id={store_ids[id]}'
-                out_dict[id]['group'] = 'intervention'
+            out_dict[id] = {
+                'score':value,
+                'link':f'/ui?id={store_ids[id]}'}
 
         self.log.debug(out_dict)
         # Return dict as a json file

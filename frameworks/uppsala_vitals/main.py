@@ -80,7 +80,9 @@ class Main:
         out_weights = {
             'amb_intervention':1,
             'amb_prio':1,
-            'hosp_critcare':1
+            'hosp_admit':1,
+            'hosp_critcare':1,
+            'hosp_2daymort':1
         },
         instrument_trans = 'logit',
         filter_str = '',
@@ -94,7 +96,9 @@ class Main:
         label_dict = {
             "amb_intervention" : ["amb_meds", "amb_cpr", "amb_o2", "amb_immob", "amb_crit", "amb_alert", "amb_ecg"],
             "amb_prio" : ["amb_prio"],
-            "hosp_critcare" : ["hosp_icu","hosp_30daymort"]},
+            "hosp_admit" : ["hosp_admit"],
+            "hosp_critcare" : ["hosp_icu","hosp_30daymort"],
+            "hosp_2daymort" : ["hosp_2daymort"]},
         # Define predictors to extract
         predictors = ['CreatedOn','disp_age','disp_gender','disp_cats', 'disp_prio', 'eval_breaths', 'eval_spo2','eval_sbp', 'eval_pulse', 'eval_temp','eval_avpu'],
         parse_text = None,
@@ -267,7 +271,7 @@ class Main:
 
         # Generate IDs for storage in db (with 32 byte secret to prevent guessing ids)
         store_ids = {key : append_secret(key) for key in prediction.keys()}
-        
+        out_dict = {}
         for id,value in prediction.items():
             # Add info other included ids
             other_ids = list(store_ids.values())
@@ -318,7 +322,7 @@ class Main:
 
         return render_template(
             "testui.html", 
-            title = f"Övergripande risk: {np.round(store['score'],2)}", 
+            title = f"Overall risk: {np.round(store['score'],2)}", 
             fig_base64 = ui_data['fig_base64'], 
             components = ui_data['components'].render(), 
             feat_imp = ui_data['feat_imp_table'].render())

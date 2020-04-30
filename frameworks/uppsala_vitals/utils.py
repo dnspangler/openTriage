@@ -45,14 +45,12 @@ def render_densplot(pred,dist,other_preds):
 
     plt.axvline(pred)
 
-    return fig
-
-def fig_to_base64(fig):
-    """ Convert matplotlib figure to a data string """
     img = io.BytesIO()
     fig.savefig(img, format='png',
                 bbox_inches='tight')
     img.seek(0)
+
+    plt.close(fig)
 
     return base64.b64encode(img.getvalue())
 
@@ -62,8 +60,7 @@ def generate_ui_data(store,other_scores,feat_imp_cols,text_prefix,model,log):
 
     # Render figure
     fig = render_densplot(store['score'],model['model_props']['scores'],other_scores)
-    fig_encode = fig_to_base64(fig)
-    fig_base64 = fig_encode.decode('utf-8')
+    fig_base64 = fig.decode('utf-8')
 
     # Components table
     components = pd.DataFrame(store['components']['orig'], index = ['pct_risk'])

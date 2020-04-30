@@ -279,19 +279,35 @@ class Main:
             value['other_ids'] = other_ids
 
             # Store the prediction
-            self.cache.set(store_ids[id], json.dumps(value))
+            # self.cache.set(store_ids[id], json.dumps(value))
             # Set cache data to expire in one hour
-            self.cache.expire(store_ids[id],60*60)
-    
+            # self.cache.expire(store_ids[id],60*60)
 
-        # Get scores for each prediction
-        scores = {key : value['score'] for key, value in prediction.items()}
+            #TODO: implement showing other scores on plot
+            other_scores = []
 
-        for id,value in scores.items():
-            # Add items which should be returned regardless of inclusion in control/intervention arm
+            ui_data = generate_ui_data(
+                value,
+                other_scores, 
+                self.prod_ui_cols,
+                self.text_prefix,
+                self.model,
+                self.log
+                )
+
+            page = render_template(
+                "testui.html", 
+                title = f"Overall risk: {np.round(value['score'],2)}", 
+                fig_base64 = ui_data['fig_base64'], 
+                components = ui_data['components'].render(), 
+                feat_imp = ui_data['feat_imp_table'].render())
+            
+            
+
             out_dict[id] = {
-                'score':value,
-                'link':f'/ui?id={store_ids[id]}'}
+                'score':value['score'],
+                'html':str(page)
+                }
 
         self.log.debug(out_dict)
         # Return dict as a json file
@@ -299,33 +315,7 @@ class Main:
 
     def ui_function(self, id):
         
-        #load prediction data from cache (deserialize!)
-        if id == "control":
-            return "Kontrollärende! Genomför prioritering enligt klinisk praxis."
-        else:
-            store = json.loads(self.cache.get(id))
-
-        # Get other predictions in trial for comparison
-        other_scores = []
-        for oid in store['other_ids']:
-            op = json.loads(self.cache.get(oid))
-            other_scores.append(op['score'])
-
-        ui_data = generate_ui_data(
-            store,
-            other_scores,
-            self.prod_ui_cols,
-            self.text_prefix,
-            self.model,
-            self.log
-            )
-
-        return render_template(
-            "testui.html", 
-            title = f"Overall risk: {np.round(store['score'],2)}", 
-            fig_base64 = ui_data['fig_base64'], 
-            components = ui_data['components'].render(), 
-            feat_imp = ui_data['feat_imp_table'].render())
+        pass
 
     def _load_data(self,data_path_dict,stopword_path):
 

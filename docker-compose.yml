@@ -53,7 +53,7 @@ services:
     # Setting this to something other than 'root' will cause shiny apps not to
     # run on the localhost:80 "Welcome to Shiny" diagnostics page mentioned
     # below.
-    user: shiny
+    user: root
     # Uncomment the lines below to disable application logs STDOUT output
     # environment:
     #   - APPLICATION_LOGS_TO_STDOUT=false

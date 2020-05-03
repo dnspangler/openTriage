@@ -308,7 +308,7 @@ class Main:
                 'html':str(page)
                 }
 
-        self.log.debug(out_dict)
+        #self.log.debug(out_dict)
         # Return dict as a json file
         return json.dumps(out_dict)
 

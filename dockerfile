@@ -25,5 +25,7 @@ COPY lib/conda_env.yml lib/
 # TODO: Split this up so that only packages needed by specified framework are loaded?
 RUN conda env update -f lib/conda_env.yml 
 
+EXPOSE 5000
+
 # Copy the current directory into the image
 COPY . .

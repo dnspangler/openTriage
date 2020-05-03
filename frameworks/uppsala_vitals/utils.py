@@ -170,10 +170,7 @@ def parse_json_data(inputData,model,log):
 
     data['disp_age'] = inputData['disp_age']
     data['disp_prio'] = inputData['disp_prio']
-    if inputData['disp_gender'] == 'Male':
-        data['disp_gender'] = 0
-    elif inputData['disp_gender'] == 'Female':
-        data['disp_gender'] = 1
+    data['disp_gender'] = inputData['disp_gender']
 
     data['eval_breaths'] = inputData['eval_breaths']
     data['eval_spo2'] = inputData['eval_spo2']

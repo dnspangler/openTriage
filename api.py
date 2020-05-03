@@ -92,8 +92,8 @@ if __name__ == "__main__":
         return Response(output_data, status=status.HTTP_201_CREATED, mimetype='application/json')
 
     # Add ui endpoint if ui_function is defined by framework
-    @app.route("/ui/", methods=['GET'])
-    def ui():
+    @app.route("/html/", methods=['GET'])
+    def html_gen():
 
         """
         Return a page with details regarding a prediction.
@@ -108,10 +108,10 @@ if __name__ == "__main__":
                 return ui
 
             except Exception as e:
-                logger.exception("Error upon generating ui:")
-                return f"Server error upon generating ui: {e}", status.HTTP_500_INTERNAL_SERVER_ERROR
+                logger.exception("Error upon generating html:")
+                return f"Server error upon generating html: {e}", status.HTTP_500_INTERNAL_SERVER_ERROR
         else:
-            return f"No ui implemented for {fw_name}", status.HTTP_501_NOT_IMPLEMENTED
+            return f"No html generation implemented for {fw_name}", status.HTTP_501_NOT_IMPLEMENTED
     
     @app.route("/reinit/", methods=['GET'])
     def reinit():
@@ -165,8 +165,9 @@ if __name__ == "__main__":
         
         app.run(host=host, 
                 debug=True, 
-                port=port,
-                ssl_context='adhoc')
+                port=port
+                #ssl_context='adhoc'
+                )
     else:
         logger.info('Starting app in production mode')
         try:
@@ -176,10 +177,12 @@ if __name__ == "__main__":
             logger.exception("type error: " + str(e))
             logger.exception("\n\tFor production use:\n\t\tPlease make sure environment variables 'SSL_CERT_PATH' and 'SSL_KEY_PATH' are set up correctly")
 
-        http_server = WSGIServer((host, port), 
-                                    app, 
-                                    log=logger, 
-                                    keyfile=ssl_key_path,
-                                    certfile=ssl_cert_path)
+        http_server = WSGIServer(
+            (host, port), 
+            app, 
+            log=logger
+            #keyfile=ssl_key_path,
+            #certfile=ssl_cert_path
+            )
         http_server.serve_forever()
             

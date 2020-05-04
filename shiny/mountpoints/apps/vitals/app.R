@@ -37,6 +37,9 @@ ui <- fluidPage(
     sidebarLayout(
         #actionButton("predict","Predict"),
         sidebarPanel(
+            selectInput("region",
+                        "Region",
+                        choices = c("Uppsala")),
             sliderInput("disp_age",
                         "Patient Age",
                         min = 0,
@@ -96,17 +99,17 @@ ui <- fluidPage(
                                  tagList(
                                      p(),
                                      "This app demonstrates the behaviour of a risk assessment instrument reflecting a
-                                   patient's risk for deterioration at the time of initial evaluation on scene. The insrument 
+                                   patient's risk for deterioration at the time of initial evaluation by an ambulans crew on scene. The insrument 
                                      is based on methods described in our research article", 
-                                     a("A validation of machine learning-based risk scores in the prehospital setting",
-                                       href="https://doi.org/10.1371/journal.pone.0226518"),
-                                     ". This user inferface contains no code to estimate risk scores, but rather performs API calls to", 
-                                     a("openTriage",
-                                       href="https://github.com/dnspangler/openTriage"),
-                                     ", a back-end system for estimating risk scores for use in clinical decision support systems.", 
-                                     "Please note that these scores have not been validated outside of Region Uppsala in Sweden, and 
-                                     that this tool is provided for demonstation purposes only. If you use this on patients
-                                     outside of this context, you could kill people.",
+                                     a("A validation of machine learning-based risk scores in the prehospital setting", href="https://doi.org/10.1371/journal.pone.0226518"),
+                                     ". This user inferface contains no code to estimate risk scores, but rather calls to", 
+                                     a("openTriage", href="https://github.com/dnspangler/openTriage"),
+                                     ", an open-source API for estimating risk scores for use in clinical decision support systems.
+                                     Please note that these scores have not been validated outside of Region Uppsala in Sweden, and 
+                                     that this tool is provided for demonstation purposes only. The software is provided 'as is' under the terms of the", 
+                                     a("GPLv3 license", href="https://www.gnu.org/licenses/gpl-3.0.en.html"),"
+                                      without assuption of liability or warranty of any kind. Put plainly: If you use this on actual patients outside of the 
+                                      context in which the models have been validated, you could kill people.",
                                      p(),
                                      "A patient with median values for each predictor included in the models
                                    is described by default. Modify the model parameters in the sidebar and see how the risk assessment
@@ -119,8 +122,8 @@ ui <- fluidPage(
                                      for each variable across the component outcomed are displayed to explain how the model arrived at the final 
                                      score.",
                                      p(),
-                                     "The API this front-end system employs may be accessed via a POST request to",paste0(server_url,"predict/"),
-                                     ". The API expects a JSON file with a specific format. You can download a test a test payload based on the currently 
+                                     "The API this front-end system employs may be accessed via a POST request to https://opentriage.net/predict/. 
+                                     The API expects a JSON file with a specific format. You can download a test payload based on the currently 
                                      selected predictors here:",
                                      p(),
                                      downloadButton("download",
@@ -145,7 +148,7 @@ server <- function(input, output) {
     get_payload <- function(input) {
         
         out = toJSON(list("gui" = list(
-            "region"="Uppsala",
+            "region"=input$region,
             "disp_created"=input$disp_created,
             "disp_age"=input$disp_age,
             "disp_gender"=as.numeric(input$disp_gender),

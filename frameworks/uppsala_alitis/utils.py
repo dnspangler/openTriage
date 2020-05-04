@@ -90,7 +90,8 @@ def generate_ui_data(store,other_scores,feat_imp_cols,text_prefix,model,log):
 
     pd.set_option('display.float_format', lambda x: '%.3f' % x)
     
-    if os.environ['DEV_MODE']:
+    log.info(model['names'])
+    if os.environ['DEV_MODE'] == True:
         feat_imp_table = feat_imp.style
     
     else:
@@ -98,11 +99,11 @@ def generate_ui_data(store,other_scores,feat_imp_cols,text_prefix,model,log):
             feat_imp = feat_imp[feat_imp.index.isin(model['names']) | feat_imp.index.str.startswith(text_prefix)]
             feat_imp.index = pd.Series(feat_imp.index).replace(to_replace=model['names'])
 
-    #Show all positive answers and negtive answers with high shap values
-    feat_imp_table = feat_imp[(feat_imp.mean_abs_shap > 0.02) | (feat_imp.value != 0)][feat_imp_cols]
+        #Show all positive answers and negtive answers with high shap values
+        feat_imp_table = feat_imp[(feat_imp.mean_abs_shap > 0.02) | (feat_imp.value != 0)][feat_imp_cols]
 
-    feat_imp_table = feat_imp_table.style.format({'value': "{:.0f}", 'mean_shap': '{:.2f}'}).set_properties(**{'text-align': 'center'})
-    feat_imp_table = feat_imp_table.bar(subset=['mean_shap'], align='mid', color=['#5fba7d','#d65f5f'])
+        feat_imp_table = feat_imp_table.style.format({'value': "{:.0f}", 'mean_shap': '{:.2f}'}).set_properties(**{'text-align': 'center'})
+        feat_imp_table = feat_imp_table.bar(subset=['mean_shap'], align='mid', color=['#5fba7d','#d65f5f'])
     
     return {
         'fig_base64':fig_base64,
@@ -398,7 +399,6 @@ def predict_instrument(model,new_data,log):
     
     
     doc_feats = doc_feats.join(feat_imp)
-    doc_feats.gain[doc_feats.gain.isnull()] = 0
 
     # Generate final score (weighted average), save score and intermediate predictions as dict (dfs don't like being serialized)
     out = {"score": np.average(list(p['scale']),

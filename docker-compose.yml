@@ -10,17 +10,17 @@ services:
     container_name: nginx
     image: nginx
     volumes:
-      - ./lib/nginx.conf:/etc/nginx/nginx.conf.d
+      - ./lib/nginx.conf:/etc/nginx/nginx.conf
       - ./lib/ssl/.:/etc/nginx/ssl/
     links:
-        - opentriage
-        - shiny
+      - opentriage
+      - shiny
     environment:
-    - HOST_NAME=${HOST_NAME}
+      - HOST_NAME=${HOST_NAME}
     ports:
-        - 80:80
-        - 443:443
-    command: /bin/bash -c "envsubst < /etc/nginx/nginx.conf.d > /etc/nginx/nginx.conf && nginx -g 'daemon off;'"
+      - 80:80
+      - 443:443
+    #command: /bin/bash -c "envsubst < /etc/nginx/nginx.conf.temp > /etc/nginx/nginx.conf && nginx -g 'daemon off;'"
 
   opentriage:
     container_name: opentriage
@@ -53,7 +53,7 @@ services:
     # Setting this to something other than 'root' will cause shiny apps not to
     # run on the localhost:80 "Welcome to Shiny" diagnostics page mentioned
     # below.
-    user: root
+    user: shiny
     # Uncomment the lines below to disable application logs STDOUT output
     # environment:
     #   - APPLICATION_LOGS_TO_STDOUT=false

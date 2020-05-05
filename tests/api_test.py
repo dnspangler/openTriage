@@ -17,7 +17,7 @@ def parseArgs():
 
 # Lots of ugly dependence on global variabes here... Might get rid of these later.
 
-def test_post(addr,data,verify, type_json=True):
+def test_post(addr,fw,data,verify, type_json=True):
     # Set headers indicating JSON payload
     if type_json:
         headers = {'Accept' : 'application/json',
@@ -25,13 +25,13 @@ def test_post(addr,data,verify, type_json=True):
     
     #Send via https if using https port
     
-    target = f'https://{addr}/predict/'
+    target = f'https://{addr}/predict/{fw}/'
 
     # Return results of post
     results = requests.post(target, data=data, headers=headers, verify=verify)
     return results
 
-def test_ui(addr,link,verify):
+def test_ui(addr,fw,link,verify):
 
     target = f'https://{addr}{link}'
         
@@ -50,14 +50,14 @@ def str2bool(v):
     else:
         raise 'Boolean value expected.'
 
-def run_tests(test_file,addr,verify):
+def run_tests(test_file,addr,fw,verify):
 
     print(f"Request using: '{test_file}'")
 
     # Try predict endpoint
     try:
         with open(test_file, 'rb') as f:
-            results = test_post(addr,data=f, verify=verify)
+            results = test_post(addr, data=f, fw=fw, verify=verify)
     except Exception as e:
         return "Post failed: " + str(e)
     
@@ -79,7 +79,7 @@ def run_tests(test_file,addr,verify):
 
             if 'link' in value:
                 try:
-                    ui_results = test_ui(addr,value['link'], verify=verify)
+                    ui_results = test_ui(addr,fw,link=value['link'], verify=verify)
                     if ui_results:
                         print("UI sucessfully rendered")
                     else:
@@ -101,7 +101,7 @@ if __name__ == "__main__":
     verify = str2bool(args.verify)
     test_file = f"frameworks/{args.fw}/data/api/{args.file}"
 
-    t = run_tests(test_file,args.addr,verify) 
+    t = run_tests(test_file,args.addr,args.fw,verify) 
 
     if t == 1:
         print("Test passed")

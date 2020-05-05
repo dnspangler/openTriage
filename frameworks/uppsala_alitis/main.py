@@ -319,7 +319,7 @@ class Main:
             for id,value in prediction.items():
                 out_dict[id]['text'] = '-'
                 out_dict[id]['color'] = '#c0c0c0'
-                out_dict[id]['link'] = f'/html?id=control'
+                out_dict[id]['link'] = f'/html/uppsala_alitis?id=control'
                 out_dict[id]['group'] = 'control'
 
         else:
@@ -334,7 +334,7 @@ class Main:
                 # Add output data to be displayed in intervention arm
                 out_dict[id]['text'] = str(value)
                 out_dict[id]['color'] = col
-                out_dict[id]['link'] = f'/html?id={store_ids[id]}'
+                out_dict[id]['link'] = f'/html/uppsala_alitis?id={store_ids[id]}'
                 out_dict[id]['group'] = 'intervention'
 
         self.log.debug(out_dict)

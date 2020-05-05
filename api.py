@@ -36,19 +36,18 @@ if __name__ == "__main__":
         logger.warning("No mode defined, defaulting to development")
         os.environ['DEV_MODE'] = os.environ['DEFAULT_DEV_MODE']
     
-    fw_name = os.environ['FRAMEWORK']
-    code_dir = f'frameworks/{fw_name}'
+    fw_names = os.environ['FRAMEWORK'].split(' ')
 
     #Set path for framework-specific templates
-    template_path = os.path.abspath(f'./{code_dir}/templates')
+    template_path = os.path.abspath(f'./lib/templates')
 
     # Instantiate API
     app = FlaskAPI(__name__,template_folder=template_path)
                             
     # Set up endpoints -------------------------------------------------
 
-    @app.route("/predict/", methods=['POST'])
-    def predict():
+    @app.route("/predict/<fw>/", methods=['POST'])
+    def predict(fw):
         """
         Return a prediction for provided data.
         """
@@ -60,7 +59,7 @@ if __name__ == "__main__":
         if request.data:
             try:
                 # Pass request payload to input function
-                input_data = Main.input_function(request.data)
+                input_data = Main[fw].input_function(request.data)
 
             except Exception as e:
                 logger.exception("Error upon parsing input data:")
@@ -73,7 +72,7 @@ if __name__ == "__main__":
         logger.info('Start Prediction')
         try:
             # Pass result of input function to predict function
-            prediction = Main.predict_function(input_data)
+            prediction = Main[fw].predict_function(input_data)
 
         except Exception as e:
             logger.exception("Error upon predicting model:")
@@ -82,7 +81,7 @@ if __name__ == "__main__":
         logging.info('Start Output') 
         try:
             # Pass result of predict function to output function
-            output_data = Main.output_function(prediction)
+            output_data = Main[fw].output_function(prediction)
 
         except Exception as e:
             logger.exception("Error upon generating output data:")
@@ -92,29 +91,29 @@ if __name__ == "__main__":
         return Response(output_data, status=status.HTTP_201_CREATED, mimetype='application/json')
 
     # Add ui endpoint if ui_function is defined by framework
-    @app.route("/html/", methods=['GET'])
-    def html_gen():
+    @app.route("/html/<fw>", methods=['GET'])
+    def html_gen(fw):
 
         """
         Return a page with details regarding a prediction.
         """
-        if "ui_function" in dir(Main):
+        if "ui_function" in dir(Main[fw]):
             # Get requested store_id from argument
             id = request.args.get('id')
 
             try:
                 # pass requested id to ui function and return generated web page
-                ui = Main.ui_function(id)
+                ui = Main[fw].ui_function(id)
                 return ui
 
             except Exception as e:
                 logger.exception("Error upon generating html:")
                 return f"Server error upon generating html: {e}", status.HTTP_500_INTERNAL_SERVER_ERROR
         else:
-            return f"No html generation implemented for {fw_name}", status.HTTP_501_NOT_IMPLEMENTED
+            return f"No html generation implemented for {fw}", status.HTTP_501_NOT_IMPLEMENTED
     
-    @app.route("/reinit/", methods=['GET'])
-    def reinit():
+    @app.route("/reinit/<fw>", methods=['GET'])
+    def reinit(fw):
 
         """
         Reinitialize the framework class.
@@ -131,13 +130,13 @@ if __name__ == "__main__":
             # Get requested store_id from argument
             try:
 
-                logger.info(f"Reinitializing framework {fw_name}...")
+                logger.info(f"Reinitializing framework {fw}...")
 
-                Main = import_module(f"frameworks.{fw_name}.main").Main(
-                    code_dir = code_dir,
-                    log = logger,
-                    cache = r
-                )
+                Main[i] = import_module(f"frameworks.{fw}.main").Main(
+            code_dir = f'frameworks/{fw}',
+            log = logger,
+            cache = r
+            )
                 return "Done!"
 
             except Exception as e:
@@ -147,13 +146,18 @@ if __name__ == "__main__":
             return f"Incorrect secret provided!", status.HTTP_401_UNAUTHORIZED
             
     # Load required classes from framework modules
-    logger.info(f"Initializing framework {fw_name}...")
 
-    Main = import_module(f"frameworks.{fw_name}.main").Main(
-        code_dir = code_dir,
-        log = logger,
-        cache = r
-        )
+    Main = {}
+
+    for i in fw_names:
+
+        logger.info(f"Initializing framework {i}...")
+
+        Main[i] = import_module(f"frameworks.{i}.main").Main(
+            code_dir = f'frameworks/{i}',
+            log = logger,
+            cache = r
+            )
 
     # Run Server ----------------------------------------------------------
     port = 5000

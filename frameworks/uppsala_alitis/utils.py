@@ -103,7 +103,7 @@ def generate_ui_data(store,other_scores,feat_imp_cols,text_prefix,model,log):
 
         feat_imp_table = feat_imp_table.style.format({'value': "{:.0f}", 'mean_shap': '{:.2f}'}).set_properties(**{'text-align': 'center'})
         feat_imp_table = feat_imp_table.bar(subset=['mean_shap'], align='mid', color=['#5fba7d','#d65f5f'])
-        
+    
     return {
         'fig_base64':fig_base64,
         'components':components,

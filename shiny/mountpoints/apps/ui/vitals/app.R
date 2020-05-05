@@ -180,7 +180,7 @@ server <- function(input, output) {
         
         payload <- get_payload(input)
         
-        r <- POST(paste0(server_url,"/predict/"), content_type_json(), body = payload)
+        r <- POST(paste0(server_url,"/predict/uppsala_vitals/"), content_type_json(), body = payload)
 
         r_list <- content(r,"parsed")
 

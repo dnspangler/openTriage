@@ -152,7 +152,7 @@ class Main:
         out_dict = {}
         for id, value in prediction.items():
             out_dict[id] = {'score':value,
-                            'link':f'/ui?id={id}'}
+                            'link':f'/html/news_adhoc?id={id}'}
 
         return json.dumps(out_dict)
 

@@ -398,7 +398,6 @@ def predict_instrument(model,new_data,log):
     
     
     doc_feats = doc_feats.join(feat_imp)
-    doc_feats.gain[doc_feats.gain.isnull()] = 0
 
     # Generate final score (weighted average), save score and intermediate predictions as dict (dfs don't like being serialized)
     out = {"score": np.average(list(p['scale']),

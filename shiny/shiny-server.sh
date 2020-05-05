@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# Windows users: If you're getting 211 file not found errors, check to make sure this file is saved using LF EOL encoding
+
 # Make sure the directory for individual app logs exists
 mkdir -p /var/log/shiny-server
 chown shiny.shiny /var/log/shiny-server

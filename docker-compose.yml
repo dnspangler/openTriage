@@ -12,6 +12,7 @@ services:
     volumes:
       - ./lib/nginx.conf:/etc/nginx/nginx.conf.temp
       - ./lib/ssl/.:/etc/nginx/ssl/
+      - ./lib/assets/index.html:/etc/nginx/html/index.html
     links:
       - opentriage
       - shiny

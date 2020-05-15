@@ -94,9 +94,6 @@ def generate_ui_data(store,other_scores,feat_imp_cols,text_prefix,model,log):
 
         feat_imp_table = feat_imp[feat_imp_cols]
 
-        #Show all positive answers and negtive answers with high shap values
-        #feat_imp_table = feat_imp[(feat_imp.mean_abs_shap > 0.02) | (feat_imp.value != 0)][feat_imp_cols]
-
         feat_imp_table = feat_imp_table.style.format({'value': "{:.0f}", 'mean_shap': '{:.2f}'}).set_properties(**{'text-align': 'center'})
         feat_imp_table = feat_imp_table.bar(subset=['mean_shap'], align='mid', color=['#5fba7d','#d65f5f'])
         
@@ -158,6 +155,20 @@ def generate_tokens(key_table):
     qa_name = list(map(remove_pos, qa_name))
 
     return cat_token, qa_token, qa_name
+
+def generate_cms(preds,labels,thresholds):
+    """
+    Generate confusion matrices for a list of threshold values and returns a dict
+    of arrays, for a 2 by 2 matrix, this is in the format [[TN,FP],[FN,TP]]
+    """
+    from sklearn.metrics import confusion_matrix
+
+    cm = {}
+    for i in thresholds:
+        pred_bin = [p>=i for p in preds]
+        cm[i] = confusion_matrix(labels,pred_bin).tolist()
+
+    return cm
 
 def parse_json_data(inputData,model,log):
     """
@@ -508,7 +519,8 @@ def get_model_props(
     fits,
     data,
     out_weights,
-    instrument_trans
+    instrument_trans,
+    threshold_digits = 2
     ):
 
     """ Function to generate a dict containing the properties of a given set of model fits """
@@ -518,6 +530,7 @@ def get_model_props(
     scale_preds = {}
     scale = {}
     feat_gains = {}
+    confusion_matrices = {}
 
     for name, values in data['test']['labels'].items(): 
         # For each label....
@@ -543,6 +556,7 @@ def get_model_props(
             p.append(scale_preds[key][i])
         scores.append(np.average(p, weights=list(out_weights.values())))
 
+    # Generate feature importance and median value df
     feat_name_lists = [list(v.keys()) for v in feat_gains.values()]
     feat_gain_lists = [list(v.values()) for v in feat_gains.values()]
 
@@ -554,6 +568,21 @@ def get_model_props(
     median_values_df = pd.DataFrame({'median' : data['train']['data'].median(axis = 0, skipna = True)})
     feat_props = median_values_df.join(gainsum_df).dropna()
 
+    threshold_value = 10**-threshold_digits
+    # Generate confusion matrices for various score thresholds
+    threshold_list = list(np.arange(
+            min(scores),
+            max(scores),
+            threshold_value))
+    
+    threshold_list = [round(i,threshold_digits) for i in threshold_list]
+
+    confusion_matrices = {}
+
+    for name, values in data['test']['labels'].items():
+        confusion_matrices[name] = generate_cms(scores,values,threshold_list)
+
+    # Generate dictionary to be returned
     model_props = {
         'names': list(data['train']['labels'].columns),
         'feat_props': feat_props.to_dict(),
@@ -562,6 +591,7 @@ def get_model_props(
             'trans': instrument_trans,
             'out_weights': out_weights
         },
+        'confusion_matrices': confusion_matrices,
         #Add some noise here... Just to be safe.
         'scores': list(np.add(scores,np.random.normal(0,0.0001,len(scores)))),
         'sub_preds': {k: list(np.add(v,np.random.normal(0,0.0001,len(v)))) for k, v in preds.items()}

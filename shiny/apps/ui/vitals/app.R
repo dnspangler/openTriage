@@ -3,15 +3,17 @@ library(shiny)
 library(jsonlite)
 library(lubridate)
 library(httr)
+library(epiR)
 
 # Set this if you're using a different framework
-fw_url = "https://raw.githubusercontent.com/dnspangler/openTriage/master/frameworks/uppsala_vitals"
+fw_name = "uppsala_vitals"
 
 # Set this if you're not running this and the openTriage back-end on the same server
 server_url = "http://opentriage:5000"
+cat(file=stdout(),"Hello!")
+model_props = fromJSON(paste0("../../frameworks/",fw_name,"/models/model_props.json"))
+pretty_names = unlist(fromJSON(paste0("../../frameworks/",fw_name,"/models/pretty_names.json")))
 
-model_props = fromJSON(paste0(fw_url,"/models/model_props.json"))
-pretty_names = unlist(fromJSON(paste0(fw_url,"/models/pretty_names.json")))
 
 feats = data.frame(var = names(model_props$feat_props$gain),
                    gain = unlist(model_props$feat_props$gain),
@@ -27,8 +29,7 @@ feats = feats[rev(order(feats$gain)),]
 cat_names = gsub("disp_cats_","",feats$var)[grepl("disp_cats_",feats$var)]
 names(cat_names) = feats$name[grepl("disp_cats_",feats$var)]
 
-
-httr::set_config(config(ssl_verifypeer = 0L))
+ui_page = reactiveVal()
 
 ui <- fluidPage(
     
@@ -122,12 +123,21 @@ ui <- fluidPage(
                                      for each variable across the component outcomed are displayed to explain how the model arrived at the final 
                                      score.",
                                      p(),
-                                     "The API this front-end system employs may be accessed via a POST request to https://opentriage.net/predict/. 
+                                     "The API this front-end system employs may be accessed via a POST request to https://opentriage.net/predict/uppsala_vitals. 
                                      The API expects a JSON file with a specific format. You can download a test payload based on the currently 
                                      selected predictors here:",
                                      p(),
                                      downloadButton("download",
                                                     "Download test data"),
+                                     p(),
+                                     "Diagnostics based on",length(model_props$scores)," validation samples at score:",
+                                     p(),
+                                     sliderInput("diag_score",
+                                                 NULL,
+                                                 min = min(round(model_props$scores,2)),
+                                                 max = max(round(model_props$scores,2)),
+                                                 value = 0),
+                                     tableOutput("diag"),
                                      p(),
                                      fluidRow(style="text-align: center;padding:60px;",
                                               a(img(src="as.png", width = "200px"), 
@@ -143,7 +153,32 @@ ui <- fluidPage(
     )
 )
 
-server <- function(input, output) {
+server <- function(input, output, session) {
+    
+    # Observer to update score and ui page upon changing parameters
+    observe({
+        
+        payload <- get_payload(input)
+        
+        r <- POST(paste0(server_url,"/predict/",fw_name,"/"), content_type_json(), body = payload)
+        
+        r_list <- content(r,"parsed")
+        
+        if(class(r_list) == "list"){
+            
+            updateSliderInput(session,"diag_score",value = round(r_list$gui$score,2))
+            
+            ui_page(HTML(as.character(r_list$gui$html)))
+            
+        }else{
+            
+            ui_page(HTML(as.character(r_list)))
+            
+        }
+        
+    })
+    
+    updateTextInput(session, "disp_created", value = now())
     
     get_payload <- function(input) {
         
@@ -177,23 +212,39 @@ server <- function(input, output) {
     )
     
     output$ui <- renderUI({
-        
-        payload <- get_payload(input)
-        
-        r <- POST(paste0(server_url,"/predict/uppsala_vitals/"), content_type_json(), body = payload)
-
-        r_list <- content(r,"parsed")
-
-        if(class(r_list) == "list"){
-            
-            HTML(as.character(r_list$gui$html))
-            
-        }else{
-            
-            HTML(as.character(r_list))
-            
-        }
+        ui_page()
     })
+    
+    output$diag <- renderTable({
+        
+        p <- input$diag_score
+        
+        
+        tt <- lapply(model_props$confusion_matrices,function(x){
+            x[[which.min(abs(as.numeric(names(x)) - p))]]
+        } )
+        
+        tt_epi <- lapply(tt,function(x){
+            # Need to remap position of TN and TP between python and epiR
+            out = x
+            out[1,1] = x[2,2]
+            out[2,2] = x[1,1]
+            return(out)
+        })
+        
+        diags <- lapply(tt_epi,epi.tests)
+        
+        out <- sapply(diags,function(x){
+            sapply(x$rval,function(y){
+                round(y$est,2)
+            })
+        })
+        out <- as.data.frame(out,stringsAsFactors = F)
+        names(out) <- pretty_names[match(names(out),names(pretty_names))]
+        
+        return(out)
+        
+    },rownames = T)
 }
 
 # Run the application 

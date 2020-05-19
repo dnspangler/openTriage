@@ -192,7 +192,8 @@ class Main:
                     data = data_clean, 
                     test_cutoff_ymd = self.test_cutoff_ymd, 
                     test_sample = self.test_sample, 
-                    test_criteria = self.test_criteria)
+                    test_criteria = self.test_criteria, 
+                    inclusion_criteria=inclusion_criteria)
 
                 self._save_data(data_split, full_data_paths) # Write data to disk
                 # Load it from disk (to avoid making stupid mistakes)

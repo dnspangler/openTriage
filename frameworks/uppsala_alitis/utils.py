@@ -624,7 +624,7 @@ def load_alitis_cases_data(alitis_cases_path):
 
     return alit_df
 
-def separate_flat_data(full_df,label_dict,predictor_list,text_col = "FreeText"):
+def separate_flat_data(full_df,label_dict,predictor_list,inclusion_list,text_col = "FreeText"):
 
     """ generate composite labels and separate flat data """
 
@@ -633,7 +633,7 @@ def separate_flat_data(full_df,label_dict,predictor_list,text_col = "FreeText"):
     for lab, comps in label_dict.items():
         label_df[lab] = full_df[comps].max(axis=1)
 
-    data_df = full_df[predictor_list]
+    data_df = full_df[predictor_list + inclusion_list]
 
     text_df = full_df[text_col]
 
@@ -645,7 +645,8 @@ def parse_flat_data(
     incl_vars
     ):
     """ Load flat data from Qliksense and Alitis """
-    qs_df = load_qliksense_data(qs_excel_path,incl_vars)
+    #qs_df = load_qliksense_data(qs_excel_path,incl_vars)
+    qs_df = pd.read_excel(qs_excel_path,index_col='caseid',na_values='-')
     alit_df = load_alitis_cases_data(alitis_cases_path)
 
     return join_flat_data(qs_df,alit_df)
@@ -811,7 +812,7 @@ def parse_export_data(code_dir, raw_data_paths,inclusion_criteria, label_dict, p
         f"{data_paths['mbs_cases']}",
         inclusion_criteria)
         
-    label_df, data_df, text_df = separate_flat_data(full_df,label_dict,predictors)
+    label_df, data_df, text_df = separate_flat_data(full_df,label_dict,predictors,inclusion_criteria)
 
     # Check for intermediate dictionary of mbs tokens
     unparsed_dict = {}
@@ -861,7 +862,7 @@ def parse_export_data(code_dir, raw_data_paths,inclusion_criteria, label_dict, p
 
 def clean_data(code_dir, raw_data_paths, clean_data_paths, full_name_path, overwrite_data, inclusion_criteria, label_dict, predictors, key_table, filter_str, log):
     
-    """ Try to load clean data or parse raw export data if necessary, then generate final test/train data. """
+    """ Try to load clean data or parse raw export data if necessary. """
 
     full_paths = {k:f'{code_dir}/{v}' for k,v in clean_data_paths.items()}
     paths_exist = {k:os.path.exists(v) for k,v in full_paths.items()}
@@ -901,8 +902,20 @@ def clean_data(code_dir, raw_data_paths, clean_data_paths, full_name_path, overw
             'labels':label_df,
             'text':text_df}
 
-def split_data(data, test_cutoff_ymd, test_sample, test_criteria):
+def split_data(data, test_cutoff_ymd, test_sample, test_criteria, inclusion_criteria):
     
+    # Apply inclusion criteria before splitting
+
+    for i in inclusion_criteria:
+        inclobs = data['data'][i].eq(1)
+        print(inclobs)
+        print("excluding",len(data['data'].index)-np.sum(inclobs),i)
+        data['data'] = data['data'][inclobs]
+        data['labels'] = data['labels'][inclobs]
+        data['text'] = data['text'][inclobs]
+    
+    data['data'] = data['data'].drop(inclusion_criteria)
+
     # A major update to the user interface was implemented in May 2019 which 
     # substantially impacted the structure of the collected data (primarily 
     # by reducing the rate of missingness). These changes included a validation 

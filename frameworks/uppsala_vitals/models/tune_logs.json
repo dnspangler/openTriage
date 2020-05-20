@@ -1,0 +1,2730 @@
+{
+    "amb_intervention": {
+        "0.7522126": {
+            "params": {
+                "subsample": 0.6394003033187637,
+                "colsample_bytree": 0.7891338104621826,
+                "max_depth": 5,
+                "min_child_weight": 2.0822207885574366,
+                "learning_rate": 0.08372764770091229,
+                "gamma": 2.8563737262673863,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 4.81599497795105,
+                "train_score": 0.8543602,
+                "val_score": 0.7522126,
+                "n_estimators": 139
+            }
+        },
+        "0.7444488000000001": {
+            "params": {
+                "subsample": 0.7379692764997112,
+                "colsample_bytree": 0.9586807063799634,
+                "max_depth": 10,
+                "min_child_weight": 7.336444823693057,
+                "learning_rate": 0.10925759718560352,
+                "gamma": 2.8295453335345155,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 4.495998859405518,
+                "train_score": 0.8612668000000001,
+                "val_score": 0.7444488000000001,
+                "n_estimators": 57
+            }
+        },
+        "0.7509364": {
+            "params": {
+                "subsample": 0.6961892897312625,
+                "colsample_bytree": 0.5780502525605875,
+                "max_depth": 4,
+                "min_child_weight": 4.037986307085695,
+                "learning_rate": 0.091254866531021,
+                "gamma": 4.123607064750863,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 4.888001441955566,
+                "train_score": 0.8015190000000001,
+                "val_score": 0.7509364,
+                "n_estimators": 139
+            }
+        },
+        "0.742036": {
+            "params": {
+                "subsample": 0.7363175533984658,
+                "colsample_bytree": 0.9913252137269142,
+                "max_depth": 6,
+                "min_child_weight": 7.661808688711328,
+                "learning_rate": 0.1889142088391257,
+                "gamma": 3.143727395381369,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 2.2499992847442627,
+                "train_score": 0.8111412000000001,
+                "val_score": 0.742036,
+                "n_estimators": 27
+            }
+        },
+        "0.7458060000000001": {
+            "params": {
+                "subsample": 0.6713774949483049,
+                "colsample_bytree": 0.8751309951822461,
+                "max_depth": 6,
+                "min_child_weight": 7.953548166065515,
+                "learning_rate": 0.06097408258467845,
+                "gamma": 1.228916101230616,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 6.158994913101196,
+                "train_score": 0.8566108,
+                "val_score": 0.7458060000000001,
+                "n_estimators": 130
+            }
+        },
+        "0.7378764": {
+            "params": {
+                "subsample": 0.78314451270337,
+                "colsample_bytree": 0.6512039422604652,
+                "max_depth": 9,
+                "min_child_weight": 1.2073944489126633,
+                "learning_rate": 0.1806813773559617,
+                "gamma": 0.5676590277612078,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 3.2599992752075195,
+                "train_score": 0.9693314000000001,
+                "val_score": 0.7378764,
+                "n_estimators": 49
+            }
+        },
+        "0.7532396": {
+            "params": {
+                "subsample": 0.7364100278788969,
+                "colsample_bytree": 0.6618888338572244,
+                "max_depth": 4,
+                "min_child_weight": 5.342125753383956,
+                "learning_rate": 0.16405644187437177,
+                "gamma": 0.38348640355186936,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 2.54000186920166,
+                "train_score": 0.8351767999999999,
+                "val_score": 0.7532396,
+                "n_estimators": 65
+            }
+        },
+        "0.7466374": {
+            "params": {
+                "subsample": 0.5276903974631966,
+                "colsample_bytree": 0.8496632875443432,
+                "max_depth": 10,
+                "min_child_weight": 0.7973107692046817,
+                "learning_rate": 0.10429077527627587,
+                "gamma": 3.9742217995569074,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 6.2525200843811035,
+                "train_score": 0.8600427999999999,
+                "val_score": 0.7466374,
+                "n_estimators": 82
+            }
+        },
+        "0.7534088000000001": {
+            "params": {
+                "subsample": 0.9475633747663011,
+                "colsample_bytree": 0.6029882467700346,
+                "max_depth": 9,
+                "min_child_weight": 2.099475543570385,
+                "learning_rate": 0.07144222367341585,
+                "gamma": 3.411060443685855,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 7.83699631690979,
+                "train_score": 0.8783555999999999,
+                "val_score": 0.7534088000000001,
+                "n_estimators": 155
+            }
+        },
+        "0.7497192": {
+            "params": {
+                "subsample": 0.8318715305842872,
+                "colsample_bytree": 0.5069056376490066,
+                "max_depth": 8,
+                "min_child_weight": 2.7656005817713556,
+                "learning_rate": 0.029008619508761505,
+                "gamma": 1.5067462874098405,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 2.173001766204834,
+                "train_score": 0.8253156,
+                "val_score": 0.7497192,
+                "n_estimators": 36
+            }
+        },
+        "0.7428798": {
+            "params": {
+                "subsample": 0.9821364795420504,
+                "colsample_bytree": 0.5506674471091527,
+                "max_depth": 5,
+                "min_child_weight": 0.46150255715110244,
+                "learning_rate": 0.03211303348228852,
+                "gamma": 4.636620646161576,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 2.2900054454803467,
+                "train_score": 0.7729864,
+                "val_score": 0.7428798,
+                "n_estimators": 42
+            }
+        },
+        "0.7520222000000001": {
+            "params": {
+                "subsample": 0.9094501342662282,
+                "colsample_bytree": 0.9857297300318716,
+                "max_depth": 5,
+                "min_child_weight": 3.810757575271303,
+                "learning_rate": 0.027071299366016578,
+                "gamma": 2.408253872859333,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 15.389175415039062,
+                "train_score": 0.8578666,
+                "val_score": 0.7520222000000001,
+                "n_estimators": 373
+            }
+        },
+        "0.7447413999999999": {
+            "params": {
+                "subsample": 0.5306265267429648,
+                "colsample_bytree": 0.5939292515070169,
+                "max_depth": 11,
+                "min_child_weight": 4.360513886760508,
+                "learning_rate": 0.01278319373844242,
+                "gamma": 4.975805678365147,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 18.876001596450806,
+                "train_score": 0.7973588000000001,
+                "val_score": 0.7447413999999999,
+                "n_estimators": 400
+            }
+        },
+        "0.7473282": {
+            "params": {
+                "subsample": 0.576552158555194,
+                "colsample_bytree": 0.5525167250542442,
+                "max_depth": 6,
+                "min_child_weight": 3.5849186877896138,
+                "learning_rate": 0.19788908477697492,
+                "gamma": 2.650379869655635,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 2.058969497680664,
+                "train_score": 0.8338374,
+                "val_score": 0.7473282,
+                "n_estimators": 41
+            }
+        },
+        "0.7374156": {
+            "params": {
+                "subsample": 0.9735249072108895,
+                "colsample_bytree": 0.5592993937208377,
+                "max_depth": 4,
+                "min_child_weight": 6.072527505869368,
+                "learning_rate": 0.01,
+                "gamma": 1.8842658815970932,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 3.2510013580322266,
+                "train_score": 0.7630062,
+                "val_score": 0.7374156,
+                "n_estimators": 95
+            }
+        },
+        "0.7509620000000001": {
+            "params": {
+                "subsample": 0.6221456146944491,
+                "colsample_bytree": 0.9891567736840265,
+                "max_depth": 4,
+                "min_child_weight": 4.537766731268249,
+                "learning_rate": 0.15509716907856202,
+                "gamma": 0.14625987342069455,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 2.5650031566619873,
+                "train_score": 0.8282361999999999,
+                "val_score": 0.7509620000000001,
+                "n_estimators": 53
+            }
+        },
+        "0.748977": {
+            "params": {
+                "subsample": 0.9738083570224607,
+                "colsample_bytree": 0.5199608320563671,
+                "max_depth": 11,
+                "min_child_weight": 7.807301320357272,
+                "learning_rate": 0.1509122890628819,
+                "gamma": 0.10498468657496136,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 3.5509986877441406,
+                "train_score": 0.9144116,
+                "val_score": 0.748977,
+                "n_estimators": 53
+            }
+        },
+        "0.7484474": {
+            "params": {
+                "subsample": 0.9867866049072475,
+                "colsample_bytree": 0.7570168146797968,
+                "max_depth": 8,
+                "min_child_weight": 7.365924067852779,
+                "learning_rate": 0.144872880614601,
+                "gamma": 0.12881317566323575,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 3.000964879989624,
+                "train_score": 0.8843648,
+                "val_score": 0.7484474,
+                "n_estimators": 48
+            }
+        },
+        "0.7520294": {
+            "params": {
+                "subsample": 0.9877003804926829,
+                "colsample_bytree": 0.9083734929516527,
+                "max_depth": 11,
+                "min_child_weight": 1.4599614916472428,
+                "learning_rate": 0.11964402608099732,
+                "gamma": 4.026989903766595,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 6.2120041847229,
+                "train_score": 0.8787754,
+                "val_score": 0.7520294,
+                "n_estimators": 74
+            }
+        },
+        "0.7505712": {
+            "params": {
+                "subsample": 0.7711882199033248,
+                "colsample_bytree": 0.9436106309893149,
+                "max_depth": 6,
+                "min_child_weight": 2.8809446508305205,
+                "learning_rate": 0.07996848018843296,
+                "gamma": 4.785163048726846,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 11.185166597366333,
+                "train_score": 0.8340824,
+                "val_score": 0.7505712,
+                "n_estimators": 235
+            }
+        },
+        "0.7560938": {
+            "params": {
+                "subsample": 0.9553601009068435,
+                "colsample_bytree": 0.5393275762893341,
+                "max_depth": 5,
+                "min_child_weight": 2.834679618052453,
+                "learning_rate": 0.03493693699177879,
+                "gamma": 0.23965717402825767,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 9.159004211425781,
+                "train_score": 0.8703586,
+                "val_score": 0.7560938,
+                "n_estimators": 267
+            }
+        },
+        "0.7481929999999999": {
+            "params": {
+                "subsample": 0.9105322263277584,
+                "colsample_bytree": 0.6942285119398952,
+                "max_depth": 11,
+                "min_child_weight": 7.950663310167669,
+                "learning_rate": 0.057488203173159766,
+                "gamma": 4.962147219545908,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 13.708101987838745,
+                "train_score": 0.8319804,
+                "val_score": 0.7481929999999999,
+                "n_estimators": 247
+            }
+        },
+        "0.7493907999999999": {
+            "params": {
+                "subsample": 0.5241096742713741,
+                "colsample_bytree": 0.523336189016777,
+                "max_depth": 5,
+                "min_child_weight": 4.4861919229451495,
+                "learning_rate": 0.05757058675497974,
+                "gamma": 0.052972183074065086,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 3.8659698963165283,
+                "train_score": 0.8272952,
+                "val_score": 0.7493907999999999,
+                "n_estimators": 108
+            }
+        },
+        "0.7536288000000001": {
+            "params": {
+                "subsample": 0.999400783351728,
+                "colsample_bytree": 0.5786002433882025,
+                "max_depth": 4,
+                "min_child_weight": 2.4696842567760235,
+                "learning_rate": 0.13558058717108823,
+                "gamma": 0.6499629873695116,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 3.1089975833892822,
+                "train_score": 0.8536836000000001,
+                "val_score": 0.7536288000000001,
+                "n_estimators": 91
+            }
+        },
+        "0.7489392": {
+            "params": {
+                "subsample": 0.9145788365047527,
+                "colsample_bytree": 0.9992756408953782,
+                "max_depth": 4,
+                "min_child_weight": 7.92975031262244,
+                "learning_rate": 0.1635993797472503,
+                "gamma": 0.027699849548232132,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 3.4670016765594482,
+                "train_score": 0.8514886,
+                "val_score": 0.7489392,
+                "n_estimators": 82
+            }
+        },
+        "0.7503736": {
+            "params": {
+                "subsample": 0.8480204056431437,
+                "colsample_bytree": 0.5370257309470152,
+                "max_depth": 11,
+                "min_child_weight": 0.31438516944280703,
+                "learning_rate": 0.04350157547580625,
+                "gamma": 4.993692483813663,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 8.977005243301392,
+                "train_score": 0.8235666,
+                "val_score": 0.7503736,
+                "n_estimators": 150
+            }
+        },
+        "0.7562059999999999": {
+            "params": {
+                "subsample": 0.9971200230629143,
+                "colsample_bytree": 0.5221224014449302,
+                "max_depth": 5,
+                "min_child_weight": 3.2364608480740262,
+                "learning_rate": 0.14887869404665766,
+                "gamma": 0.8305387239601335,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 3.924999713897705,
+                "train_score": 0.897911,
+                "val_score": 0.7562059999999999,
+                "n_estimators": 113
+            }
+        },
+        "0.7415446": {
+            "params": {
+                "subsample": 0.5315414589952314,
+                "colsample_bytree": 0.9348728158692705,
+                "max_depth": 4,
+                "min_child_weight": 2.1974183849359648,
+                "learning_rate": 0.19456874865564505,
+                "gamma": 4.994541676601218,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 1.6229965686798096,
+                "train_score": 0.7760956,
+                "val_score": 0.7415446,
+                "n_estimators": 27
+            }
+        },
+        "0.757019": {
+            "params": {
+                "subsample": 0.9654160737779932,
+                "colsample_bytree": 0.5171164154334716,
+                "max_depth": 4,
+                "min_child_weight": 2.353426327909933,
+                "learning_rate": 0.05176288656082199,
+                "gamma": 1.8600543732882002,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 7.678560972213745,
+                "train_score": 0.8419354,
+                "val_score": 0.757019,
+                "n_estimators": 250
+            }
+        },
+        "0.7534168": {
+            "params": {
+                "subsample": 0.9993472078446066,
+                "colsample_bytree": 0.535664224294837,
+                "max_depth": 5,
+                "min_child_weight": 2.1371317657857993,
+                "learning_rate": 0.046030604460918646,
+                "gamma": 2.6767841383034523,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 8.96296501159668,
+                "train_score": 0.8397646,
+                "val_score": 0.7534168,
+                "n_estimators": 273
+            }
+        },
+        "0.7506112": {
+            "params": {
+                "subsample": 0.9548588732211685,
+                "colsample_bytree": 0.9847671990178144,
+                "max_depth": 10,
+                "min_child_weight": 1.6437555642548585,
+                "learning_rate": 0.1267339492420742,
+                "gamma": 4.909223028396937,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 12.0690016746521,
+                "train_score": 0.8687202,
+                "val_score": 0.7506112,
+                "n_estimators": 165
+            }
+        },
+        "0.7521536000000001": {
+            "params": {
+                "subsample": 0.980338620774061,
+                "colsample_bytree": 0.5166464859250227,
+                "max_depth": 11,
+                "min_child_weight": 0.22663168591538252,
+                "learning_rate": 0.01580390186265481,
+                "gamma": 2.205211069392233,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 5.929115056991577,
+                "train_score": 0.8825248,
+                "val_score": 0.7521536000000001,
+                "n_estimators": 92
+            }
+        },
+        "0.7480512000000001": {
+            "params": {
+                "subsample": 0.934624438545633,
+                "colsample_bytree": 0.5690782570653794,
+                "max_depth": 9,
+                "min_child_weight": 7.770351333577827,
+                "learning_rate": 0.02173238945195665,
+                "gamma": 4.871063657159021,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 16.877999544143677,
+                "train_score": 0.8110057999999999,
+                "val_score": 0.7480512000000001,
+                "n_estimators": 400
+            }
+        },
+        "0.7526922": {
+            "params": {
+                "subsample": 0.9825294276122725,
+                "colsample_bytree": 0.5845249939831009,
+                "max_depth": 11,
+                "min_child_weight": 3.6772837977381583,
+                "learning_rate": 0.04110837176702914,
+                "gamma": 1.9116026255792427,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 9.081999778747559,
+                "train_score": 0.9139728,
+                "val_score": 0.7526922,
+                "n_estimators": 161
+            }
+        },
+        "0.7395311999999999": {
+            "params": {
+                "subsample": 0.8720454182950035,
+                "colsample_bytree": 0.5830700883128561,
+                "max_depth": 4,
+                "min_child_weight": 3.61128303192414,
+                "learning_rate": 0.017976873830175162,
+                "gamma": 0.04437386094480362,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 1.5970048904418945,
+                "train_score": 0.7637796,
+                "val_score": 0.7395311999999999,
+                "n_estimators": 35
+            }
+        },
+        "0.7510776000000001": {
+            "params": {
+                "subsample": 0.9944390242008881,
+                "colsample_bytree": 0.9146683754202464,
+                "max_depth": 4,
+                "min_child_weight": 0.53711666537904,
+                "learning_rate": 0.1927215218036888,
+                "gamma": 0.5450586692001751,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 2.793013334274292,
+                "train_score": 0.8589966,
+                "val_score": 0.7510776000000001,
+                "n_estimators": 58
+            }
+        },
+        "0.7532444": {
+            "params": {
+                "subsample": 0.9693311471598839,
+                "colsample_bytree": 0.5023762701544725,
+                "max_depth": 5,
+                "min_child_weight": 2.2276419065271256,
+                "learning_rate": 0.1605872110831603,
+                "gamma": 0.807607960798382,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 2.5080015659332275,
+                "train_score": 0.8708794000000001,
+                "val_score": 0.7532444,
+                "n_estimators": 62
+            }
+        },
+        "0.7504594": {
+            "params": {
+                "subsample": 0.8469013711149869,
+                "colsample_bytree": 0.9849381461643983,
+                "max_depth": 5,
+                "min_child_weight": 5.510458567295185,
+                "learning_rate": 0.19469829910727385,
+                "gamma": 0.4971399228194293,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 2.679964542388916,
+                "train_score": 0.8631603999999999,
+                "val_score": 0.7504594,
+                "n_estimators": 49
+            }
+        },
+        "0.7508815999999999": {
+            "params": {
+                "subsample": 0.9793429323616132,
+                "colsample_bytree": 0.8749124976853013,
+                "max_depth": 4,
+                "min_child_weight": 2.1983273510857497,
+                "learning_rate": 0.1670382207607516,
+                "gamma": 1.4974566221794856,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 3.2189745903015137,
+                "train_score": 0.8586082000000002,
+                "val_score": 0.7508815999999999,
+                "n_estimators": 80
+            }
+        },
+        "0.7489642": {
+            "params": {
+                "subsample": 0.6358172983149959,
+                "colsample_bytree": 0.509462643629617,
+                "max_depth": 4,
+                "min_child_weight": 0.6489154956448075,
+                "learning_rate": 0.19638700043849522,
+                "gamma": 0.3924123775514104,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 1.7809724807739258,
+                "train_score": 0.833812,
+                "val_score": 0.7489642,
+                "n_estimators": 43
+            }
+        }
+    },
+    "amb_prio": {
+        "0.8472826": {
+            "params": {
+                "subsample": 0.8768897600199286,
+                "colsample_bytree": 0.5482501281186482,
+                "max_depth": 5,
+                "min_child_weight": 5.654123505014429,
+                "learning_rate": 0.18144696374134975,
+                "gamma": 0.24415929957582086,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 1.3750016689300537,
+                "train_score": 0.9099162,
+                "val_score": 0.8472826,
+                "n_estimators": 24
+            }
+        },
+        "0.8560180000000001": {
+            "params": {
+                "subsample": 0.5849777102523384,
+                "colsample_bytree": 0.7379460852777655,
+                "max_depth": 5,
+                "min_child_weight": 0.9110895228008298,
+                "learning_rate": 0.08199028590110476,
+                "gamma": 4.0089085572484064,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 2.9769980907440186,
+                "train_score": 0.8941428,
+                "val_score": 0.8560180000000001,
+                "n_estimators": 51
+            }
+        },
+        "0.8525765999999999": {
+            "params": {
+                "subsample": 0.5813373869248559,
+                "colsample_bytree": 0.756954747064163,
+                "max_depth": 8,
+                "min_child_weight": 2.915285964886788,
+                "learning_rate": 0.1720223259099193,
+                "gamma": 4.105910367645668,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 5.51399827003479,
+                "train_score": 0.9213296,
+                "val_score": 0.8525765999999999,
+                "n_estimators": 110
+            }
+        },
+        "0.8473642": {
+            "params": {
+                "subsample": 0.7221550799888827,
+                "colsample_bytree": 0.8906394551253943,
+                "max_depth": 5,
+                "min_child_weight": 2.9844876817304753,
+                "learning_rate": 0.14955398202894152,
+                "gamma": 3.982190627329989,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 1.6359977722167969,
+                "train_score": 0.8863778,
+                "val_score": 0.8473642,
+                "n_estimators": 23
+            }
+        },
+        "0.8489498": {
+            "params": {
+                "subsample": 0.7815372253402924,
+                "colsample_bytree": 0.7837926212952337,
+                "max_depth": 8,
+                "min_child_weight": 7.385516403417054,
+                "learning_rate": 0.0122456206211269,
+                "gamma": 0.7849056788868148,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 2.300001382827759,
+                "train_score": 0.8801038,
+                "val_score": 0.8489498,
+                "n_estimators": 35
+            }
+        },
+        "0.8445668": {
+            "params": {
+                "subsample": 0.5062186936766999,
+                "colsample_bytree": 0.9832275444425362,
+                "max_depth": 5,
+                "min_child_weight": 2.4460379312873552,
+                "learning_rate": 0.025482990341917127,
+                "gamma": 2.1738060410079,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 3.3170042037963867,
+                "train_score": 0.8805059999999999,
+                "val_score": 0.8445668,
+                "n_estimators": 58
+            }
+        },
+        "0.8440668": {
+            "params": {
+                "subsample": 0.9541761844466975,
+                "colsample_bytree": 0.8105141484775376,
+                "max_depth": 7,
+                "min_child_weight": 7.458714393645411,
+                "learning_rate": 0.14870038346141776,
+                "gamma": 3.1257511903330273,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 1.6410036087036133,
+                "train_score": 0.8795768,
+                "val_score": 0.8440668,
+                "n_estimators": 13
+            }
+        },
+        "0.8556058": {
+            "params": {
+                "subsample": 0.764151040389125,
+                "colsample_bytree": 0.9517202528795599,
+                "max_depth": 9,
+                "min_child_weight": 0.44835708730501445,
+                "learning_rate": 0.0890844269691232,
+                "gamma": 0.8743974592095467,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 2.9120025634765625,
+                "train_score": 0.9628816,
+                "val_score": 0.8556058,
+                "n_estimators": 29
+            }
+        },
+        "0.8427148000000001": {
+            "params": {
+                "subsample": 0.5183053278874143,
+                "colsample_bytree": 0.8162928419528255,
+                "max_depth": 7,
+                "min_child_weight": 6.651148633698617,
+                "learning_rate": 0.19954546172590382,
+                "gamma": 4.339509102097222,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 2.6070001125335693,
+                "train_score": 0.8821784000000001,
+                "val_score": 0.8427148000000001,
+                "n_estimators": 49
+            }
+        },
+        "0.845413": {
+            "params": {
+                "subsample": 0.9396792904228767,
+                "colsample_bytree": 0.7695221969135619,
+                "max_depth": 9,
+                "min_child_weight": 7.748047178062272,
+                "learning_rate": 0.10249485715888224,
+                "gamma": 3.2200205021228583,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 2.1460013389587402,
+                "train_score": 0.8889224,
+                "val_score": 0.845413,
+                "n_estimators": 29
+            }
+        },
+        "0.8548254": {
+            "params": {
+                "subsample": 0.692336821638998,
+                "colsample_bytree": 0.5359641475279346,
+                "max_depth": 11,
+                "min_child_weight": 0.16164421031266762,
+                "learning_rate": 0.14080372654922926,
+                "gamma": 4.13256849526595,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 2.1090004444122314,
+                "train_score": 0.8951354,
+                "val_score": 0.8548254,
+                "n_estimators": 23
+            }
+        },
+        "0.8582287999999998": {
+            "params": {
+                "subsample": 0.9616171518410683,
+                "colsample_bytree": 0.5073025675875166,
+                "max_depth": 8,
+                "min_child_weight": 0.30084065145513694,
+                "learning_rate": 0.06139854680155257,
+                "gamma": 3.8074477321819833,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 3.591965913772583,
+                "train_score": 0.9115550000000001,
+                "val_score": 0.8582287999999998,
+                "n_estimators": 72
+            }
+        },
+        "0.8451524000000001": {
+            "params": {
+                "subsample": 0.6040292356632344,
+                "colsample_bytree": 0.5283429020514689,
+                "max_depth": 11,
+                "min_child_weight": 0.45632562397003884,
+                "learning_rate": 0.19705882432684022,
+                "gamma": 0.3341329709920244,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 2.721003770828247,
+                "train_score": 0.989593,
+                "val_score": 0.8451524000000001,
+                "n_estimators": 33
+            }
+        },
+        "0.8545634": {
+            "params": {
+                "subsample": 0.8800214724288073,
+                "colsample_bytree": 0.992713400799007,
+                "max_depth": 6,
+                "min_child_weight": 0.09110919403251305,
+                "learning_rate": 0.17846908104265832,
+                "gamma": 4.4581347415546855,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 2.101001739501953,
+                "train_score": 0.9026162,
+                "val_score": 0.8545634,
+                "n_estimators": 27
+            }
+        },
+        "0.8510816": {
+            "params": {
+                "subsample": 0.5049625759018259,
+                "colsample_bytree": 0.6084065482074652,
+                "max_depth": 8,
+                "min_child_weight": 0.0,
+                "learning_rate": 0.01,
+                "gamma": 5.0,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 2.3759965896606445,
+                "train_score": 0.8635202,
+                "val_score": 0.8510816,
+                "n_estimators": 40
+            }
+        },
+        "0.8564955999999999": {
+            "params": {
+                "subsample": 0.9770297289941288,
+                "colsample_bytree": 0.5035672664609862,
+                "max_depth": 4,
+                "min_child_weight": 0.09294434486412939,
+                "learning_rate": 0.14241089340699623,
+                "gamma": 0.6970157114894159,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 1.1820042133331299,
+                "train_score": 0.9073051999999999,
+                "val_score": 0.8564955999999999,
+                "n_estimators": 23
+            }
+        },
+        "0.8619436": {
+            "params": {
+                "subsample": 0.8727110743118615,
+                "colsample_bytree": 0.5828945066806777,
+                "max_depth": 6,
+                "min_child_weight": 0.02726358530020523,
+                "learning_rate": 0.19284157240283836,
+                "gamma": 1.4592930107067053,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 1.407963514328003,
+                "train_score": 0.93774,
+                "val_score": 0.8619436,
+                "n_estimators": 20
+            }
+        },
+        "0.8531728": {
+            "params": {
+                "subsample": 0.9789627704361503,
+                "colsample_bytree": 0.6554978297182897,
+                "max_depth": 4,
+                "min_child_weight": 0.027273913701727714,
+                "learning_rate": 0.17393179487773858,
+                "gamma": 4.975877416936117,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 1.4879674911499023,
+                "train_score": 0.8876588,
+                "val_score": 0.8531728,
+                "n_estimators": 30
+            }
+        },
+        "0.856672": {
+            "params": {
+                "subsample": 0.9947297578546953,
+                "colsample_bytree": 0.523119151988752,
+                "max_depth": 7,
+                "min_child_weight": 0.4193186944518459,
+                "learning_rate": 0.1952755025514299,
+                "gamma": 3.10246884522823,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 1.5960004329681396,
+                "train_score": 0.9189088,
+                "val_score": 0.856672,
+                "n_estimators": 24
+            }
+        },
+        "0.8576902000000001": {
+            "params": {
+                "subsample": 0.996424983780882,
+                "colsample_bytree": 0.904580434109441,
+                "max_depth": 7,
+                "min_child_weight": 0.02732274227140863,
+                "learning_rate": 0.02781193394418456,
+                "gamma": 0.31719907077749016,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 4.718003034591675,
+                "train_score": 0.9555181999999999,
+                "val_score": 0.8576902000000001,
+                "n_estimators": 75
+            }
+        },
+        "0.848996": {
+            "params": {
+                "subsample": 0.9194616995127247,
+                "colsample_bytree": 0.5154525850212915,
+                "max_depth": 4,
+                "min_child_weight": 7.759819013870993,
+                "learning_rate": 0.140496697607964,
+                "gamma": 0.07318313500484226,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 1.6229972839355469,
+                "train_score": 0.8982914000000001,
+                "val_score": 0.848996,
+                "n_estimators": 34
+            }
+        },
+        "0.8476218": {
+            "params": {
+                "subsample": 0.8853342331030105,
+                "colsample_bytree": 0.9606607343045476,
+                "max_depth": 11,
+                "min_child_weight": 2.675492039101469,
+                "learning_rate": 0.05000549159831508,
+                "gamma": 4.988587455823061,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 4.192001819610596,
+                "train_score": 0.8860812000000001,
+                "val_score": 0.8476218,
+                "n_estimators": 57
+            }
+        },
+        "0.8598750000000001": {
+            "params": {
+                "subsample": 0.501558960656185,
+                "colsample_bytree": 0.5074665129937515,
+                "max_depth": 8,
+                "min_child_weight": 0.004957726477985425,
+                "learning_rate": 0.08322401243702152,
+                "gamma": 1.8736564151947979,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 3.9889979362487793,
+                "train_score": 0.9483086000000001,
+                "val_score": 0.8598750000000001,
+                "n_estimators": 82
+            }
+        },
+        "0.8438437999999999": {
+            "params": {
+                "subsample": 0.9838439312336175,
+                "colsample_bytree": 0.743274582375056,
+                "max_depth": 11,
+                "min_child_weight": 7.952672749121608,
+                "learning_rate": 0.19678034474477052,
+                "gamma": 0.24981745858523505,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 1.3260009288787842,
+                "train_score": 0.8913222,
+                "val_score": 0.8438437999999999,
+                "n_estimators": 7
+            }
+        },
+        "0.8580627999999999": {
+            "params": {
+                "subsample": 0.6151983584655731,
+                "colsample_bytree": 0.5340159526219292,
+                "max_depth": 7,
+                "min_child_weight": 0.07004233640364,
+                "learning_rate": 0.1826334184952286,
+                "gamma": 1.7304301873533785,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 2.2970023155212402,
+                "train_score": 0.9465662,
+                "val_score": 0.8580627999999999,
+                "n_estimators": 33
+            }
+        },
+        "0.8540621999999999": {
+            "params": {
+                "subsample": 0.8268303268187964,
+                "colsample_bytree": 0.937085163417312,
+                "max_depth": 9,
+                "min_child_weight": 0.0035641072798773266,
+                "learning_rate": 0.1728550673556794,
+                "gamma": 2.570960051937794,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 3.2250049114227295,
+                "train_score": 0.9500156000000001,
+                "val_score": 0.8540621999999999,
+                "n_estimators": 33
+            }
+        },
+        "0.863457": {
+            "params": {
+                "subsample": 0.9995263857821176,
+                "colsample_bytree": 0.562067888489171,
+                "max_depth": 7,
+                "min_child_weight": 0.24389235609153648,
+                "learning_rate": 0.011075655523422535,
+                "gamma": 0.22496263220526816,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 6.178999185562134,
+                "train_score": 0.9438086,
+                "val_score": 0.863457,
+                "n_estimators": 152
+            }
+        },
+        "0.8526002": {
+            "params": {
+                "subsample": 0.9962304917965111,
+                "colsample_bytree": 0.5258432779255287,
+                "max_depth": 9,
+                "min_child_weight": 2.591633390784086,
+                "learning_rate": 0.011691320746531788,
+                "gamma": 0.7063366373524045,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 3.5029983520507812,
+                "train_score": 0.9143979999999999,
+                "val_score": 0.8526002,
+                "n_estimators": 71
+            }
+        },
+        "0.8562061999999999": {
+            "params": {
+                "subsample": 0.8567615260108801,
+                "colsample_bytree": 0.5672527520742695,
+                "max_depth": 7,
+                "min_child_weight": 0.23566321326138784,
+                "learning_rate": 0.11233561870761281,
+                "gamma": 0.03632355144836943,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 2.5351929664611816,
+                "train_score": 0.9767846,
+                "val_score": 0.8562061999999999,
+                "n_estimators": 38
+            }
+        },
+        "0.8608692": {
+            "params": {
+                "subsample": 0.909764971708744,
+                "colsample_bytree": 0.5640275847329742,
+                "max_depth": 5,
+                "min_child_weight": 0.2542520898797589,
+                "learning_rate": 0.016188665007411555,
+                "gamma": 2.07587541159374,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 4.1970038414001465,
+                "train_score": 0.9028872000000001,
+                "val_score": 0.8608692,
+                "n_estimators": 119
+            }
+        },
+        "0.8597002": {
+            "params": {
+                "subsample": 0.9776839141698879,
+                "colsample_bytree": 0.5040128597048892,
+                "max_depth": 8,
+                "min_child_weight": 0.07679686581993028,
+                "learning_rate": 0.044349744407665925,
+                "gamma": 1.6977702085470627,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 3.8039965629577637,
+                "train_score": 0.9449728000000001,
+                "val_score": 0.8597002,
+                "n_estimators": 78
+            }
+        },
+        "0.8456954000000001": {
+            "params": {
+                "subsample": 0.9850057054604159,
+                "colsample_bytree": 0.5189467324805127,
+                "max_depth": 4,
+                "min_child_weight": 7.890404603750355,
+                "learning_rate": 0.18536486120868229,
+                "gamma": 4.860821191447638,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 1.2379992008209229,
+                "train_score": 0.8744206,
+                "val_score": 0.8456954000000001,
+                "n_estimators": 23
+            }
+        },
+        "0.8613622": {
+            "params": {
+                "subsample": 0.8271332487668599,
+                "colsample_bytree": 0.5477805617799681,
+                "max_depth": 5,
+                "min_child_weight": 0.01900312169966689,
+                "learning_rate": 0.024503940635934515,
+                "gamma": 2.5284125148758014,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 5.251999855041504,
+                "train_score": 0.9091752,
+                "val_score": 0.8613622,
+                "n_estimators": 136
+            }
+        },
+        "0.8472384": {
+            "params": {
+                "subsample": 0.547674371304843,
+                "colsample_bytree": 0.6223599951226204,
+                "max_depth": 11,
+                "min_child_weight": 7.8772155334021985,
+                "learning_rate": 0.18735657254793953,
+                "gamma": 4.924240031326237,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 2.418997049331665,
+                "train_score": 0.8716214000000001,
+                "val_score": 0.8472384,
+                "n_estimators": 46
+            }
+        },
+        "0.8474389999999999": {
+            "params": {
+                "subsample": 0.5101801590452849,
+                "colsample_bytree": 0.5008298351583793,
+                "max_depth": 11,
+                "min_child_weight": 6.63726642847514,
+                "learning_rate": 0.04676848778720538,
+                "gamma": 3.477915814184404,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 2.1400015354156494,
+                "train_score": 0.8651562,
+                "val_score": 0.8474389999999999,
+                "n_estimators": 46
+            }
+        },
+        "0.8608184": {
+            "params": {
+                "subsample": 0.9985449660355477,
+                "colsample_bytree": 0.6116070772235631,
+                "max_depth": 5,
+                "min_child_weight": 0.10258360822029111,
+                "learning_rate": 0.024789646373412983,
+                "gamma": 2.037430674780202,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 3.2680165767669678,
+                "train_score": 0.9053108,
+                "val_score": 0.8608184,
+                "n_estimators": 82
+            }
+        },
+        "0.8521118": {
+            "params": {
+                "subsample": 0.9984165981573997,
+                "colsample_bytree": 0.5372991283088436,
+                "max_depth": 7,
+                "min_child_weight": 7.914274129691314,
+                "learning_rate": 0.02468128707727346,
+                "gamma": 0.12389441290633167,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 3.5440030097961426,
+                "train_score": 0.902314,
+                "val_score": 0.8521118,
+                "n_estimators": 84
+            }
+        },
+        "0.8590072": {
+            "params": {
+                "subsample": 0.5581529951990313,
+                "colsample_bytree": 0.5122023701168554,
+                "max_depth": 6,
+                "min_child_weight": 0.15622285920814782,
+                "learning_rate": 0.0781474219654021,
+                "gamma": 0.7128606827952008,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 3.4265618324279785,
+                "train_score": 0.9578568000000001,
+                "val_score": 0.8590072,
+                "n_estimators": 71
+            }
+        },
+        "0.857467": {
+            "params": {
+                "subsample": 0.9582199919520892,
+                "colsample_bytree": 0.5049647531705781,
+                "max_depth": 6,
+                "min_child_weight": 0.014213809972348557,
+                "learning_rate": 0.0918247619545908,
+                "gamma": 2.1544858705839487,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 2.5120012760162354,
+                "train_score": 0.9307424,
+                "val_score": 0.857467,
+                "n_estimators": 50
+            }
+        },
+        "0.8569829999999999": {
+            "params": {
+                "subsample": 0.6968108435871151,
+                "colsample_bytree": 0.8014880780753789,
+                "max_depth": 4,
+                "min_child_weight": 0.07090928667622354,
+                "learning_rate": 0.016006022498731783,
+                "gamma": 2.84088819965649,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 4.964999675750732,
+                "train_score": 0.8908938,
+                "val_score": 0.8569829999999999,
+                "n_estimators": 139
+            }
+        }
+    },
+    "hosp_admit": {
+        "0.7536524": {
+            "params": {
+                "subsample": 0.7517033703612839,
+                "colsample_bytree": 0.6424762968105582,
+                "max_depth": 7,
+                "min_child_weight": 2.4377922635409073,
+                "learning_rate": 0.12706766516555246,
+                "gamma": 0.7801223199387327,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 2.4919984340667725,
+                "train_score": 0.8942387999999999,
+                "val_score": 0.7536524,
+                "n_estimators": 43
+            }
+        },
+        "0.7532322": {
+            "params": {
+                "subsample": 0.9425596284661883,
+                "colsample_bytree": 0.6481772734691332,
+                "max_depth": 7,
+                "min_child_weight": 7.9876081204103535,
+                "learning_rate": 0.1844628783402412,
+                "gamma": 0.35943077424457837,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 2.0310003757476807,
+                "train_score": 0.8647503999999999,
+                "val_score": 0.7532322,
+                "n_estimators": 31
+            }
+        },
+        "0.7498706": {
+            "params": {
+                "subsample": 0.860512584143505,
+                "colsample_bytree": 0.7779121991974958,
+                "max_depth": 10,
+                "min_child_weight": 4.0964067330880924,
+                "learning_rate": 0.18062578815427185,
+                "gamma": 1.7993924958416196,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 2.7889957427978516,
+                "train_score": 0.9009691999999999,
+                "val_score": 0.7498706,
+                "n_estimators": 29
+            }
+        },
+        "0.7564647999999999": {
+            "params": {
+                "subsample": 0.5508668717963667,
+                "colsample_bytree": 0.9416908788072844,
+                "max_depth": 8,
+                "min_child_weight": 4.837190672072899,
+                "learning_rate": 0.08843701965734085,
+                "gamma": 3.1791357397377564,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 3.946000099182129,
+                "train_score": 0.8362491999999999,
+                "val_score": 0.7564647999999999,
+                "n_estimators": 56
+            }
+        },
+        "0.7575571999999999": {
+            "params": {
+                "subsample": 0.5240354247145051,
+                "colsample_bytree": 0.7378866734026084,
+                "max_depth": 4,
+                "min_child_weight": 3.6543422640464023,
+                "learning_rate": 0.14615623757804427,
+                "gamma": 0.9545580796288451,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 2.0319981575012207,
+                "train_score": 0.8189162,
+                "val_score": 0.7575571999999999,
+                "n_estimators": 43
+            }
+        },
+        "0.7596426": {
+            "params": {
+                "subsample": 0.5656770980666408,
+                "colsample_bytree": 0.7880627233249522,
+                "max_depth": 10,
+                "min_child_weight": 1.2204832798024485,
+                "learning_rate": 0.06713028055473862,
+                "gamma": 3.1962398129696985,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 6.690000772476196,
+                "train_score": 0.8839036,
+                "val_score": 0.7596426,
+                "n_estimators": 105
+            }
+        },
+        "0.7458374": {
+            "params": {
+                "subsample": 0.8265618906077963,
+                "colsample_bytree": 0.8307404481486955,
+                "max_depth": 11,
+                "min_child_weight": 4.210092307661934,
+                "learning_rate": 0.1432754955946975,
+                "gamma": 1.2953522243062463,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 3.427001953125,
+                "train_score": 0.9209768,
+                "val_score": 0.7458374,
+                "n_estimators": 36
+            }
+        },
+        "0.7597499999999999": {
+            "params": {
+                "subsample": 0.5599792891720938,
+                "colsample_bytree": 0.6917306371303992,
+                "max_depth": 4,
+                "min_child_weight": 5.176219330125603,
+                "learning_rate": 0.10157405788048103,
+                "gamma": 2.406409893529593,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 3.6985206604003906,
+                "train_score": 0.8258061999999999,
+                "val_score": 0.7597499999999999,
+                "n_estimators": 95
+            }
+        },
+        "0.7628242000000001": {
+            "params": {
+                "subsample": 0.641864111948752,
+                "colsample_bytree": 0.887726601013807,
+                "max_depth": 4,
+                "min_child_weight": 1.6427821466262262,
+                "learning_rate": 0.15457860656920963,
+                "gamma": 3.227310473432471,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 3.2239952087402344,
+                "train_score": 0.8333126,
+                "val_score": 0.7628242000000001,
+                "n_estimators": 75
+            }
+        },
+        "0.758889": {
+            "params": {
+                "subsample": 0.5158325584557526,
+                "colsample_bytree": 0.5857920374580392,
+                "max_depth": 11,
+                "min_child_weight": 7.42325504368694,
+                "learning_rate": 0.06702640938745191,
+                "gamma": 3.2033658034744303,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 6.457996368408203,
+                "train_score": 0.8313941999999999,
+                "val_score": 0.758889,
+                "n_estimators": 138
+            }
+        },
+        "0.7584008": {
+            "params": {
+                "subsample": 0.6430147761063014,
+                "colsample_bytree": 0.5042894236709751,
+                "max_depth": 4,
+                "min_child_weight": 0.2768574631930525,
+                "learning_rate": 0.16124728793823284,
+                "gamma": 4.96545512959588,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 3.3979969024658203,
+                "train_score": 0.796087,
+                "val_score": 0.7584008,
+                "n_estimators": 89
+            }
+        },
+        "0.7557878": {
+            "params": {
+                "subsample": 0.7674871376756693,
+                "colsample_bytree": 0.9928163756451711,
+                "max_depth": 4,
+                "min_child_weight": 7.883529484119874,
+                "learning_rate": 0.026637432388154095,
+                "gamma": 4.716906480842726,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 10.612002849578857,
+                "train_score": 0.7963609999999999,
+                "val_score": 0.7557878,
+                "n_estimators": 292
+            }
+        },
+        "0.7666040000000001": {
+            "params": {
+                "subsample": 0.6057898536516562,
+                "colsample_bytree": 0.8823376606403497,
+                "max_depth": 4,
+                "min_child_weight": 0.22402646970623152,
+                "learning_rate": 0.050462627666745405,
+                "gamma": 2.148917293361328,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 7.139089584350586,
+                "train_score": 0.8504905999999999,
+                "val_score": 0.7666040000000001,
+                "n_estimators": 181
+            }
+        },
+        "0.7618148": {
+            "params": {
+                "subsample": 0.7870360944287651,
+                "colsample_bytree": 0.9979412394325842,
+                "max_depth": 4,
+                "min_child_weight": 0.08809421073814594,
+                "learning_rate": 0.010678392856111735,
+                "gamma": 2.0789876408249293,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 14.09799575805664,
+                "train_score": 0.8225414000000001,
+                "val_score": 0.7618148,
+                "n_estimators": 400
+            }
+        },
+        "0.7595176": {
+            "params": {
+                "subsample": 0.5352693276691596,
+                "colsample_bytree": 0.5397904371263498,
+                "max_depth": 4,
+                "min_child_weight": 0.0845842113525741,
+                "learning_rate": 0.19451081598225614,
+                "gamma": 1.6450621803345573,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 2.5990042686462402,
+                "train_score": 0.8620484000000002,
+                "val_score": 0.7595176,
+                "n_estimators": 73
+            }
+        },
+        "0.7641752": {
+            "params": {
+                "subsample": 0.5113715942105099,
+                "colsample_bytree": 0.8164947394193569,
+                "max_depth": 5,
+                "min_child_weight": 0.03369915603414597,
+                "learning_rate": 0.036243975400860134,
+                "gamma": 3.4625978707959977,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 8.238003730773926,
+                "train_score": 0.8318463999999999,
+                "val_score": 0.7641752,
+                "n_estimators": 212
+            }
+        },
+        "0.7648092": {
+            "params": {
+                "subsample": 0.5041442137778734,
+                "colsample_bytree": 0.6622240129081047,
+                "max_depth": 11,
+                "min_child_weight": 0.06732821832617653,
+                "learning_rate": 0.06825955276903468,
+                "gamma": 4.508406346787288,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 11.910123586654663,
+                "train_score": 0.8540174,
+                "val_score": 0.7648092,
+                "n_estimators": 187
+            }
+        },
+        "0.7654576000000001": {
+            "params": {
+                "subsample": 0.6497789865068802,
+                "colsample_bytree": 0.9763504704934269,
+                "max_depth": 9,
+                "min_child_weight": 0.04263632103358095,
+                "learning_rate": 0.02737029186897095,
+                "gamma": 4.958570002178262,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 22.824121236801147,
+                "train_score": 0.8466422000000001,
+                "val_score": 0.7654576000000001,
+                "n_estimators": 354
+            }
+        },
+        "0.758816": {
+            "params": {
+                "subsample": 0.5862088524590436,
+                "colsample_bytree": 0.9824230515677219,
+                "max_depth": 10,
+                "min_child_weight": 0.18717757408476388,
+                "learning_rate": 0.15828761839469963,
+                "gamma": 4.994557152430284,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 4.84599757194519,
+                "train_score": 0.8447814000000001,
+                "val_score": 0.758816,
+                "n_estimators": 53
+            }
+        },
+        "0.7517487999999999": {
+            "params": {
+                "subsample": 0.6053601846066469,
+                "colsample_bytree": 0.5149345439168558,
+                "max_depth": 7,
+                "min_child_weight": 0.8768869513213744,
+                "learning_rate": 0.013390862338646477,
+                "gamma": 4.781140538274863,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 4.164011240005493,
+                "train_score": 0.7834702,
+                "val_score": 0.7517487999999999,
+                "n_estimators": 93
+            }
+        },
+        "0.7617954000000001": {
+            "params": {
+                "subsample": 0.5000000068821306,
+                "colsample_bytree": 0.9088538198530383,
+                "max_depth": 9,
+                "min_child_weight": 1.1011409076493187e-07,
+                "learning_rate": 0.010000000000000009,
+                "gamma": 2.9289928119339943,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 21.327006578445435,
+                "train_score": 0.8631462000000001,
+                "val_score": 0.7617954000000001,
+                "n_estimators": 340
+            }
+        },
+        "0.7609870000000001": {
+            "params": {
+                "subsample": 0.540869660367552,
+                "colsample_bytree": 0.9071477322451208,
+                "max_depth": 4,
+                "min_child_weight": 0.6959167869679632,
+                "learning_rate": 0.11125706719992778,
+                "gamma": 3.8747111583088096,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 3.896967887878418,
+                "train_score": 0.8192465999999999,
+                "val_score": 0.7609870000000001,
+                "n_estimators": 92
+            }
+        },
+        "0.7544785999999999": {
+            "params": {
+                "subsample": 0.5021533912398048,
+                "colsample_bytree": 0.9155849144906445,
+                "max_depth": 7,
+                "min_child_weight": 7.987093324501691,
+                "learning_rate": 0.015003442095578145,
+                "gamma": 2.2710001886278217,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 13.459954738616943,
+                "train_score": 0.8228148,
+                "val_score": 0.7544785999999999,
+                "n_estimators": 287
+            }
+        },
+        "0.7560216": {
+            "params": {
+                "subsample": 0.9370284511768217,
+                "colsample_bytree": 0.9946447168697913,
+                "max_depth": 11,
+                "min_child_weight": 7.986037897252028,
+                "learning_rate": 0.025557583116355972,
+                "gamma": 1.174172233666966,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 13.371978282928467,
+                "train_score": 0.8940516000000001,
+                "val_score": 0.7560216,
+                "n_estimators": 187
+            }
+        },
+        "0.7542036": {
+            "params": {
+                "subsample": 0.9129071794139652,
+                "colsample_bytree": 0.8610866124549512,
+                "max_depth": 11,
+                "min_child_weight": 7.720738407834251,
+                "learning_rate": 0.15561543111153384,
+                "gamma": 4.866063895998146,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 3.2930009365081787,
+                "train_score": 0.8166399999999999,
+                "val_score": 0.7542036,
+                "n_estimators": 34
+            }
+        },
+        "0.756127": {
+            "params": {
+                "subsample": 0.9672329562064186,
+                "colsample_bytree": 0.5645077761321011,
+                "max_depth": 4,
+                "min_child_weight": 7.882431684322273,
+                "learning_rate": 0.14260150494384283,
+                "gamma": 1.4256667270917958,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 2.559999465942383,
+                "train_score": 0.831029,
+                "val_score": 0.756127,
+                "n_estimators": 73
+            }
+        },
+        "0.7632086000000001": {
+            "params": {
+                "subsample": 0.9890049111411212,
+                "colsample_bytree": 0.9772201645828968,
+                "max_depth": 11,
+                "min_child_weight": 0.44951823676372715,
+                "learning_rate": 0.012260332624461348,
+                "gamma": 3.447463378849843,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 27.627997875213623,
+                "train_score": 0.8917788,
+                "val_score": 0.7632086000000001,
+                "n_estimators": 400
+            }
+        },
+        "0.7584488": {
+            "params": {
+                "subsample": 0.9168771693490554,
+                "colsample_bytree": 0.5435284475623925,
+                "max_depth": 4,
+                "min_child_weight": 3.6937147728956177,
+                "learning_rate": 0.012662798580921463,
+                "gamma": 2.588856420003674,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 10.855998754501343,
+                "train_score": 0.8083020000000001,
+                "val_score": 0.7584488,
+                "n_estimators": 400
+            }
+        },
+        "0.7646248": {
+            "params": {
+                "subsample": 0.6040175329897483,
+                "colsample_bytree": 0.9956888109454832,
+                "max_depth": 11,
+                "min_child_weight": 0.3398471673212766,
+                "learning_rate": 0.018062831086036707,
+                "gamma": 4.615126210645889,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 28.358683586120605,
+                "train_score": 0.8554943999999999,
+                "val_score": 0.7646248,
+                "n_estimators": 400
+            }
+        },
+        "0.7639197999999998": {
+            "params": {
+                "subsample": 0.941329084731428,
+                "colsample_bytree": 0.9196378868460429,
+                "max_depth": 11,
+                "min_child_weight": 0.10046656281858901,
+                "learning_rate": 0.014686305162023076,
+                "gamma": 4.567803822432712,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 27.567631721496582,
+                "train_score": 0.8585744,
+                "val_score": 0.7639197999999998,
+                "n_estimators": 400
+            }
+        },
+        "0.7619038": {
+            "params": {
+                "subsample": 0.6041056038867179,
+                "colsample_bytree": 0.9150124627790353,
+                "max_depth": 11,
+                "min_child_weight": 0.19114369629092742,
+                "learning_rate": 0.09153198853825968,
+                "gamma": 2.7385236089096274,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 5.824001789093018,
+                "train_score": 0.9131258000000001,
+                "val_score": 0.7619038,
+                "n_estimators": 66
+            }
+        },
+        "0.7626988": {
+            "params": {
+                "subsample": 0.9686772852204599,
+                "colsample_bytree": 0.9980546535640455,
+                "max_depth": 6,
+                "min_child_weight": 0.2869557448723494,
+                "learning_rate": 0.01627380558293535,
+                "gamma": 3.2642963341056794,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 17.922000646591187,
+                "train_score": 0.8513024,
+                "val_score": 0.7626988,
+                "n_estimators": 400
+            }
+        },
+        "0.7619928": {
+            "params": {
+                "subsample": 0.5234670741454734,
+                "colsample_bytree": 0.9328984819137103,
+                "max_depth": 4,
+                "min_child_weight": 0.22296076028558787,
+                "learning_rate": 0.016697949127949727,
+                "gamma": 3.846903225677206,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 13.47309160232544,
+                "train_score": 0.8111888,
+                "val_score": 0.7619928,
+                "n_estimators": 400
+            }
+        },
+        "0.7624280000000001": {
+            "params": {
+                "subsample": 0.5152818129252508,
+                "colsample_bytree": 0.9869315923419292,
+                "max_depth": 5,
+                "min_child_weight": 1.1010707655059973,
+                "learning_rate": 0.08480811114227604,
+                "gamma": 2.177806315506421,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 5.759001731872559,
+                "train_score": 0.8790806,
+                "val_score": 0.7624280000000001,
+                "n_estimators": 119
+            }
+        },
+        "0.7628695999999999": {
+            "params": {
+                "subsample": 0.5026859508647228,
+                "colsample_bytree": 0.879586162771367,
+                "max_depth": 11,
+                "min_child_weight": 0.14176487720019448,
+                "learning_rate": 0.027228986549939646,
+                "gamma": 3.6337450861863974,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 16.373220920562744,
+                "train_score": 0.8708237999999999,
+                "val_score": 0.7628695999999999,
+                "n_estimators": 227
+            }
+        },
+        "0.7624394": {
+            "params": {
+                "subsample": 0.9772046121822353,
+                "colsample_bytree": 0.9998621992471848,
+                "max_depth": 7,
+                "min_child_weight": 0.1291810763042962,
+                "learning_rate": 0.1698102637379058,
+                "gamma": 3.418832806332181,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 5.8550097942352295,
+                "train_score": 0.8776702000000001,
+                "val_score": 0.7624394,
+                "n_estimators": 99
+            }
+        },
+        "0.7612984": {
+            "params": {
+                "subsample": 0.6115625706748895,
+                "colsample_bytree": 0.9745958310491465,
+                "max_depth": 4,
+                "min_child_weight": 0.02128257436610781,
+                "learning_rate": 0.17375552610291736,
+                "gamma": 3.265117496263398,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 2.3859989643096924,
+                "train_score": 0.8228373999999998,
+                "val_score": 0.7612984,
+                "n_estimators": 42
+            }
+        },
+        "0.7686138": {
+            "params": {
+                "subsample": 0.9885495253773726,
+                "colsample_bytree": 0.893195900964632,
+                "max_depth": 4,
+                "min_child_weight": 0.02059323795340795,
+                "learning_rate": 0.046261221939100025,
+                "gamma": 0.0672197750233394,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 11.92500352859497,
+                "train_score": 0.884879,
+                "val_score": 0.7686138,
+                "n_estimators": 334
+            }
+        },
+        "0.7643714": {
+            "params": {
+                "subsample": 0.7363407502017261,
+                "colsample_bytree": 0.9587047710672159,
+                "max_depth": 4,
+                "min_child_weight": 0.5584164893882173,
+                "learning_rate": 0.012987751355298912,
+                "gamma": 0.024215121425116573,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 13.92751693725586,
+                "train_score": 0.8344039999999999,
+                "val_score": 0.7643714,
+                "n_estimators": 400
+            }
+        },
+        "0.7564429999999999": {
+            "params": {
+                "subsample": 0.9483023203554526,
+                "colsample_bytree": 0.9728208933698844,
+                "max_depth": 4,
+                "min_child_weight": 4.182534351768032,
+                "learning_rate": 0.09934325443299372,
+                "gamma": 4.999231486449126,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 5.39499831199646,
+                "train_score": 0.7997105999999999,
+                "val_score": 0.7564429999999999,
+                "n_estimators": 138
+            }
+        }
+    },
+    "hosp_critcare": {
+        "0.7985654": {
+            "params": {
+                "subsample": 0.504328816053685,
+                "colsample_bytree": 0.8027703970645597,
+                "max_depth": 6,
+                "min_child_weight": 4.296377562887113,
+                "learning_rate": 0.13740496541301342,
+                "gamma": 3.0019763796451175,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 1.507002353668213,
+                "train_score": 0.8448420000000001,
+                "val_score": 0.7985654,
+                "n_estimators": 23
+            }
+        },
+        "0.8036338000000001": {
+            "params": {
+                "subsample": 0.5863402682243134,
+                "colsample_bytree": 0.7012393564908269,
+                "max_depth": 11,
+                "min_child_weight": 6.314622739513807,
+                "learning_rate": 0.0636904022015378,
+                "gamma": 2.527932054823076,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 3.054003953933716,
+                "train_score": 0.8555925999999999,
+                "val_score": 0.8036338000000001,
+                "n_estimators": 62
+            }
+        },
+        "0.7988252000000001": {
+            "params": {
+                "subsample": 0.8439672184071378,
+                "colsample_bytree": 0.9437756765342293,
+                "max_depth": 8,
+                "min_child_weight": 0.8111799580776768,
+                "learning_rate": 0.12854301705279722,
+                "gamma": 4.572648624070975,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 3.503002405166626,
+                "train_score": 0.8965338,
+                "val_score": 0.7988252000000001,
+                "n_estimators": 50
+            }
+        },
+        "0.8005074000000001": {
+            "params": {
+                "subsample": 0.6725358324889199,
+                "colsample_bytree": 0.5708511648831025,
+                "max_depth": 8,
+                "min_child_weight": 5.099175129658038,
+                "learning_rate": 0.040162231818557576,
+                "gamma": 4.972482678335361,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 3.4889943599700928,
+                "train_score": 0.8397608,
+                "val_score": 0.8005074000000001,
+                "n_estimators": 90
+            }
+        },
+        "0.7979128": {
+            "params": {
+                "subsample": 0.9875912693780267,
+                "colsample_bytree": 0.7630481817260852,
+                "max_depth": 10,
+                "min_child_weight": 2.2523522438247827,
+                "learning_rate": 0.13561500514093572,
+                "gamma": 2.2832407661820193,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 2.968000650405884,
+                "train_score": 0.9376536,
+                "val_score": 0.7979128,
+                "n_estimators": 44
+            }
+        },
+        "0.8025602": {
+            "params": {
+                "subsample": 0.5040210988963278,
+                "colsample_bytree": 0.910259416931587,
+                "max_depth": 5,
+                "min_child_weight": 0.8683113253673955,
+                "learning_rate": 0.0488130872819929,
+                "gamma": 0.8789145764346865,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 2.750997543334961,
+                "train_score": 0.9134678,
+                "val_score": 0.8025602,
+                "n_estimators": 55
+            }
+        },
+        "0.8101597999999999": {
+            "params": {
+                "subsample": 0.5162713659679347,
+                "colsample_bytree": 0.6563329158561266,
+                "max_depth": 11,
+                "min_child_weight": 1.7698673955587196,
+                "learning_rate": 0.04613181372816468,
+                "gamma": 4.771340252533296,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 4.8566389083862305,
+                "train_score": 0.8590106000000001,
+                "val_score": 0.8101597999999999,
+                "n_estimators": 101
+            }
+        },
+        "0.8113026": {
+            "params": {
+                "subsample": 0.5276779435832921,
+                "colsample_bytree": 0.8294506145103555,
+                "max_depth": 6,
+                "min_child_weight": 2.506849139269338,
+                "learning_rate": 0.03877208714586976,
+                "gamma": 0.6729834617608674,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 4.002002239227295,
+                "train_score": 0.9117599999999999,
+                "val_score": 0.8113026,
+                "n_estimators": 90
+            }
+        },
+        "0.7964496": {
+            "params": {
+                "subsample": 0.7090417733820867,
+                "colsample_bytree": 0.8432628831046292,
+                "max_depth": 11,
+                "min_child_weight": 1.9187285234403317,
+                "learning_rate": 0.09824532763111303,
+                "gamma": 1.3645061847322206,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 1.5219981670379639,
+                "train_score": 0.8717585999999999,
+                "val_score": 0.7964496,
+                "n_estimators": 14
+            }
+        },
+        "0.7966363999999999": {
+            "params": {
+                "subsample": 0.623410552952885,
+                "colsample_bytree": 0.9338785078574765,
+                "max_depth": 11,
+                "min_child_weight": 0.39849741780150083,
+                "learning_rate": 0.06321974267958028,
+                "gamma": 1.9849809429591965,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 5.466997146606445,
+                "train_score": 0.9544637999999999,
+                "val_score": 0.7966363999999999,
+                "n_estimators": 75
+            }
+        },
+        "0.8068774": {
+            "params": {
+                "subsample": 0.7767757252796611,
+                "colsample_bytree": 0.5096683386247038,
+                "max_depth": 4,
+                "min_child_weight": 7.592599846190842,
+                "learning_rate": 0.017865691348152603,
+                "gamma": 0.014363124221585552,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 4.320978164672852,
+                "train_score": 0.8696864,
+                "val_score": 0.8068774,
+                "n_estimators": 130
+            }
+        },
+        "0.810074": {
+            "params": {
+                "subsample": 0.5145408562619136,
+                "colsample_bytree": 0.5803863994717181,
+                "max_depth": 6,
+                "min_child_weight": 7.408431447845106,
+                "learning_rate": 0.022463024642746965,
+                "gamma": 0.06693096189323984,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 3.2959983348846436,
+                "train_score": 0.860502,
+                "val_score": 0.810074,
+                "n_estimators": 96
+            }
+        },
+        "0.8047506": {
+            "params": {
+                "subsample": 0.7007542980529134,
+                "colsample_bytree": 0.9679121563989204,
+                "max_depth": 11,
+                "min_child_weight": 3.6155754847331574,
+                "learning_rate": 0.028722748202251472,
+                "gamma": 4.997442292709844,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 8.932965993881226,
+                "train_score": 0.8640956,
+                "val_score": 0.8047506,
+                "n_estimators": 183
+            }
+        },
+        "0.8037542": {
+            "params": {
+                "subsample": 0.5674889739672269,
+                "colsample_bytree": 0.5405402093954239,
+                "max_depth": 5,
+                "min_child_weight": 3.369677658538003,
+                "learning_rate": 0.040277093104688584,
+                "gamma": 0.02370323686868701,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 1.659996747970581,
+                "train_score": 0.8644988,
+                "val_score": 0.8037542,
+                "n_estimators": 32
+            }
+        },
+        "0.8005319999999999": {
+            "params": {
+                "subsample": 0.531821907211371,
+                "colsample_bytree": 0.5335325440431178,
+                "max_depth": 10,
+                "min_child_weight": 7.956318466158358,
+                "learning_rate": 0.03124022896617131,
+                "gamma": 4.530846089135024,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 3.245975971221924,
+                "train_score": 0.8281836,
+                "val_score": 0.8005319999999999,
+                "n_estimators": 100
+            }
+        },
+        "0.8019636": {
+            "params": {
+                "subsample": 0.5376897228577139,
+                "colsample_bytree": 0.9705988029773861,
+                "max_depth": 8,
+                "min_child_weight": 2.0211182340321887,
+                "learning_rate": 0.019228645223226686,
+                "gamma": 1.9804415844309287,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 4.748996257781982,
+                "train_score": 0.8783771999999999,
+                "val_score": 0.8019636,
+                "n_estimators": 95
+            }
+        },
+        "0.7904578": {
+            "params": {
+                "subsample": 0.9524666932846404,
+                "colsample_bytree": 0.5174487192057182,
+                "max_depth": 11,
+                "min_child_weight": 0.3482087396677196,
+                "learning_rate": 0.02062985230538548,
+                "gamma": 4.928159334899875,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 6.258596897125244,
+                "train_score": 0.8444693999999998,
+                "val_score": 0.7904578,
+                "n_estimators": 126
+            }
+        },
+        "0.7826318000000001": {
+            "params": {
+                "subsample": 0.5010969124870179,
+                "colsample_bytree": 0.6403006252201466,
+                "max_depth": 7,
+                "min_child_weight": 0.9436581718469581,
+                "learning_rate": 0.19041322127656912,
+                "gamma": 0.16472539778059395,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 1.9519755840301514,
+                "train_score": 0.9617994,
+                "val_score": 0.7826318000000001,
+                "n_estimators": 33
+            }
+        },
+        "0.8021306000000001": {
+            "params": {
+                "subsample": 0.8067250176811324,
+                "colsample_bytree": 0.7636927616202296,
+                "max_depth": 11,
+                "min_child_weight": 7.811070890408501,
+                "learning_rate": 0.08713576973969957,
+                "gamma": 0.04911429682316206,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 2.085993766784668,
+                "train_score": 0.8873404,
+                "val_score": 0.8021306000000001,
+                "n_estimators": 39
+            }
+        },
+        "0.7984368000000001": {
+            "params": {
+                "subsample": 0.9855724849511053,
+                "colsample_bytree": 0.9628884134124751,
+                "max_depth": 4,
+                "min_child_weight": 7.428615621540359,
+                "learning_rate": 0.023664181045352013,
+                "gamma": 0.09775213335138211,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 4.0129945278167725,
+                "train_score": 0.8729856,
+                "val_score": 0.7984368000000001,
+                "n_estimators": 105
+            }
+        },
+        "0.8007286": {
+            "params": {
+                "subsample": 0.5239713944469997,
+                "colsample_bytree": 0.9368360806014883,
+                "max_depth": 4,
+                "min_child_weight": 0.5642365882014131,
+                "learning_rate": 0.10244156542928412,
+                "gamma": 4.8006516089775175,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 2.5159642696380615,
+                "train_score": 0.8701048,
+                "val_score": 0.8007286,
+                "n_estimators": 54
+            }
+        },
+        "0.7979352000000001": {
+            "params": {
+                "subsample": 0.6073331768551913,
+                "colsample_bytree": 0.5876307503673249,
+                "max_depth": 4,
+                "min_child_weight": 7.711567067244449,
+                "learning_rate": 0.15508864278340628,
+                "gamma": 4.936052498681751,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 1.7280035018920898,
+                "train_score": 0.8347125999999999,
+                "val_score": 0.7979352000000001,
+                "n_estimators": 33
+            }
+        },
+        "0.80977": {
+            "params": {
+                "subsample": 0.5684317437872304,
+                "colsample_bytree": 0.6017951051287931,
+                "max_depth": 11,
+                "min_child_weight": 3.14582367941253,
+                "learning_rate": 0.03413675982192354,
+                "gamma": 3.4077264488200254,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 4.059973955154419,
+                "train_score": 0.8576678000000001,
+                "val_score": 0.80977,
+                "n_estimators": 101
+            }
+        },
+        "0.8092179999999999": {
+            "params": {
+                "subsample": 0.5071684312681615,
+                "colsample_bytree": 0.9402429512443866,
+                "max_depth": 4,
+                "min_child_weight": 7.9665513567536825,
+                "learning_rate": 0.02731162724894541,
+                "gamma": 0.44688911646228113,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 4.29800009727478,
+                "train_score": 0.8611164,
+                "val_score": 0.8092179999999999,
+                "n_estimators": 113
+            }
+        },
+        "0.8062998": {
+            "params": {
+                "subsample": 0.5542660076470662,
+                "colsample_bytree": 0.5302950324601303,
+                "max_depth": 9,
+                "min_child_weight": 7.9937090460873215,
+                "learning_rate": 0.04176495423250599,
+                "gamma": 1.1656399592264806,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 3.2060019969940186,
+                "train_score": 0.8572279999999999,
+                "val_score": 0.8062998,
+                "n_estimators": 95
+            }
+        },
+        "0.8096057999999999": {
+            "params": {
+                "subsample": 0.521563348763143,
+                "colsample_bytree": 0.9576319382875642,
+                "max_depth": 6,
+                "min_child_weight": 3.1003189029552427,
+                "learning_rate": 0.04651053657347594,
+                "gamma": 0.5807773355058675,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 3.1776275634765625,
+                "train_score": 0.8937801999999999,
+                "val_score": 0.8096057999999999,
+                "n_estimators": 57
+            }
+        },
+        "0.8107764000000002": {
+            "params": {
+                "subsample": 0.5192924129275212,
+                "colsample_bytree": 0.8171397898918428,
+                "max_depth": 6,
+                "min_child_weight": 2.0465067717918304,
+                "learning_rate": 0.015576526572103783,
+                "gamma": 2.1006911283302325,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 8.820002794265747,
+                "train_score": 0.8953258000000002,
+                "val_score": 0.8107764000000002,
+                "n_estimators": 226
+            }
+        },
+        "0.8012644": {
+            "params": {
+                "subsample": 0.6987644066853733,
+                "colsample_bytree": 0.519490403130398,
+                "max_depth": 4,
+                "min_child_weight": 7.966977983435919,
+                "learning_rate": 0.02410233255116056,
+                "gamma": 2.2408987677233636,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 3.211001396179199,
+                "train_score": 0.8424808,
+                "val_score": 0.8012644,
+                "n_estimators": 104
+            }
+        },
+        "0.8098472000000001": {
+            "params": {
+                "subsample": 0.5003114510474952,
+                "colsample_bytree": 0.9779817434588649,
+                "max_depth": 8,
+                "min_child_weight": 1.6759646048981711,
+                "learning_rate": 0.021016861369365078,
+                "gamma": 4.9457972088279325,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 12.679975509643555,
+                "train_score": 0.8732018,
+                "val_score": 0.8098472000000001,
+                "n_estimators": 265
+            }
+        },
+        "0.8083448000000001": {
+            "params": {
+                "subsample": 0.5027066181486888,
+                "colsample_bytree": 0.5347923411604345,
+                "max_depth": 6,
+                "min_child_weight": 7.963962878523153,
+                "learning_rate": 0.025564656605638947,
+                "gamma": 0.3905274223741517,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 3.0759756565093994,
+                "train_score": 0.8536038000000001,
+                "val_score": 0.8083448000000001,
+                "n_estimators": 95
+            }
+        },
+        "0.8071996": {
+            "params": {
+                "subsample": 0.6223983882467451,
+                "colsample_bytree": 0.5437551977593859,
+                "max_depth": 9,
+                "min_child_weight": 6.109571461603978,
+                "learning_rate": 0.023120891064930732,
+                "gamma": 0.042669713999865806,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 4.043999910354614,
+                "train_score": 0.8795138,
+                "val_score": 0.8071996,
+                "n_estimators": 107
+            }
+        },
+        "0.8107262000000001": {
+            "params": {
+                "subsample": 0.5242728033426731,
+                "colsample_bytree": 0.97459254395873,
+                "max_depth": 4,
+                "min_child_weight": 1.9223181091150217,
+                "learning_rate": 0.01919734248951569,
+                "gamma": 1.7076579251786306,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 6.64800238609314,
+                "train_score": 0.8945871999999999,
+                "val_score": 0.8107262000000001,
+                "n_estimators": 184
+            }
+        },
+        "0.8002893999999999": {
+            "params": {
+                "subsample": 0.5552774087490454,
+                "colsample_bytree": 0.9783398236932142,
+                "max_depth": 10,
+                "min_child_weight": 2.5045666954475374,
+                "learning_rate": 0.010277479505026246,
+                "gamma": 4.4818618705086175,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 11.703563451766968,
+                "train_score": 0.8436275999999999,
+                "val_score": 0.8002893999999999,
+                "n_estimators": 245
+            }
+        },
+        "0.7733024": {
+            "params": {
+                "subsample": 0.5042427333967681,
+                "colsample_bytree": 0.5405584290123472,
+                "max_depth": 8,
+                "min_child_weight": 1.430091637483768,
+                "learning_rate": 0.02132497766442821,
+                "gamma": 4.857817810340025,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 2.010016679763794,
+                "train_score": 0.7975725999999999,
+                "val_score": 0.7733024,
+                "n_estimators": 47
+            }
+        },
+        "0.8014357999999999": {
+            "params": {
+                "subsample": 0.7263062468990678,
+                "colsample_bytree": 0.9993861482481712,
+                "max_depth": 11,
+                "min_child_weight": 1.6646765417686158,
+                "learning_rate": 0.18000231648048934,
+                "gamma": 4.917659924457717,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 3.7589993476867676,
+                "train_score": 0.8919763999999999,
+                "val_score": 0.8014357999999999,
+                "n_estimators": 53
+            }
+        },
+        "0.8020472": {
+            "params": {
+                "subsample": 0.8359142275666391,
+                "colsample_bytree": 1.0,
+                "max_depth": 4,
+                "min_child_weight": 3.7087891540037994,
+                "learning_rate": 0.011379599931607792,
+                "gamma": 4.755676377505582,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 13.592999696731567,
+                "train_score": 0.8613218,
+                "val_score": 0.8020472,
+                "n_estimators": 400
+            }
+        },
+        "0.7987143999999999": {
+            "params": {
+                "subsample": 0.7709539630533986,
+                "colsample_bytree": 0.5101353716657758,
+                "max_depth": 11,
+                "min_child_weight": 6.3342405714071095,
+                "learning_rate": 0.11878338924805851,
+                "gamma": 0.5303221426825342,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 1.835970163345337,
+                "train_score": 0.8934986,
+                "val_score": 0.7987143999999999,
+                "n_estimators": 40
+            }
+        },
+        "0.8013686": {
+            "params": {
+                "subsample": 0.5712799057599075,
+                "colsample_bytree": 0.9991074557102952,
+                "max_depth": 5,
+                "min_child_weight": 6.853174954031728,
+                "learning_rate": 0.021070689411895493,
+                "gamma": 4.891615648629577,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 7.771520614624023,
+                "train_score": 0.8401987999999999,
+                "val_score": 0.8013686,
+                "n_estimators": 192
+            }
+        },
+        "0.7957297999999999": {
+            "params": {
+                "subsample": 0.7240171734857412,
+                "colsample_bytree": 0.5100788925900129,
+                "max_depth": 11,
+                "min_child_weight": 5.417544149341751,
+                "learning_rate": 0.10419905352346226,
+                "gamma": 4.946999956598549,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 2.3389575481414795,
+                "train_score": 0.8507908000000001,
+                "val_score": 0.7957297999999999,
+                "n_estimators": 58
+            }
+        },
+        "0.8003397999999999": {
+            "params": {
+                "subsample": 0.911500766830265,
+                "colsample_bytree": 0.995782676783818,
+                "max_depth": 5,
+                "min_child_weight": 2.025409902867594,
+                "learning_rate": 0.01937615298167915,
+                "gamma": 1.6417531525568194,
+                "objective": "binary:logistic"
+            },
+            "fit_props": {
+                "train_time": 9.440003871917725,
+                "train_score": 0.9265180000000001,
+                "val_score": 0.8003397999999999,
+                "n_estimators": 220
+            }
+        }
+    }
+}

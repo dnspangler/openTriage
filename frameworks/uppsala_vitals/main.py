@@ -98,8 +98,7 @@ class Main:
             "amb_intervention" : ["amb_meds", "amb_cpr", "amb_o2", "amb_immob", "amb_crit", "amb_alert", "amb_ecg"],
             "amb_prio" : ["amb_prio"],
             "hosp_admit" : ["hosp_admit"],
-            "hosp_critcare" : ["hosp_icu","hosp_30daymort"],
-            "hosp_2daymort" : ["hosp_2daymort"]},
+            "hosp_critcare" : ["hosp_icu","hosp_30daymort"]},
         # Define predictors to extract
         predictors = ['CreatedOn','disp_age','disp_gender','disp_cats', 'disp_prio', 'disp_corona','eval_breaths', 'eval_spo2','eval_sbp', 'eval_pulse', 'eval_temp','eval_avpu','amb_corona'],
         parse_text = None,

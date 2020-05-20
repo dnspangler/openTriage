@@ -735,13 +735,13 @@ def split_data(data, test_cutoff_ymd, test_sample, test_criteria, inclusion_crit
         crit_incl = data['data'][i].eq(1)
         criteria_ids = data['data'].index[crit_incl]
         valid_ids = [j for j in valid_ids if j in criteria_ids]
-        print(f"Keeping {len(valid_ids)} observations with {i}")
+        print(f"Keeping {len(valid_ids)} observations with {i} for testing")
     
     data['data'] = data['data'].drop(test_criteria,axis=1)
 
     test_ids = list(random.sample(list(valid_ids),int(len(valid_ids)*test_sample)))
     
-    print(f"{len(test_ids)} observations after random sampling")
+    print(f"{len(test_ids)} test observations after random sampling")
 
     out_data = {
         'train':{

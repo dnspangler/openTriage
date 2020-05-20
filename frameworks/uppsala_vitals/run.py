@@ -19,11 +19,11 @@ if __name__ == '__main__':
         code_dir = code_dir,
         log = logger, 
         cache = None,
-        init_rounds = 2, #NOTE: Low for testing, use maybe 10/40/400
-        opt_rounds = 5,
+        init_rounds = 10, #NOTE: Low for testing, use maybe 10/40/400
+        opt_rounds = 40, 
         max_estimators = 400,
         overwrite_models = True,
-        overwrite_data = False,
-        test_cutoff_ymd='20200101',
-        test_sample=0.3
+        overwrite_data = True,
+        test_cutoff_ymd='20200401',
+        test_sample=1
         )

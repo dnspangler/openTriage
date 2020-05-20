@@ -17,16 +17,21 @@ def parseArgs():
 
 # Lots of ugly dependence on global variabes here... Might get rid of these later.
 
-def test_post(addr,fw,data,verify, type_json=True):
+def test_post(addr,fw,data,verify, file_extension):
     # Set headers indicating JSON payload
-    if type_json:
+    if file_extension == '.json':
         headers = {'Accept' : 'application/json',
                'Content-Type' : 'application/json'}
-    
+    elif file_extension == '.xml':
+        headers = {'Accept' : 'application/json',
+               'Content-Type' : 'application/xml'}
+    else:
+        return "Unsupported file type!"
+
     #Send via https if using https port
     
     target = f'https://{addr}/predict/{fw}/'
-
+    print(data)
     # Return results of post
     results = requests.post(target, data=data, headers=headers, verify=verify)
     return results
@@ -54,10 +59,11 @@ def run_tests(test_file,addr,fw,verify):
 
     print(f"Request using: '{test_file}'")
 
+    _, file_extension = os.path.splitext(test_file)
     # Try predict endpoint
     try:
         with open(test_file, 'rb') as f:
-            results = test_post(addr, data=f, fw=fw, verify=verify)
+            results = test_post(addr, data=f, fw=fw, verify=verify,file_extension=file_extension)
     except Exception as e:
         return "Post failed: " + str(e)
     

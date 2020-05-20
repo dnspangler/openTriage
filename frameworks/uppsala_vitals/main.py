@@ -8,6 +8,7 @@ import itertools
 import xgboost
 import time
 import csv
+import xmltodict
 
 import numpy as np
 import pandas as pd
@@ -34,7 +35,8 @@ from frameworks.uppsala_vitals.utils import (
     generate_ui_data,
     generate_names,
     parse_text_to_bow,
-    get_stopword_set
+    get_stopword_set,
+    nemsis3_to_vitals_dict
     )
 
 class Main:

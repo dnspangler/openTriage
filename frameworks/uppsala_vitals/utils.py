@@ -17,6 +17,7 @@ import collections
 import random
 import time
 import calendar
+import xmltodict
 
 from pathlib import Path
 from datetime import date, datetime
@@ -944,6 +945,126 @@ def generate_names(code_dir, data):
     
     pass
 
+def nemsis3_to_vitals_dict(nemsis_xml):
+
+    n3_map = {
+        'disp_gender':{
+        '9906001':1, # Female
+        '9906003':0 # Male
+        },
+        'disp_cats':{ # A first stab at this.. Non-matches will assume a missing category #TODO: Check how to handle multiple matches, our categories are more specific...
+            '2301001':'disp_cats_Buk_flanksmrta|disp_cats_Diarr|disp_cats_Mag_tarmbldning',# Abdominal Pain/Problems
+            '2301003':'disp_cats_Allergisk_reaktion',# Allergic Reaction/Stings
+            '2301005':None,# Animal Bite
+            '2301007':None,# Assault
+            '2301009':None,# Automated Crash Notification
+            '2301011':'disp_cats_Ryggsmrta',# Back Pain (Non-Traumatic)
+            '2301013':'disp_cats_Andningsbesvr',# Breathing Problem
+            '2301015':'disp_cats_Brnnskada',# Burns/Explosion
+            '2301017':'disp_cats_CBRN|disp_cats_Kemisk_exponering',# Carbon Monoxide/Hazmat/Inhalation/CBRN
+            '2301019':'disp_cats_Hjrtstopp',# Cardiac Arrest/Death
+            '2301021':'disp_cats_Brstsmrta',# Chest Pain (Non-Traumatic)
+            '2301023':'disp_cats_Luftvgsbesvr',# Choking #TODO: Technically... Got to check this one
+            '2301025':'disp_cats_Kramper',# Convulsions/Seizure
+            '2301027':'disp_cats_Blodsocker_hgt|disp_cats_Blodsocker_lgt',# Diabetic Problem 
+            '2301029':'disp_cats_Elektrisk_skada',# Electrocution/Lightning
+            '2301031':'disp_cats_gon',# Eye Problem/Injury
+            '2301033':None,# Falls
+            '2301035':'disp_cats_Brand|disp_cats_Rkexponering',# Fire
+            '2301037':'disp_cats_Huvudvrk',# Headache
+            '2301039':'disp_cats_Planerad',# Healthcare Professional/Admission
+            '2301041':'disp_cats_ICD|disp_cats_Rytmrubbning|disp_cats_Pacemaker',# Heart Problems/AICD
+            '2301043':'disp_cats_Hypertermi|disp_cats_Hypotermi|disp_cats_Kldskada|disp_cats_Vrmeslag',# Heat/Cold Exposure
+            '2301045':'disp_cats_Srskada',# Hemorrhage/Laceration
+            '2301047':None,# Industrial Accident/Inaccessible Incident/Other Entrapments (Non-Vehicle)
+            '2301049':None,# Medical Alarm
+            '2301051':'disp_cats_Annat',# No Other Appropriate Choice
+            '2301053':'disp_cats_Intoxfrgiftning',# Overdose/Poisoning/Ingestion
+            '2301055':None,# Pandemic/Epidemic/Outbreak
+            '2301057':'disp_cats_Graviditet|disp_cats_Frlossning',# Pregnancy/Childbirth/Miscarriage
+            '2301059':'disp_cats_Psykiska_besvr|disp_cats_Vldhotsuicidhot',# Psychiatric Problem/Abnormal Behavior/Suicide Attempt
+            '2301061':'disp_cats_Allmn_vuxen|disp_cats_Allmn_ldring|disp_cats_Allmn_barn',# Sick Person
+            '2301063':None,# Stab/Gunshot Wound/Penetrating Trauma
+            '2301065':None,# Standby
+            '2301067':'disp_cats_Stroke|disp_cats_Talpverkan|disp_cats_Sensoriskt_motoriskt_bortfall',# Stroke/CVA
+            '2301069':'disp_cats_Trafikolycka|disp_cats_Sjolycka|disp_cats_Flygolycka',# Traffic/Transportation Incident
+            '2301071':'disp_cats_Planerad',# Transfer/Interfacility/Palliative Care
+            '2301073':'disp_cats_Trauma',# Traumatic Injury
+            '2301075':None,# Well Person Check
+            '2301077':'disp_cats_Snkt_vakenhet|disp_cats_Svimning|disp_cats_Yrsel',# Unconscious/Fainting/Near-Fainting
+            '2301079':None,# Unknown Problem/Person Down
+            '2301081':'disp_cats_Drunkningstillbud|disp_cats_Dykeriolycka',# Drowning/Diving/SCUBA Accident
+            '2301083':'disp_cats_Planerad',# Airmedical Transport
+            '2301085':'disp_cats_Snkt_vakenhet|disp_cats_Frvirring',# Altered Mental Status
+            '2301087':None,# Intercept
+            '2301089':'disp_cats_Illamende',# Nausea
+            '2301091':'disp_cats_Krkning'# Vomiting
+        },
+        'disp_prio':{ # These are... Kinda right
+            '2305001':1,#Critical
+            '2305003':2,#Emergent
+            '2305005':3,#Lower Acuity
+            '2305007':4#Non-Acute [e.g., Scheduled Transfer or Standby]
+        }
+    }
+
+    """
+    Additional dispatch categories not matched to NEMSIS:
+    "disp_cats_Arm_bensymtom_ej_trauma": "Arm/leg symptoms",
+    "disp_cats_Blod_i_urin": "Blood in urine",
+    "disp_cats_Blodig_upphostning": "Blood in sputum",
+    "disp_cats_Feber": "Fever",
+    "disp_cats_Frtskada": "Chemical burn",
+    "": "Confusion",
+    "disp_cats_Hallucination": "Hallucination",
+    "disp_cats_Halsont": "Throat pain",
+    "disp_cats_Infektion": "Infection",
+    "disp_cats_Ns_svalgbldning": "Nosebleed",
+    "disp_cats_Ormbett": "Snakebite",
+    "disp_cats_Urinkateterstopp": "Urinary catheter blockage",
+    "disp_cats_Urinstmma": "Dysuria",
+    "disp_cats_Urogenitala_besvr": "Urogenital issue",
+    "disp_cats_Vaginal_bldning": "Vaginal bleed",
+    "": "Dizziness",
+    """
+
+    indata = xmltodict.parse(nemsis_xml)['EMSDataSet']['Header']['PatientCareReport']
+
+    # Use pcr number for id if sent, otherwise generate a random string
+    if indata['eRecord']['eRecord.01']:
+        identifier = indata['eRecord']['eRecord.01']
+    else:
+        identifier = secrets.token_urlsafe(6)
+
+    n3 = {
+        'region':indata['eResponse']['eResponse.AgencyGroup'].get('eResponse.01'),
+        'disp_created':indata['eTimes'].get('eTimes.02'), 
+        'disp_age':indata['ePatient']['ePatient.AgeGroup'].get('ePatient.15'), 
+        'disp_gender':indata['ePatient'].get('ePatient.13'),
+        'disp_cats':indata['eDispatch'].get('eDispatch.01'),
+        'disp_prio':indata['eDispatch'].get('eDispatch.05'),
+        # Get first set of vitals
+        'eval_breaths': indata['eVitals']['eVitals.VitalGroup'][0].get('eVitals.14'),
+        'eval_spo2': indata['eVitals']['eVitals.VitalGroup'][0].get('eVitals.12'),
+        'eval_sbp': indata['eVitals']['eVitals.VitalGroup'][0]['eVitals.BloodPressureGroup'].get('eVitals.06'),
+        'eval_pulse':indata['eVitals']['eVitals.VitalGroup'][0]['eVitals.HeartRateGroup'].get('eVitals.10'),
+        'eval_avpu':indata['eVitals']['eVitals.VitalGroup'][0].get('eVitals.26'),
+        'eval_temp':indata['eVitals']['eVitals.VitalGroup'][0]['eVitals.TemperatureGroup'].get('eVitals.24') # Note that NEMSIS uses celcius for body temperature like other civilized people!
+    }
+
+    # Apply transformations
+    # Reformat dispatch date
+    n3['disp_created'] = n3['disp_created'].split('+')[0].replace('T', ' ')
+    # Set age to 0 if age documented as other than years (though perhaps some crews document 1-2 year olds in terms of months? Should revisit this)
+    if indata['ePatient']['ePatient.AgeGroup']['ePatient.16'] in ['2516001','2516003','2516005','2516007']:
+        indata['ePatient']['ePatient.AgeGroup']['ePatient.15'] = 0
+    n3['disp_gender'] =  n3_map['disp_gender'].get(n3['disp_gender'])
+    n3['disp_cats'] =  n3_map['disp_cats'].get(n3['disp_cats'])
+    n3['disp_prio'] =  n3_map['disp_prio'].get(n3['disp_prio'])
+
+    outdict = {}
+    outdict[identifier] = n3
+    return outdict
 # Text parsng -------------------------------------------------------
 
 def ngrams(words, n):

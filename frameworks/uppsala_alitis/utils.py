@@ -914,7 +914,7 @@ def split_data(data, test_cutoff_ymd, test_sample, test_criteria, inclusion_crit
         data['labels'] = data['labels'][inclobs]
         data['text'] = data['text'][inclobs]
     
-    data['data'] = data['data'].drop(inclusion_criteria)
+    data['data'] = data['data'].drop(inclusion_criteria,axis=1)
 
     # A major update to the user interface was implemented in May 2019 which 
     # substantially impacted the structure of the collected data (primarily 

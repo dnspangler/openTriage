@@ -110,6 +110,7 @@ class Main:
         test_cutoff_ymd = '20200319',
         test_sample = 0.3,
         test_criteria = [],
+        date_obs_weights = True, # Weight more recent observations more heavily in training?
         # UI stuff
         prod_ui_cols = ['value','mean_shap']
         ):
@@ -430,10 +431,13 @@ class Main:
 
         self.log.info("Training models...")
 
-        date_min = min(self.data['train']['data']['disp_date'])
-        date_max = max(self.data['train']['data']['disp_date'])
-        span = date_max - date_min
-        obs_weights = [(i - date_min)/span for i in self.data['train']['data']['disp_date']]
+        if self.date_obs_weights:
+            date_min = min(self.data['train']['data']['disp_date'])
+            date_max = max(self.data['train']['data']['disp_date'])
+            span = date_max - date_min
+            obs_weights = [(i - date_min)/span for i in self.data['train']['data']['disp_date']]
+        else:
+            obs_weights = [1]*len(self.data['train']['data'].index)
 
         # Tune Hyperparameters ----------------------------------------------------------------
 

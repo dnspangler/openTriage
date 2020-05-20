@@ -230,8 +230,9 @@ class Main:
         else:
             self.log.info("No stopwords found!")
 
-    def input_function(self, request_data):
+    def input_function(self, request):
         """input_function is a required function to parse incoming data"""
+        request_data = request.data
         self.log.debug(request_data)
         # Loop through each item sent through the API
         results = {}

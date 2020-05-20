@@ -12,9 +12,6 @@ from flask_api import FlaskAPI, status, exceptions
 from redis import Redis
 from importlib import import_module
 
-#TODO: Add functionality to support multiple frameworks being hosted 
-# on the same server eg using request arguments or appending something to the endpoint.
-
 #TODO: Define types for all the things
 
 if __name__ == "__main__":
@@ -56,10 +53,12 @@ if __name__ == "__main__":
         # of preventing information leakage via the API for now.. Settings?
 
         logger.info('Start Processing')
+        logger.debug(request.headers)
+        logger.debug(request.data)
         if request.data:
             try:
                 # Pass request payload to input function
-                input_data = Main[fw].input_function(request.data)
+                input_data = Main[fw].input_function(request)
 
             except Exception as e:
                 logger.exception("Error upon parsing input data:")

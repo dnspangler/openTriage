@@ -101,7 +101,7 @@ class Main:
             "hosp_critcare" : ["hosp_icu","hosp_30daymort"],
             "hosp_2daymort" : ["hosp_2daymort"]},
         # Define predictors to extract
-        predictors = ['CreatedOn','disp_age','disp_gender','disp_cats', 'disp_prio', 'eval_breaths', 'eval_spo2','eval_sbp', 'eval_pulse', 'eval_temp','eval_avpu'],
+        predictors = ['CreatedOn','disp_age','disp_gender','disp_cats', 'disp_prio', 'disp_corona','eval_breaths', 'eval_spo2','eval_sbp', 'eval_pulse', 'eval_temp','eval_avpu','amb_corona'],
         parse_text = None,
         max_ngram = 2, 
         text_prefix = 'text_', 
@@ -171,6 +171,7 @@ class Main:
                     full_name_path=full_name_path, 
                     overwrite_data=overwrite_data, 
                     inclusion_criteria=inclusion_criteria, 
+                    test_criteria=test_criteria,
                     label_dict=label_dict, 
                     predictors=predictors,
                     text_col=parse_text,
@@ -183,7 +184,8 @@ class Main:
                     data = data_clean, 
                     test_cutoff_ymd = self.test_cutoff_ymd, 
                     test_sample = self.test_sample, 
-                    test_criteria = self.test_criteria)
+                    test_criteria = self.test_criteria, 
+                    inclusion_criteria=inclusion_criteria)
 
                 self._save_data(data_split, full_data_paths) # Write data to disk
                 # Load it from disk (to avoid making stupid mistakes)
@@ -483,19 +485,29 @@ class Main:
                                 train_dmatrix,
                                 num_boost_round=log_best['fit_props']['n_estimators'])
 
-            # Print some quick "sanity check" results
-            test_dmatrix = xgboost.DMatrix(self.data['test']['data'], label = self.data['test']['labels'][name])
-            self.log.info("Mean pred: "+
-                str(np.mean(fits[name].predict(test_dmatrix))) +
-                " Test AUC: " +
-                str(metrics.roc_auc_score(self.data['test']['labels'][name],
-                    fits[name].predict(test_dmatrix))))
+            if len(self.data['test']['data'].index) > 0:
+                # Print some quick "sanity check" results in test data
+                test_dmatrix = xgboost.DMatrix(self.data['test']['data'], label = self.data['test']['labels'][name])
+                self.log.info("Mean pred: "+
+                    str(np.mean(fits[name].predict(test_dmatrix))) +
+                    " (" + str(np.mean(self.data['test']['labels'][name])) + ")"
+                    " Test AUC: " +
+                    str(metrics.roc_auc_score(self.data['test']['labels'][name],
+                        fits[name].predict(test_dmatrix))))
+            else:
+                # If no test data, check results using CV
+                cv_results = xgboost.cv(best_params,
+                                train_dmatrix,
+                                metrics = 'auc',
+                                num_boost_round=log_best['fit_props']['n_estimators'])
+                self.log.info(cv_results.iloc[-1])
 
         model_props = get_model_props(
             fits,
             data = self.data,
             out_weights = self.out_weights,
-            instrument_trans = self.instrument_trans)
+            instrument_trans = self.instrument_trans,
+            log = self.log)
 
         model_dict = {
             'models':fits,

@@ -8,6 +8,7 @@ import itertools
 import xgboost
 import time
 import csv
+import xmltodict
 
 import numpy as np
 import pandas as pd
@@ -34,7 +35,8 @@ from frameworks.uppsala_vitals.utils import (
     generate_ui_data,
     generate_names,
     parse_text_to_bow,
-    get_stopword_set
+    get_stopword_set,
+    nemsis3_to_vitals_dict
     )
 
 class Main:
@@ -80,8 +82,7 @@ class Main:
             'amb_intervention':1,
             'amb_prio':1,
             'hosp_admit':1,
-            'hosp_critcare':1,
-            'hosp_2daymort':1
+            'hosp_critcare':1
         },
         instrument_trans = 'logit',
         filter_str = '',
@@ -96,18 +97,20 @@ class Main:
             "amb_intervention" : ["amb_meds", "amb_cpr", "amb_o2", "amb_immob", "amb_crit", "amb_alert", "amb_ecg"],
             "amb_prio" : ["amb_prio"],
             "hosp_admit" : ["hosp_admit"],
-            "hosp_critcare" : ["hosp_icu","hosp_30daymort"],
-            "hosp_2daymort" : ["hosp_2daymort"]},
+            "hosp_critcare" : ["hosp_icu","hosp_30daymort"]},
         # Define predictors to extract
-        predictors = ['CreatedOn','disp_age','disp_gender','disp_cats', 'disp_prio', 'eval_breaths', 'eval_spo2','eval_sbp', 'eval_pulse', 'eval_temp','eval_avpu'],
+        predictors = ['CreatedOn','disp_age','disp_gender','disp_cats', 'disp_prio','eval_breaths', 'eval_spo2','eval_sbp', 'eval_pulse', 'eval_temp','eval_avpu'],
         parse_text = None,
         max_ngram = 2, 
         text_prefix = 'text_', 
         min_terms = 500,
-        # Test/train sample splitting
+        # Test/train sample splitting and model training
         test_cutoff_ymd = '20200319',
         test_sample = 0.3,
         test_criteria = [],
+        date_obs_weights = True, # Weight more recent observations more heavily in training?
+        refit_full_model = False, # Refit model with training and test data after estimating performance (for production models)
+        # Perhaps add functionality to weight observations meeting certain criteria more heavily
         # UI stuff
         prod_ui_cols = ['value','mean_shap']
         ):
@@ -134,6 +137,8 @@ class Main:
         self.test_cutoff_ymd = test_cutoff_ymd
         self.test_sample = test_sample
         self.test_criteria = test_criteria
+        self.date_obs_weights = date_obs_weights
+        self.refit_full_model = refit_full_model
         self.prod_ui_cols = prod_ui_cols
 
         # Make and check full paths
@@ -169,6 +174,7 @@ class Main:
                     full_name_path=full_name_path, 
                     overwrite_data=overwrite_data, 
                     inclusion_criteria=inclusion_criteria, 
+                    test_criteria=test_criteria,
                     label_dict=label_dict, 
                     predictors=predictors,
                     text_col=parse_text,
@@ -181,7 +187,8 @@ class Main:
                     data = data_clean, 
                     test_cutoff_ymd = self.test_cutoff_ymd, 
                     test_sample = self.test_sample, 
-                    test_criteria = self.test_criteria)
+                    test_criteria = self.test_criteria, 
+                    inclusion_criteria=inclusion_criteria)
 
                 self._save_data(data_split, full_data_paths) # Write data to disk
                 # Load it from disk (to avoid making stupid mistakes)
@@ -218,9 +225,16 @@ class Main:
         else:
             self.log.info("No stopwords found!")
 
-    def input_function(self, request_data):
+    def input_function(self, request):
         """input_function is a required function to parse incoming data"""
+
+        if request.content_type == 'application/json':
+            request_data = request.data
+        if request.content_type == 'application/xml':
+            request_data = nemsis3_to_vitals_dict(request.data)
+
         self.log.debug(request_data)
+        
         # Loop through each item sent through the API
         results = {}
         for id, value in request_data.items():
@@ -419,10 +433,13 @@ class Main:
 
         self.log.info("Training models...")
 
-        date_min = min(self.data['train']['data']['disp_date'])
-        date_max = max(self.data['train']['data']['disp_date'])
-        span = date_max - date_min
-        obs_weights = [(i - date_min)/span for i in self.data['train']['data']['disp_date']]
+        if self.date_obs_weights:
+            date_min = min(self.data['train']['data']['disp_date'])
+            date_max = max(self.data['train']['data']['disp_date'])
+            span = date_max - date_min
+            obs_weights = [(i - date_min)/span for i in self.data['train']['data']['disp_date']]
+        else:
+            obs_weights = [1]*len(self.data['train']['data'].index)
 
         # Tune Hyperparameters ----------------------------------------------------------------
 
@@ -474,20 +491,50 @@ class Main:
                                 train_dmatrix,
                                 num_boost_round=log_best['fit_props']['n_estimators'])
 
-            # Print some quick "sanity check" results
-            test_dmatrix = xgboost.DMatrix(self.data['test']['data'], label = self.data['test']['labels'][name])
-            self.log.info("Mean pred: "+
-                str(np.mean(fits[name].predict(test_dmatrix))) +
-                " Test AUC: " +
-                str(metrics.roc_auc_score(self.data['test']['labels'][name],
-                    fits[name].predict(test_dmatrix))))
+            if len(self.data['test']['data'].index) > 0:
+                # Print some quick "sanity check" results in test data
+                test_dmatrix = xgboost.DMatrix(self.data['test']['data'], label = self.data['test']['labels'][name])
+                self.log.info("Mean pred: "+
+                    str(np.mean(fits[name].predict(test_dmatrix))) +
+                    " (" + str(np.mean(self.data['test']['labels'][name])) + ")"
+                    " Test AUC: " +
+                    str(metrics.roc_auc_score(self.data['test']['labels'][name],
+                        fits[name].predict(test_dmatrix))))
+            else:
+                # If no test data, check results using CV
+                cv_results = xgboost.cv(best_params,
+                                train_dmatrix,
+                                metrics = 'auc',
+                                num_boost_round=log_best['fit_props']['n_estimators'])
+                self.log.info(cv_results.iloc[-1])
 
         model_props = get_model_props(
             fits,
             data = self.data,
             out_weights = self.out_weights,
-            instrument_trans = self.instrument_trans)
+            instrument_trans = self.instrument_trans,
+            log = self.log)
 
+        if self.refit_full_model:
+
+            for name, values in self.data['train']['labels'].iteritems(): 
+
+                self.log.info(f"Training {name} on training and test data")
+
+                train_dmatrix = xgboost.DMatrix(
+                    self.data['train']['data'], 
+                    label = values, 
+                    weight=obs_weights, 
+                    feature_names=self.data['train']['data'].columns)
+
+                # Get best hyperparameters for label from log 
+                log_best = log_params[name][max(log_params[name].keys())]
+                best_params = log_best['params']
+
+                fits[name] = xgboost.train(best_params,
+                                    train_dmatrix,
+                                    num_boost_round=log_best['fit_props']['n_estimators'])
+        
         model_dict = {
             'models':fits,
             'model_props':model_props

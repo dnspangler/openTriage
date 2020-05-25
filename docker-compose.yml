@@ -65,9 +65,10 @@ services:
       # Comment the line below out for initial testing. With it commented out,
       # going to localhost:80 in one's web browser will show a "Welcome to
       # Shiny Server!" diagnostics page.
-      - ./shiny/mountpoints/apps:/srv/shiny-server
+      - ./shiny/apps:/srv/shiny-server
+      - ./frameworks:/srv/shiny-server/frameworks
 
-#volumes:
-#  shiny_logs:
+volumes:
+  shiny_logs:
 
     # TODO: Use kubernetes instead of docker-compose?

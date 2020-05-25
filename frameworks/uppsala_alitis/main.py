@@ -192,7 +192,8 @@ class Main:
                     data = data_clean, 
                     test_cutoff_ymd = self.test_cutoff_ymd, 
                     test_sample = self.test_sample, 
-                    test_criteria = self.test_criteria)
+                    test_criteria = self.test_criteria, 
+                    inclusion_criteria=inclusion_criteria)
 
                 self._save_data(data_split, full_data_paths) # Write data to disk
                 # Load it from disk (to avoid making stupid mistakes)
@@ -229,8 +230,9 @@ class Main:
         else:
             self.log.info("No stopwords found!")
 
-    def input_function(self, request_data):
+    def input_function(self, request):
         """input_function is a required function to parse incoming data"""
+        request_data = request.data
         self.log.debug(request_data)
         # Loop through each item sent through the API
         results = {}

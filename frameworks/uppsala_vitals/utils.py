@@ -17,6 +17,7 @@ import collections
 import random
 import time
 import calendar
+import xmltodict
 
 from pathlib import Path
 from datetime import date, datetime
@@ -94,9 +95,6 @@ def generate_ui_data(store,other_scores,feat_imp_cols,text_prefix,model,log):
 
         feat_imp_table = feat_imp[feat_imp_cols]
 
-        #Show all positive answers and negtive answers with high shap values
-        #feat_imp_table = feat_imp[(feat_imp.mean_abs_shap > 0.02) | (feat_imp.value != 0)][feat_imp_cols]
-
         feat_imp_table = feat_imp_table.style.format({'value': "{:.0f}", 'mean_shap': '{:.2f}'}).set_properties(**{'text-align': 'center'})
         feat_imp_table = feat_imp_table.bar(subset=['mean_shap'], align='mid', color=['#5fba7d','#d65f5f'])
         
@@ -158,6 +156,20 @@ def generate_tokens(key_table):
     qa_name = list(map(remove_pos, qa_name))
 
     return cat_token, qa_token, qa_name
+
+def generate_cms(preds,labels,thresholds):
+    """
+    Generate confusion matrices for a list of threshold values and returns a dict
+    of arrays, for a 2 by 2 matrix, this is in the format [[TN,FP],[FN,TP]]
+    """
+    from sklearn.metrics import confusion_matrix
+
+    cm = {}
+    for i in thresholds:
+        pred_bin = [p>=i for p in preds]
+        cm[i] = confusion_matrix(labels,pred_bin).tolist()
+
+    return cm
 
 def parse_json_data(inputData,model,log):
     """
@@ -508,7 +520,9 @@ def get_model_props(
     fits,
     data,
     out_weights,
-    instrument_trans
+    instrument_trans,
+    log,
+    threshold_digits = 2
     ):
 
     """ Function to generate a dict containing the properties of a given set of model fits """
@@ -518,10 +532,17 @@ def get_model_props(
     scale_preds = {}
     scale = {}
     feat_gains = {}
+    confusion_matrices = {}
 
-    for name, values in data['test']['labels'].items(): 
+    if len(data['test']['labels'].index) == 0:
+        log.warn("Warning! No test data found! Generating model properties on training data, very likely to over-estimate model performance.")
+        eval_data = data['train']
+    else:
+        eval_data = data['test']
+
+    for name, values in eval_data['labels'].items(): 
         # For each label....
-        test_dmatrix = xgboost.DMatrix(data['test']['data'], label = values)
+        test_dmatrix = xgboost.DMatrix(eval_data['data'], label = values)
         # Predict raw score
         preds[name] = [float(i) for i in list(fits[name].predict(test_dmatrix))]
         
@@ -543,6 +564,7 @@ def get_model_props(
             p.append(scale_preds[key][i])
         scores.append(np.average(p, weights=list(out_weights.values())))
 
+    # Generate feature importance and median value df
     feat_name_lists = [list(v.keys()) for v in feat_gains.values()]
     feat_gain_lists = [list(v.values()) for v in feat_gains.values()]
 
@@ -554,6 +576,21 @@ def get_model_props(
     median_values_df = pd.DataFrame({'median' : data['train']['data'].median(axis = 0, skipna = True)})
     feat_props = median_values_df.join(gainsum_df).dropna()
 
+    threshold_value = 10**-threshold_digits
+    # Generate confusion matrices for various score thresholds
+    threshold_list = list(np.arange(
+            min(scores),
+            max(scores),
+            threshold_value))
+    
+    threshold_list = [round(i,threshold_digits) for i in threshold_list]
+
+    confusion_matrices = {}
+
+    for name, values in eval_data['labels'].items():
+        confusion_matrices[name] = generate_cms(scores,values,threshold_list)
+
+    # Generate dictionary to be returned
     model_props = {
         'names': list(data['train']['labels'].columns),
         'feat_props': feat_props.to_dict(),
@@ -562,6 +599,7 @@ def get_model_props(
             'trans': instrument_trans,
             'out_weights': out_weights
         },
+        'confusion_matrices': confusion_matrices,
         #Add some noise here... Just to be safe.
         'scores': list(np.add(scores,np.random.normal(0,0.0001,len(scores)))),
         'sub_preds': {k: list(np.add(v,np.random.normal(0,0.0001,len(v)))) for k, v in preds.items()}
@@ -592,37 +630,7 @@ def join_flat_data(qs_df,alit_df):
     print("alitis:",len(alit_df.index),"qliksense:",len(qs_df.index),"final:",len(full_df.index))
     return full_df
 
-def load_qliksense_data(qs_excel_path,incl_vars):
-
-    """ load and filter data exported from Qliksense """
-    qs_df = pd.read_excel(qs_excel_path,index_col='caseid',na_values='-')
-
-    for i in incl_vars:
-        inclobs = qs_df[i].eq(1)
-        print("excluding",len(qs_df.index)-np.sum(inclobs),i)
-        qs_df = qs_df[inclobs]
-
-    return qs_df
-
-def load_alitis_cases_data(alitis_cases_path):
-
-    """ Load and filter flat data exported from Alitis db """
-    
-    alit_df = pd.read_csv(alitis_cases_path,index_col='caseid')
-    
-    # Exclude calls with no MBS priority (non medical)
-    hasrecprio = alit_df.RecomendedPriority.notnull()
-    print("excluding",len(alit_df.index)-np.sum(hasrecprio), "with no recprio")
-    alit_df = alit_df[hasrecprio]
-
-    # Exclude calls where the MBS wasn't used
-    hasanswers = alit_df.HasAnswers.eq(1)
-    print("excluding",len(alit_df.index)-np.sum(hasanswers), "with no answers")
-    alit_df = alit_df[hasanswers]
-
-    return alit_df
-
-def separate_flat_data(full_df,label_dict,predictor_list,text_col):
+def separate_flat_data(full_df,label_dict,predictor_list, inclusion_list, test_list, text_col):
 
     """ generate composite labels and separate flat data """
 
@@ -631,7 +639,7 @@ def separate_flat_data(full_df,label_dict,predictor_list,text_col):
     for lab, comps in label_dict.items():
         label_df[lab] = full_df[comps].max(axis=1)
 
-    data_df = full_df[predictor_list]
+    data_df = full_df[predictor_list + inclusion_list + test_list]
 
     if text_col is not None:
         text_df = full_df[text_col]
@@ -640,175 +648,14 @@ def separate_flat_data(full_df,label_dict,predictor_list,text_col):
 
     return label_df, data_df, text_df
 
-def parse_flat_data(
-    qs_excel_path,
-    alitis_cases_path,
-    incl_vars
-    ):
-    """ Load flat data from Qliksense and Alitis """
-    qs_df = load_qliksense_data(qs_excel_path,incl_vars)
-    alit_df = load_alitis_cases_data(alitis_cases_path)
-
-    return join_flat_data(qs_df,alit_df)
-
-def load_alitis_mbs_data(incl_caseids, alitis_answers_path, alitis_neg_groups_path):
-
-    """ Load question/answer data and filter to include only relevant calls """
-    
-    answers = pd.read_csv(alitis_answers_path,index_col='caseid').fillna('')
-    neg_groups = pd.read_csv(alitis_neg_groups_path,index_col='caseid').fillna('')
-
-    # Filter only included calls
-    answers = answers[answers.index.isin(incl_caseids)]
-    neg_groups = neg_groups[neg_groups.index.isin(incl_caseids)]
-
-    return answers, neg_groups
-
-def get_categories(df,key_table):
-
-    """ Get the number of answers provided for each category and return them as a dict """
-
-    out_dict = {}
-    unparsed_dict = {}
-
-    cats = df.groupby(['caseid','CategoryID']).size().reset_index()
-    catnames = key_table[['CategoryID','cat_token']].reset_index().drop_duplicates()
-    group_cats = cats.merge(catnames,on=['CategoryID'],how='left').groupby('caseid')
-    for k,v in group_cats:
-        if len(v.index) > 0:
-            cat_dict = dict(zip(catnames['cat_token'],[0] * (len(catnames.index)+1)))
-            cat_dict.update(dict(zip(v['cat_token'],v[0])))
-            if k in out_dict:
-                out_dict[k].update(cat_dict)
-            else:
-                out_dict[k] = cat_dict
-        else:
-            unparsed_dict[k] = {
-                'CategoryID':v['CategoryID']
-            }
-
-    return out_dict, unparsed_dict
-
-def get_neg_groups(df,key_table):
-
-    """ Get implied negative answers based on documentation in question groups """
-
-    out_dict = {}
-    unparsed_dict = {}
-
-    for k,v in df.iterrows():
-        miss_list = key_table[(key_table['CategoryID'] == v['CategoryID']) & 
-                        (key_table['QuestionGroupID'] == v['QuestionGroupID'])].qa_token
-        if len(miss_list) > 0:
-            miss_dict = dict(zip(miss_list,[0] * (len(miss_list)+1)))
-            if k in out_dict:
-                out_dict[k].update(miss_dict)
-            else:
-                out_dict[k] = miss_dict
-        else:
-            unparsed_dict[k] = {
-                'CategoryID':v['CategoryID'],
-                'QuestionGroupID':v['QuestionGroupID']
-            }
-    
-    return out_dict, unparsed_dict
-
-def get_questions(df,key_table,filter_str):
-    
-    """ Get implied negative answers based on positive answers to multiple-choice question """
-
-    out_dict = {}
-    unparsed_dict = {}
-    for k,v in df.iterrows():
-        q_series = key_table[(key_table['CategoryID'] == v['CategoryID']) & 
-                        (key_table['QuestionID'] == v['QuestionID'])].qa_token
-        q_series = q_series[~q_series.str.contains(filter_str)]
-        if len(q_series) > 0:
-            q_dict = dict(zip(q_series,[0] * (len(q_series)+1)))
-            if k in out_dict:
-                out_dict[k].update(q_dict)
-            else:
-                out_dict[k] = q_dict
-        else:
-            unparsed_dict[k] = {
-                'CategryID':v['CategoryID'],
-                'QuestionID':v['QuestionID']
-            }
-    
-    return out_dict, unparsed_dict
-
-def get_answers(df,key_table,filter_str):
-
-    """ Get positive answers """
-
-    out_dict = {}
-    unparsed_dict = {}
-    for k,v in df.iterrows():
-        qa_df = key_table[(key_table['CategoryID'] == v['CategoryID']) & 
-                    (key_table['QuestionID'] == v['QuestionID']) & 
-                    (key_table['AnswerID'] == v['AnswerID']) & 
-                    ((key_table['MultipleChoiceID'] == v['MultipleChoiceID']))]
-        qa_df = qa_df[~qa_df.qa_token.str.contains(filter_str)]
-        if len(qa_df) == 1:
-            qa_dict = dict(zip(qa_df.qa_token,qa_df.value))
-            if k in out_dict:
-                out_dict[k].update(qa_dict)
-            else:
-                out_dict[k] = qa_dict
-            
-        else:
-            unparsed_dict[k] = {
-                'CategoryID':v['CategoryID'],
-                'QuestionID':v['QuestionID'],
-                'AnswerID':v['AnswerID'],
-                'MultipleChoiceID':v['MultipleChoiceID'],
-                'Text':v['Text']
-            }
-    
-    return out_dict, unparsed_dict
-
-def generate_mbs_dicts(answers,neg_groups,key_table,filter_str):
-    """Extracts categories, decision support system answers, 
-    and implied negative answers to questions, and combines 
-    them into a dictionary"""
-    unparsed_dict = {}
-
-    #TODO: Optimize this, either by multithreading or using vectorized functions
-    print("parsing categories")
-
-    # Get 
-    category_dict, unparsed = get_categories(answers,key_table)
-    unparsed_dict = {'categories': unparsed}
-    out_dict = category_dict
-    
-    print("parsing neg groups")
-
-    neg_group_dict, unparsed = get_neg_groups(neg_groups,key_table)
-    unparsed_dict = {'neg_groups': unparsed}
-    out_dict = recur_update(out_dict, neg_group_dict)
-
-    print("parsing questions")
-
-    neg_q_dict, unparsed = get_questions(answers,key_table,filter_str)
-    unparsed_dict = {'neg_questions': unparsed}
-    out_dict = recur_update(out_dict, neg_q_dict)
-
-    print("parsing answers")
-        
-    answer_dict, unparsed = get_answers(answers,key_table,filter_str)
-    unparsed_dict = {'answers': unparsed}
-    out_dict = recur_update(out_dict, answer_dict)
-
-    return out_dict, unparsed_dict
- 
-def parse_export_data(code_dir, raw_data_paths,inclusion_criteria, label_dict, predictors, text_col, key_table, filter_str, log):
+def parse_export_data(code_dir, raw_data_paths, inclusion_criteria,test_criteria, label_dict, predictors, text_col, key_table, filter_str, log):
 
     """ Parse raw export data into a clean format for further processing """
 
     data_paths = {k:f'{code_dir}/{v}' for k,v in raw_data_paths.items()}
 
-    full_df = load_qliksense_data(data_paths['qliksense_export'],inclusion_criteria)
-    label_df, data_df, text_df = separate_flat_data(full_df,label_dict,predictors,text_col)
+    full_df = pd.read_excel(data_paths['qliksense_export'],index_col='caseid',na_values='-')
+    label_df, data_df, text_df = separate_flat_data(full_df,label_dict,predictors,inclusion_criteria,test_criteria,text_col)
 
     # A bit of feature engineering
     # dates
@@ -826,7 +673,7 @@ def parse_export_data(code_dir, raw_data_paths,inclusion_criteria, label_dict, p
 
     return data_df, label_df
 
-def clean_data(code_dir, raw_data_paths, clean_data_paths, full_name_path, overwrite_data, inclusion_criteria, label_dict, predictors, text_col, key_table, filter_str, log):
+def clean_data(code_dir, raw_data_paths, clean_data_paths, full_name_path, overwrite_data, inclusion_criteria, test_criteria,label_dict, predictors, text_col, key_table, filter_str, log):
     
     """ Try to load clean data or parse raw export data if necessary, then generate final test/train data. """
 
@@ -844,6 +691,7 @@ def clean_data(code_dir, raw_data_paths, clean_data_paths, full_name_path, overw
             code_dir, 
             raw_data_paths, 
             inclusion_criteria, 
+            test_criteria,
             label_dict, 
             predictors,
             text_col,
@@ -865,16 +713,21 @@ def clean_data(code_dir, raw_data_paths, clean_data_paths, full_name_path, overw
     return {'data':data_df,
             'labels':label_df}
 
-def split_data(data, test_cutoff_ymd, test_sample, test_criteria):
+def split_data(data, test_cutoff_ymd, test_sample, test_criteria, inclusion_criteria):
     
-    # A major update to the user interface was implemented in May 2019 which 
-    # substantially impacted the structure of the collected data (primarily 
-    # by reducing the rate of missingness). These changes included a validation 
-    # system to indicate whether a record is complete or not, and risk prediction
-    # tools will only be available for complete calls per IsValid.
+    # Apply inclusion criteria before splitting
+
+    for i in inclusion_criteria:
+        inclobs = data['data'][i].eq(1)
+        print("excluding",len(data['data'].index)-np.sum(inclobs),i)
+        data['data'] = data['data'][inclobs]
+        data['labels'] = data['labels'][inclobs]
+
+    data['data'] = data['data'].drop(inclusion_criteria,axis=1)
 
     cutoff_date_epoch = calendar.timegm(time.strptime(test_cutoff_ymd, "%Y%m%d")) / 86400
 
+    
     valid_ids = data['data'].index[data['data'].disp_date >= cutoff_date_epoch]
     print(f"{len(valid_ids)} observations after {test_cutoff_ymd}")
 
@@ -882,9 +735,13 @@ def split_data(data, test_cutoff_ymd, test_sample, test_criteria):
         crit_incl = data['data'][i].eq(1)
         criteria_ids = data['data'].index[crit_incl]
         valid_ids = [j for j in valid_ids if j in criteria_ids]
-        print(f"{len(valid_ids)} observations after excluding {i}")
+        print(f"Keeping {len(valid_ids)} observations with {i} for testing")
+    
+    data['data'] = data['data'].drop(test_criteria,axis=1)
 
     test_ids = list(random.sample(list(valid_ids),int(len(valid_ids)*test_sample)))
+    
+    print(f"{len(test_ids)} test observations after random sampling")
 
     out_data = {
         'train':{
@@ -914,6 +771,126 @@ def generate_names(code_dir, data):
     
     pass
 
+def nemsis3_to_vitals_dict(nemsis_xml):
+
+    n3_map = {
+        'disp_gender':{
+        '9906001':1, # Female
+        '9906003':0 # Male
+        },
+        'disp_cats':{ # A first stab at this.. Non-matches will assume a missing category #TODO: Check how to handle multiple matches, our categories are more specific...
+            '2301001':'disp_cats_Buk_flanksmrta|disp_cats_Diarr|disp_cats_Mag_tarmbldning',# Abdominal Pain/Problems
+            '2301003':'disp_cats_Allergisk_reaktion',# Allergic Reaction/Stings
+            '2301005':None,# Animal Bite
+            '2301007':None,# Assault
+            '2301009':None,# Automated Crash Notification
+            '2301011':'disp_cats_Ryggsmrta',# Back Pain (Non-Traumatic)
+            '2301013':'disp_cats_Andningsbesvr',# Breathing Problem
+            '2301015':'disp_cats_Brnnskada',# Burns/Explosion
+            '2301017':'disp_cats_CBRN|disp_cats_Kemisk_exponering',# Carbon Monoxide/Hazmat/Inhalation/CBRN
+            '2301019':'disp_cats_Hjrtstopp',# Cardiac Arrest/Death
+            '2301021':'disp_cats_Brstsmrta',# Chest Pain (Non-Traumatic)
+            '2301023':'disp_cats_Luftvgsbesvr',# Choking #TODO: Technically... Got to check this one
+            '2301025':'disp_cats_Kramper',# Convulsions/Seizure
+            '2301027':'disp_cats_Blodsocker_hgt|disp_cats_Blodsocker_lgt',# Diabetic Problem 
+            '2301029':'disp_cats_Elektrisk_skada',# Electrocution/Lightning
+            '2301031':'disp_cats_gon',# Eye Problem/Injury
+            '2301033':None,# Falls
+            '2301035':'disp_cats_Brand|disp_cats_Rkexponering',# Fire
+            '2301037':'disp_cats_Huvudvrk',# Headache
+            '2301039':'disp_cats_Planerad',# Healthcare Professional/Admission
+            '2301041':'disp_cats_ICD|disp_cats_Rytmrubbning|disp_cats_Pacemaker',# Heart Problems/AICD
+            '2301043':'disp_cats_Hypertermi|disp_cats_Hypotermi|disp_cats_Kldskada|disp_cats_Vrmeslag',# Heat/Cold Exposure
+            '2301045':'disp_cats_Srskada',# Hemorrhage/Laceration
+            '2301047':None,# Industrial Accident/Inaccessible Incident/Other Entrapments (Non-Vehicle)
+            '2301049':None,# Medical Alarm
+            '2301051':'disp_cats_Annat',# No Other Appropriate Choice
+            '2301053':'disp_cats_Intoxfrgiftning',# Overdose/Poisoning/Ingestion
+            '2301055':None,# Pandemic/Epidemic/Outbreak
+            '2301057':'disp_cats_Graviditet|disp_cats_Frlossning',# Pregnancy/Childbirth/Miscarriage
+            '2301059':'disp_cats_Psykiska_besvr|disp_cats_Vldhotsuicidhot',# Psychiatric Problem/Abnormal Behavior/Suicide Attempt
+            '2301061':'disp_cats_Allmn_vuxen|disp_cats_Allmn_ldring|disp_cats_Allmn_barn',# Sick Person
+            '2301063':None,# Stab/Gunshot Wound/Penetrating Trauma
+            '2301065':None,# Standby
+            '2301067':'disp_cats_Stroke|disp_cats_Talpverkan|disp_cats_Sensoriskt_motoriskt_bortfall',# Stroke/CVA
+            '2301069':'disp_cats_Trafikolycka|disp_cats_Sjolycka|disp_cats_Flygolycka',# Traffic/Transportation Incident
+            '2301071':'disp_cats_Planerad',# Transfer/Interfacility/Palliative Care
+            '2301073':'disp_cats_Trauma',# Traumatic Injury
+            '2301075':None,# Well Person Check
+            '2301077':'disp_cats_Snkt_vakenhet|disp_cats_Svimning|disp_cats_Yrsel',# Unconscious/Fainting/Near-Fainting
+            '2301079':None,# Unknown Problem/Person Down
+            '2301081':'disp_cats_Drunkningstillbud|disp_cats_Dykeriolycka',# Drowning/Diving/SCUBA Accident
+            '2301083':'disp_cats_Planerad',# Airmedical Transport
+            '2301085':'disp_cats_Snkt_vakenhet|disp_cats_Frvirring',# Altered Mental Status
+            '2301087':None,# Intercept
+            '2301089':'disp_cats_Illamende',# Nausea
+            '2301091':'disp_cats_Krkning'# Vomiting
+        },
+        'disp_prio':{ # These are... Kinda right
+            '2305001':1,#Critical
+            '2305003':2,#Emergent
+            '2305005':3,#Lower Acuity
+            '2305007':4#Non-Acute [e.g., Scheduled Transfer or Standby]
+        }
+    }
+
+    """
+    Additional dispatch categories not matched to NEMSIS:
+    "disp_cats_Arm_bensymtom_ej_trauma": "Arm/leg symptoms",
+    "disp_cats_Blod_i_urin": "Blood in urine",
+    "disp_cats_Blodig_upphostning": "Blood in sputum",
+    "disp_cats_Feber": "Fever",
+    "disp_cats_Frtskada": "Chemical burn",
+    "": "Confusion",
+    "disp_cats_Hallucination": "Hallucination",
+    "disp_cats_Halsont": "Throat pain",
+    "disp_cats_Infektion": "Infection",
+    "disp_cats_Ns_svalgbldning": "Nosebleed",
+    "disp_cats_Ormbett": "Snakebite",
+    "disp_cats_Urinkateterstopp": "Urinary catheter blockage",
+    "disp_cats_Urinstmma": "Dysuria",
+    "disp_cats_Urogenitala_besvr": "Urogenital issue",
+    "disp_cats_Vaginal_bldning": "Vaginal bleed",
+    "": "Dizziness",
+    """
+
+    indata = xmltodict.parse(nemsis_xml)['EMSDataSet']['Header']['PatientCareReport']
+
+    # Use pcr number for id if sent, otherwise generate a random string
+    if indata['eRecord']['eRecord.01']:
+        identifier = indata['eRecord']['eRecord.01']
+    else:
+        identifier = secrets.token_urlsafe(6)
+
+    n3 = {
+        'region':indata['eResponse']['eResponse.AgencyGroup'].get('eResponse.01'),
+        'disp_created':indata['eTimes'].get('eTimes.02'), 
+        'disp_age':indata['ePatient']['ePatient.AgeGroup'].get('ePatient.15'), 
+        'disp_gender':indata['ePatient'].get('ePatient.13'),
+        'disp_cats':indata['eDispatch'].get('eDispatch.01'),
+        'disp_prio':indata['eDispatch'].get('eDispatch.05'),
+        # Get first set of vitals
+        'eval_breaths': indata['eVitals']['eVitals.VitalGroup'][0].get('eVitals.14'),
+        'eval_spo2': indata['eVitals']['eVitals.VitalGroup'][0].get('eVitals.12'),
+        'eval_sbp': indata['eVitals']['eVitals.VitalGroup'][0]['eVitals.BloodPressureGroup'].get('eVitals.06'),
+        'eval_pulse':indata['eVitals']['eVitals.VitalGroup'][0]['eVitals.HeartRateGroup'].get('eVitals.10'),
+        'eval_avpu':indata['eVitals']['eVitals.VitalGroup'][0].get('eVitals.26'),
+        'eval_temp':indata['eVitals']['eVitals.VitalGroup'][0]['eVitals.TemperatureGroup'].get('eVitals.24') # Note that NEMSIS uses celcius for body temperature like other civilized people!
+    }
+
+    # Apply transformations
+    # Reformat dispatch date
+    n3['disp_created'] = n3['disp_created'].split('+')[0].replace('T', ' ')
+    # Set age to 0 if age documented as other than years (though perhaps some crews document 1-2 year olds in terms of months? Should revisit this)
+    if indata['ePatient']['ePatient.AgeGroup']['ePatient.16'] in ['2516001','2516003','2516005','2516007']:
+        indata['ePatient']['ePatient.AgeGroup']['ePatient.15'] = 0
+    n3['disp_gender'] =  n3_map['disp_gender'].get(n3['disp_gender'])
+    n3['disp_cats'] =  n3_map['disp_cats'].get(n3['disp_cats'])
+    n3['disp_prio'] =  n3_map['disp_prio'].get(n3['disp_prio'])
+
+    outdict = {}
+    outdict[identifier] = n3
+    return outdict
 # Text parsng -------------------------------------------------------
 
 def ngrams(words, n):

@@ -38,10 +38,10 @@ class Main:
         # make sure predict_function handles 'model' correctly.
         return model
 
-    def input_function(self, request_data):
+    def input_function(self, request):
         """input_function is a required function to parse incoming data"""
 
-        results = request_data
+        results = request.data
 
         return results
 

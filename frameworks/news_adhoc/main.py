@@ -115,7 +115,7 @@ class Main:
         # make sure predict_function handles 'model' correctly!
         return model
 
-    def input_function(self, request_data):
+    def input_function(self, request):
         """input_function is a required function to parse incoming data.
         Do any pre-processing steps required to transform your 
         data into the format required by your model here.
@@ -124,7 +124,7 @@ class Main:
         
         If using ML models, you probably want to make the output 
         of this function a pandas dataframe."""
-
+        request_data = request.data
         results = {}
 
         for id, value in request_data.items():

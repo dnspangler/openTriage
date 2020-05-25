@@ -82,8 +82,7 @@ class Main:
             'amb_intervention':1,
             'amb_prio':1,
             'hosp_admit':1,
-            'hosp_critcare':1,
-            'hosp_2daymort':1
+            'hosp_critcare':1
         },
         instrument_trans = 'logit',
         filter_str = '',
@@ -100,16 +99,18 @@ class Main:
             "hosp_admit" : ["hosp_admit"],
             "hosp_critcare" : ["hosp_icu","hosp_30daymort"]},
         # Define predictors to extract
-        predictors = ['CreatedOn','disp_age','disp_gender','disp_cats', 'disp_prio', 'disp_corona','eval_breaths', 'eval_spo2','eval_sbp', 'eval_pulse', 'eval_temp','eval_avpu','amb_corona'],
+        predictors = ['CreatedOn','disp_age','disp_gender','disp_cats', 'disp_prio','eval_breaths', 'eval_spo2','eval_sbp', 'eval_pulse', 'eval_temp','eval_avpu'],
         parse_text = None,
         max_ngram = 2, 
         text_prefix = 'text_', 
         min_terms = 500,
-        # Test/train sample splitting
+        # Test/train sample splitting and model training
         test_cutoff_ymd = '20200319',
         test_sample = 0.3,
         test_criteria = [],
         date_obs_weights = True, # Weight more recent observations more heavily in training?
+        refit_full_model = False, # Refit model with training and test data after estimating performance (for production models)
+        # Perhaps add functionality to weight observations meeting certain criteria more heavily
         # UI stuff
         prod_ui_cols = ['value','mean_shap']
         ):
@@ -136,6 +137,8 @@ class Main:
         self.test_cutoff_ymd = test_cutoff_ymd
         self.test_sample = test_sample
         self.test_criteria = test_criteria
+        self.date_obs_weights = date_obs_weights
+        self.refit_full_model = refit_full_model
         self.prod_ui_cols = prod_ui_cols
 
         # Make and check full paths
@@ -512,6 +515,26 @@ class Main:
             instrument_trans = self.instrument_trans,
             log = self.log)
 
+        if self.refit_full_model:
+
+            for name, values in self.data['train']['labels'].iteritems(): 
+
+                self.log.info(f"Training {name} on training and test data")
+
+                train_dmatrix = xgboost.DMatrix(
+                    self.data['train']['data'], 
+                    label = values, 
+                    weight=obs_weights, 
+                    feature_names=self.data['train']['data'].columns)
+
+                # Get best hyperparameters for label from log 
+                log_best = log_params[name][max(log_params[name].keys())]
+                best_params = log_best['params']
+
+                fits[name] = xgboost.train(best_params,
+                                    train_dmatrix,
+                                    num_boost_round=log_best['fit_props']['n_estimators'])
+        
         model_dict = {
             'models':fits,
             'model_props':model_props

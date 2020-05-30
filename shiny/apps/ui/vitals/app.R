@@ -10,7 +10,6 @@ fw_name = "uppsala_vitals"
 
 # Set this if you're not running this and the openTriage back-end on the same server
 server_url = "http://opentriage:5000"
-cat(file=stdout(),"Hello!")
 model_props = fromJSON(paste0("../../frameworks/",fw_name,"/models/model_props.json"))
 pretty_names = unlist(fromJSON(paste0("../../frameworks/",fw_name,"/models/pretty_names.json")))
 
@@ -28,8 +27,6 @@ feats = feats[rev(order(feats$gain)),]
 
 cat_names = gsub("disp_cats_","",feats$var)[grepl("disp_cats_",feats$var)]
 names(cat_names) = feats$name[grepl("disp_cats_",feats$var)]
-
-ui_page = reactiveVal()
 
 ui <- fluidPage(
     
@@ -161,6 +158,7 @@ server <- function(input, output, session) {
     sessionID = paste0(do.call(paste0, replicate(5, sample(c(LETTERS,0:9), 8, TRUE), FALSE)),collapse="")
     
     # Observer to update score and ui page upon changing parameters
+    
     observe({
         
         requestID = paste0(do.call(paste0, replicate(5, sample(c(LETTERS,0:9), 8, TRUE), FALSE)),collapse="")
@@ -180,19 +178,20 @@ server <- function(input, output, session) {
         if(class(r_content) == "list"){
             
             updateSliderInput(session,"diag_score",value = round(r_content[[sessionID]]$score,2))
-            
-            ui_page(HTML(as.character(r_content[[sessionID]]$html)))
+            output$ui <- renderUI({
+                HTML(as.character(r_content[[sessionID]]$html))
+            })
             
         }else{
-            
-            ui_page(HTML(as.character(r_content)))
+            output$ui <- renderUI({
+                HTML(as.character(r_content))
+            })
             
         }
         }
         
         
     })
-    
     
     get_payload <- function(input) {
         
@@ -230,10 +229,6 @@ server <- function(input, output, session) {
             write(get_payload(input), con)
         }
     )
-    
-    output$ui <- renderUI({
-        ui_page()
-    })
     
     output$diag <- renderTable({
         

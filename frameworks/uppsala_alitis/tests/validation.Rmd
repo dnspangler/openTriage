@@ -1,0 +1,490 @@
+---
+title: "A validation of machine learning-based risk scores in the prehospital setting"
+author: 
+  - Douglas Spangler
+  - Thomas Hermansson
+  - David Smekal
+  - Hans Blomberg
+output:
+  word_document: default
+  pdf_document: default
+---
+# Setup
+```{r setup, include=FALSE}
+
+# Remember to set your working directory to the location of this file or relative file paths won't work!
+
+# if using Rstudio, this ought to do it:
+if(rstudioapi::isAvailable()){
+  setwd(dirname(rstudioapi::getSourceEditorContext()$path))
+}
+
+# Set config variables
+
+inclset = "S6" # "S6" for broadened inclusion criteria
+pubmods = FALSE # TRUE to generate public release models and include them in the validation
+
+# Don't print source code when knitting document, and don't print warnings/messages
+knitr::opts_chunk$set(echo = F,
+                      warning = F,
+                      error = F,
+                      message = F,
+                      cache = F,
+                      fig.width = 8,
+                      fig.height = 5)
+
+# Don't use scientific notation
+options(scipen = 999)
+
+# Load necessary package (installing them if necessary)
+
+pkglist <- c("tidyverse", # For general data munging and plotting
+             "lubridate", # For handling dates/times
+             "boot", # For doing bootstrap calculations
+             "knitr", # For generating pretty tables
+             "xgboost", # For fitting and cross validation of gradient boosting models
+             "PRROC", # for generating precisicion/recall and reciever operating characteristincs curves
+             "pROC", # For getting CIs for sensitivity/specificity values (can't do PRCs though)
+             "geosphere", # For calculating distances between coordinates on a geoid
+             "rms", # For testing model calibration 
+             "mice", # For doing multiple imputation
+             "EnvStats", # For truncated distributions
+             "micemd", # For parallelizing multiple imputations
+             "flextable", # For making pretty tables
+             "officer") # needed to define border properties
+
+newpkg <- pkglist[!(pkglist %in% installed.packages()[,"Package"])]
+if(length(newpkg)) install.packages(newpkg)
+
+lapply(pkglist, require, character.only = TRUE)
+
+# Set random seed for reproducibility
+seed <- 42
+
+set.seed(seed)
+
+# Load additional functions used in the analysis
+
+source("functions.R")
+
+```
+# Load
+```{r load data}
+library(readr)
+library(jsonlite)
+data <- read_csv("../data/test/data.csv")[,-1]
+labels <- read_csv("../data/test/labels.csv")[,-1]
+mbs_key <- read_csv("../models/mbs_key.csv")
+preds <- fromJSON("../models/model_props.json")
+
+dat_names <- colnames(data)
+lab_names <- colnames(labels)
+```
+## Table 2
+```{r table2}
+desc_table <- function(x){
+  
+  # Generate data to populate table of descriptive statistics
+  
+  dplyr::summarise(x, 
+            N = n(),
+            'Age, mean' = paste_boot_ci(disp_age, prop = F),
+            'Female, percent' = paste_boot_ci(disp_gender),
+            'Emergent transport ,\npercent' = paste_boot_ci(amb_prio),
+            'Ambulance intervention*,\n percent' = paste_boot_ci(amb_intervention),
+            'Critical care,\npercent' = paste_boot_ci(hosp_critcare))
+}
+
+by_prio <- valdata %>%
+  group_by(Priority)%>%
+  desc_table() %>%
+  t()
+
+tot <- valdata %>%
+  desc_table() %>%
+  t()
+
+table2 <- cbind(rownames(by_prio),by_prio,c("Total",tot))
+
+#colnames(table2) <- c(" ","1A","1B","2A","2B","Total")
+table2 <- as.data.frame(table2[-1,],stringsAsFactors = F)
+
+table2_final <- get_names(table2) %>%
+flextable() %>%
+  add_header_row(values = c("","Priority",""), 
+                 colwidths = c(1,4,1)) %>%
+  align(part = "header", align = "center")
+
+table2_final
+
+```
+
+``` {r roc_aucs}
+library(pROC)
+# Generate ROC graphs
+
+val_preds <- data.frame(
+  disp_prio = max(data$Priority)-data$Priority,
+  disp_recprio = max(data$RecomendedPriority)-data$RecomendedPriority,
+  score = preds$scores,
+  preds$sub_preds)#[data$Priority %in% c(1,2),]
+
+val_labs <- labels#[data$Priority %in% c(1,2),]
+
+roc_fun <- function(l,p){
+  list(roc(l,p))
+}
+
+sapplyply <- function(apply_fun,df1_in,df2_in){
+  
+  sapply(df1_in,function(df1,df2){
+  
+    sapply(df2,function(df22,df12){
+      apply_fun(df12,df22)
+    },df12 = df1)
+  
+  },df2 = df2_in)
+}
+
+auc_cis <- data.frame(t(sapplyply(boot_auc,val_preds,val_labs)))
+
+rocs <- data.frame(sapplyply(roc_fun,val_labs,val_preds))
+
+auc_cis %>% 
+    add_rownames() %>%
+  flextable()
+
+```
+
+```{r roc_curves}
+
+score <- data.frame(cbind(label = rep(lab_names,1,each = nrow(labels)),
+  n = as.numeric(seq_along(1:nrow(labels))),
+  sens = unlist(lapply(rocs,function(x){x$score$sensitivities})),
+  spec = unlist(lapply(rocs,function(x){x$score$specificities})),
+  thresh = unlist(lapply(rocs,function(x){x$score$thresholds}))),
+  stringsAsFactors = F)
+
+get_roc_props <- function(labs,roc_df,pred){
+  
+  data.frame(
+    label = rep(names(labs),1,each = length(roc_df[[1]][[pred]][[2]])),
+    n = rep(seq_along(1:length(roc_df[[1]][[pred]][[2]])),ncol(labs)),
+    sens = unlist(lapply(roc_df,function(x){x[[pred]]$sensitivities})),
+    spec = unlist(lapply(roc_df,function(x){x[[pred]]$specificities})),
+    thresh = unlist(lapply(roc_df,function(x){x[[pred]]$thresholds})),
+    stringsAsFactors = F)
+  
+}
+
+curves <- data.frame(rbind(
+  cbind("pred"="score",get_roc_props(labels,rocs,"score")),
+  cbind("pred"="disp_prio", get_roc_props(labels,rocs,"disp_prio")),
+  cbind("pred"="amb_prio", get_roc_props(labels,rocs,"amb_prio")),
+  cbind("pred"="amb_intervention", get_roc_props(labels,rocs,"amb_intervention")),
+  cbind("pred"="hosp_critcare", get_roc_props(labels,rocs,"hosp_critcare")))) %>%
+  filter(pred %in% c("score","disp_prio") | pred == label)
+
+ggplot(curves,aes(x=1-spec,y=sens,color=pred)) + 
+  geom_line() + 
+  geom_abline(intercept = 0,slope = 1) + 
+  facet_wrap(~label)
+
+```
+# Supplementary analyses
+
+## S3 Figure - Model calibration curves
+
+### Overall
+
+```{r calib_overall}
+library(rms)
+
+val_prob <- function(p,l, g = NULL,m = 0){
+  
+  # Use a different function from the rms package to get calibration curves stratified by some grouping vairable
+  
+  dat <- data.frame(pred = p, lab = l) 
+  
+  mod <- glm(lab ~ pred, data = dat, family = binomial)
+  
+  out <- val.prob(fitted(mod),l)
+  
+  return(out)
+}
+
+plot(val.prob(p = preds$sub_preds$amb_prio, y = labels$amb_prio, group = data$disp_gender))
+plot(val.prob(p = preds$sub_preds$amb_intervention, y = labels$amb_intervention, group = data$disp_gender))
+plot(val.prob(p = preds$sub_preds$hosp_critcare, y = labels$hosp_critcare, group = data$disp_gender))
+
+```
+
+## Sub-group calibration
+
+### By Age quartiles
+
+```{r calib_age, warning=F}
+
+par(mfrow=c(3,3),
+    mar=c(2,2,3,2),
+    oma = c(2,2,0,0))
+
+groupvar = "Age"
+for(i in seq(nrow(calib_tab))){
+  tit <- paste0(get_names(calib_tab$preds[i]),"\n",get_names(calib_tab$labs[i]))
+  dat <- val_prob(preds_test[,calib_tab$preds[i]],
+                   labs_test[,calib_tab$labs[i]],
+                  g = testdata$disp_age,
+                  m = nmin)
+  ngrp = nrow(dat$stats)
+    calibstats <- rbind(calibstats,
+                        cbind("pred" = rep(get_names(calib_tab$preds[i]),ngrp),
+                              "lab" = rep(get_names(calib_tab$labs[i]),ngrp),
+                              "groupvar" = rep(groupvar,ngrp),
+                              "group" =  names(dat$stats[,"C"]),
+                              "n" = dat$stats[,"n"],
+                              "E_avg" = dat$stats[,"Eavg"],
+                              "C_index" = dat$stats[,"C"]))
+  plt <- val_prob_plot(dat, statloc = F, xlab = " ",ylab = " ", cex = 1)
+  title(tit)
+}
+
+mtext('Predicted probability', side = 1, line = 1, outer = TRUE)
+mtext('Actual probability', side = 2, line = 1, outer = TRUE)
+
+```
+
+### By Gender
+
+```{r calib_gender, warning=F}
+par(mfrow=c(3,3),
+    mar=c(2,2,3,2),
+    oma = c(2,2,0,0))
+
+groupvar = "Gender"
+for(i in seq(nrow(calib_tab))){
+  tit <- paste0(get_names(calib_tab$preds[i]),"\n",get_names(calib_tab$labs[i]))
+  dat <- val_prob(preds_test[,calib_tab$preds[i]],
+                   labs_test[,calib_tab$labs[i]],
+                  g = factor(testdata$disp_gender, labels = c("Male","Female")),
+                  m = nmin)
+  ngrp = nrow(dat$stats)
+    calibstats <- rbind(calibstats,
+                        cbind("pred" = rep(get_names(calib_tab$preds[i]),ngrp),
+                              "lab" = rep(get_names(calib_tab$labs[i]),ngrp),
+                              "groupvar" = rep(groupvar,ngrp),
+                              "group" =  names(dat$stats[,"C"]),
+                              "n" = dat$stats[,"n"],
+                              "E_avg" = dat$stats[,"Eavg"],
+                              "C_index" = dat$stats[,"C"]))
+  plt <- val_prob_plot(dat, statloc = F, xlab = " ",ylab = " ", cex = 1)
+  title(tit)
+}
+
+mtext('Predicted probability', side = 1, line = 1, outer = TRUE)
+mtext('Actual probability', side = 2, line = 1, outer = TRUE)
+
+```
+
+### By Priority
+
+```{r calib_prio, warning=F}
+par(mfrow=c(3,3),
+    mar=c(2,2,3,2),
+    oma = c(2,2,0,0))
+
+groupvar = "Priority"
+for(i in seq(nrow(calib_tab))){
+  tit <- paste0(get_names(calib_tab$preds[i]),"\n",get_names(calib_tab$labs[i]))
+  dat <- val_prob(preds_test[,calib_tab$preds[i]],
+                   labs_test[,calib_tab$labs[i]],
+                  g = factor(testdata$pout, labels = c("2B","2A","1B","1A")),
+                  m = nmin)
+  ngrp = nrow(dat$stats)
+    calibstats <- rbind(calibstats,
+                        cbind("pred" = rep(get_names(calib_tab$preds[i]),ngrp),
+                              "lab" = rep(get_names(calib_tab$labs[i]),ngrp),
+                              "groupvar" = rep(groupvar,ngrp),
+                              "group" =  names(dat$stats[,"C"]),
+                              "n" = dat$stats[,"n"],
+                              "E_avg" = dat$stats[,"Eavg"],
+                              "C_index" = dat$stats[,"C"]))
+  plt <- val_prob_plot(dat, statloc = F, xlab = " ",ylab = " ", cex = 1)
+  title(tit)
+}
+
+mtext('Predicted probability', side = 1, line = 1, outer = TRUE)
+mtext('Actual probability', side = 2, line = 1, outer = TRUE)
+
+```
+
+### By Common call types
+
+```{r calib_ct, warning=F}
+par(mfrow=c(3,3),
+    mar=c(2,2,3,2),
+    oma = c(2,2,0,0))
+
+groupvar = "Calltype"
+
+## Get names of the most comon call types and generate a categorical variable
+
+cts <- sort(colSums(dplyr::select(testdata,starts_with("disp_cat")),na.rm = T), decreasing = T)
+
+cats <- names(cts[1:5])
+
+ct <- ifelse(testdata[cats[1]] == 1,get_names(cats[1]),
+             ifelse(testdata[cats[2]] == 1,get_names(cats[2]),
+             ifelse(testdata[cats[3]] == 1,get_names(cats[3]),
+             ifelse(testdata[cats[4]] == 1,get_names(cats[4]),
+             ifelse(testdata[cats[5]] == 1,get_names(cats[5]),
+             "Other")))))
+
+for(i in seq(nrow(calib_tab))){
+  tit <- paste0(get_names(calib_tab$preds[i]),"\n",get_names(calib_tab$labs[i]))
+  dat <- val_prob(preds_test[,calib_tab$preds[i]],
+                   labs_test[,calib_tab$labs[i]],
+                  g = ct,
+                  m = nmin)
+  ngrp = nrow(dat$stats)
+  calibstats <- rbind(calibstats,
+                      cbind("pred" = rep(get_names(calib_tab$preds[i]),ngrp),
+                            "lab" = rep(get_names(calib_tab$labs[i]),ngrp),
+                            "groupvar" = rep(groupvar,ngrp),
+                            "group" =  names(dat$stats[,"C"]),
+                            "n" = dat$stats[,"n"],
+                            "E_avg" = dat$stats[,"Eavg"],
+                            "C_index" = dat$stats[,"C"]))
+  names(dat$cal.curves) <- gsub("Dispatch - ","",names(dat$cal.curves))
+  plt <- val_prob_plot(dat, statloc = F, xlab = " ",ylab = " ", cex = 1)
+  title(tit)
+}
+
+mtext('Predicted probability', side = 1, line = 1, outer = TRUE)
+mtext('Actual probability', side = 2, line = 1, outer = TRUE)
+```
+
+## S4 Table - Model calibration mean absolute error
+```{r}
+sup3t <- calibstats %>%
+  dplyr::select(pred,lab,n,E_avg,groupvar) %>%
+  group_by(pred,lab,groupvar) %>%
+  dplyr::summarize(E_avg = weighted.mean(as.numeric(as.character(E_avg)),
+                                  as.numeric(as.character(n)))) %>%
+  spread(lab, E_avg) %>%
+  arrange(groupvar) %>%
+  dplyr::select(groupvar,everything()) %>%
+  rename(" " = groupvar,
+         "  " = pred)
+
+
+flextable(sup3t) %>%
+ add_header_row(values = c("Stratification variable","Predictor","Mean absolute error from ideal calibration"),
+                colwidths = c(1,1,3)) %>%
+  merge_v(j = 1) %>%
+  colformat_num(col_keys = c("Hospital admission","Critical Care","Two-day mortality"), digits = 4) %>%
+ align(part = "header", align = "center") %>%
+  fix_border_issues()
+  
+```
+
+## S5 Table - Sensitivity to alternate weights
+
+```{r weights}
+weightlist <- list("100:10:1" = c(100,10,1),
+                   "4:2:1" = c(4,2,1),
+                   "1:1:1" = c(1,1,1),
+                   "1:2:4" = c(1,2,4),
+                   "1:10:100" = c(10,10,100),
+                   "1:0:0" = c(1,0,0),
+                   "0:1:0" = c(0,1,0),
+                   "0:0:1" = c(0,0,1))
+
+predlist <- list("Dispatch" = list("test" = disp_test_preds,
+                                   "CV" = disp_composite_preds),
+                 "Ambulance" = list("test" = amb_test_preds,
+                                    "CV" = amb_composite_preds))
+
+namegrid = expand.grid(names(weightlist),
+                       names(predlist), 
+                       stringsAsFactors = F)
+
+crosslist <- cross2(weightlist,predlist)
+
+t <- lapply(crosslist,function(x){
+  predict_composite(x[[2]][[1]],x[[2]][[2]],x[[1]],use_min = F)
+})
+
+preds_test_weights <- as.data.frame(do.call(cbind,t))
+
+longpreddata_test_weights <- data.frame(longlabs_test, preds_test_weights) %>%
+  filter(!is.na(val))
+
+rocaucs_test_weights <- longpreddata_test_weights %>%
+  group_by(lab) %>%
+  summarise_at(vars(-1),funs(boot_auc(.,val, type = "roc"))) %>%
+  ungroup() %>%
+  t() %>%
+  as.data.frame(stringsAsFactors = F)
+
+names(rocaucs_test_weights) <- rocaucs_test_weights[1,]
+rocaucs_test_weights <- rocaucs_test_weights[-1,]
+rocaucs_test_weights <- cbind("Predictor set" = namegrid$Var2,
+                              "Weights*" = namegrid$Var1,
+                              rocaucs_test_weights,
+                              stringsAsFactors = F)
+
+flextable(get_names(rocaucs_test_weights)) %>%
+  merge_v("Predictor set") %>%
+  align(j = "Predictor set", align = "center") %>%
+  hline(i = 8, border = fp_border()) %>%
+  fix_border_issues()
+```
+* Weights applied to model predictions for Hospital Admission : Critical Care : Two-day Mortality
+
+## S6 Analysis - Broad inclusion criteria
+
+To obtain the results reported in Supplementary analysis 6, set the variable "inclset" to "S6" on row 340. 
+
+## S7 Table - Descriptive statistics by ED diagnosis
+
+```{r triage}
+
+# Only do this if there is actual data (ED triage values are not included as predictors..)
+if(fakedata != 1){ 
+  t <- incldata$hosp_triage
+t2 <- sapply(t,function(x){
+  unname(strsplit(x,"\\|")[[1]][1])
+})
+incldata$hosp_triage_single <- t2
+
+s7table <- incldata %>%
+  group_by(hosp_triage_single) %>%
+  mutate(n = n()) %>%
+  filter(n > 300) %>%
+  desc_table() %>%
+  arrange(desc(N)) %>%
+  select(-"Female, percent", 
+         -"Ambulance intervention*,\n percent",
+         -"Missing vitals,\npercent" , 
+         -"Prior contacts\n(30 days), mean",
+         -"Intensive Care Unit, percent",
+         -"In-hospital death,\npercent")
+
+get_names(s7table) %>%
+flextable()
+}
+
+
+```
+
+
+```{r fig export, eval=F}
+tiff("fig1.tif", res=600, compression = "lzw", height=5, width=8, units="in")
+fig1
+dev.off()
+
+tiff("fig2.tif", res=600, compression = "lzw", height=4, width=8, units="in")
+fig2
+dev.off()
+```

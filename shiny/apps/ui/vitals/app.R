@@ -13,7 +13,6 @@ server_url = "http://opentriage:5000"
 model_props = fromJSON(paste0("../../frameworks/",fw_name,"/models/model_props.json"))
 pretty_names = unlist(fromJSON(paste0("../../frameworks/",fw_name,"/models/pretty_names.json")))
 
-
 feats = data.frame(var = names(model_props$feat_props$gain),
                    gain = unlist(model_props$feat_props$gain),
                    stringsAsFactors = F)
@@ -153,7 +152,7 @@ ui <- fluidPage(
 server <- function(input, output, session) {
     
     # 
-    updateTextInput(session, "disp_created", value = now())
+    updateTextInput(session, "disp_created", value = format(now(tzone=Sys.timezone()),'%Y-%m-%d %H:%M:%S'))
     
     # Observer to update score and ui page upon changing parameters
     

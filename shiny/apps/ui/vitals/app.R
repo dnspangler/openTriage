@@ -10,10 +10,8 @@ fw_name = "uppsala_vitals"
 
 # Set this if you're not running this and the openTriage back-end on the same server
 server_url = "http://opentriage:5000"
-cat(file=stdout(),"Hello!")
 model_props = fromJSON(paste0("../../frameworks/",fw_name,"/models/model_props.json"))
 pretty_names = unlist(fromJSON(paste0("../../frameworks/",fw_name,"/models/pretty_names.json")))
-
 
 feats = data.frame(var = names(model_props$feat_props$gain),
                    gain = unlist(model_props$feat_props$gain),
@@ -28,8 +26,6 @@ feats = feats[rev(order(feats$gain)),]
 
 cat_names = gsub("disp_cats_","",feats$var)[grepl("disp_cats_",feats$var)]
 names(cat_names) = feats$name[grepl("disp_cats_",feats$var)]
-
-ui_page = reactiveVal()
 
 ui <- fluidPage(
     
@@ -155,33 +151,40 @@ ui <- fluidPage(
 
 server <- function(input, output, session) {
     
+    # 
+    updateTextInput(session, "disp_created", value = format(now(tzone=Sys.timezone()),'%Y-%m-%d %H:%M:%S'))
+    
     # Observer to update score and ui page upon changing parameters
+    
     observe({
         
         payload <- get_payload(input)
         
-        r <- POST(paste0(server_url,"/predict/",fw_name,"/"), content_type_json(), body = payload)
+        r <- POST(paste0(server_url,"/predict/",fw_name,"/"), 
+            content_type_json(), 
+            body = payload)
+
+        r_content <- content(r,"parsed")
         
-        r_list <- content(r,"parsed")
-        
-        if(class(r_list) == "list"){
+        if(class(r_content) == "list"){
             
-            updateSliderInput(session,"diag_score",value = round(r_list$gui$score,2))
-            
-            ui_page(HTML(as.character(r_list$gui$html)))
+            updateSliderInput(session,"diag_score",value = round(r_content$gui$score,2))
+            output$ui <- renderUI({
+                HTML(as.character(r_content$gui$html))
+            })
             
         }else{
-            
-            ui_page(HTML(as.character(r_list)))
+            output$ui <- renderUI({
+                HTML(as.character(r_content))
+            })
             
         }
         
+        
     })
     
-    updateTextInput(session, "disp_created", value = now())
-    
     get_payload <- function(input) {
-        
+
         out = toJSON(list("gui" = list(
             "region"=input$region,
             "disp_created"=input$disp_created,
@@ -210,10 +213,6 @@ server <- function(input, output, session) {
             write(get_payload(input), con)
         }
     )
-    
-    output$ui <- renderUI({
-        ui_page()
-    })
     
     output$diag <- renderTable({
         

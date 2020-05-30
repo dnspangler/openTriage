@@ -155,34 +155,43 @@ ui <- fluidPage(
 
 server <- function(input, output, session) {
     
+    updateTextInput(session, "disp_created", value = now())
+    sessionID = paste0(do.call(paste0, replicate(5, sample(c(LETTERS,0:9), 8, TRUE), FALSE)),collapse="")
     # Observer to update score and ui page upon changing parameters
     observe({
         
         payload <- get_payload(input)
         
-        r <- POST(paste0(server_url,"/predict/",fw_name,"/"), content_type_json(), body = payload)
+        r <- POST(paste0(server_url,"/predict/",fw_name,"/"), 
+            content_type_json(), 
+            body = payload,
+            add_headers(ids = sessionID))
+
+        # Appears that POST requests from other concurrent users are updating eachothers instances, but I can't reproduce the issue locally to track down why... 
+        # Adding a session ID to the request header is a kind of hacky fix until I can figure out a proper solution.
+        if(headers(r)$ids == sessionID){
+            r_content <- content(r,"parsed")
         
-        r_list <- content(r,"parsed")
-        
-        if(class(r_list) == "list"){
+        if(class(r_content) == "list"){
             
-            updateSliderInput(session,"diag_score",value = round(r_list$gui$score,2))
+            updateSliderInput(session,"diag_score",value = round(r_content[[sessionID]]$score,2))
             
-            ui_page(HTML(as.character(r_list$gui$html)))
+            ui_page(HTML(as.character(r_content[[sessionID]]$html)))
             
         }else{
             
-            ui_page(HTML(as.character(r_list)))
+            ui_page(HTML(as.character(r_content)))
             
         }
+        }
+        
         
     })
     
-    updateTextInput(session, "disp_created", value = now())
     
     get_payload <- function(input) {
         
-        out = toJSON(list("gui" = list(
+        data = list(
             "region"=input$region,
             "disp_created"=input$disp_created,
             "disp_age"=input$disp_age,
@@ -195,7 +204,13 @@ server <- function(input, output, session) {
             "eval_pulse"=input$eval_pulse,
             "eval_avpu"=input$eval_avpu,
             "eval_temp"=input$eval_temp
-        )),pretty = T)
+        )
+
+        out <- list()
+
+        out[[sessionID]] <- data
+
+        out <- toJSON(out,pretty = T)
         
         return(out)
     }

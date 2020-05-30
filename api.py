@@ -86,8 +86,14 @@ if __name__ == "__main__":
             logger.exception("Error upon generating output data:")
             return f"Server error upon generating output data: {e}", status.HTTP_500_INTERNAL_SERVER_ERROR
         
-        #return output_data, status.HTTP_201_CREATED
-        return Response(output_data, status=status.HTTP_201_CREATED, mimetype='application/json')
+        # return output_data, status.HTTP_201_CREATED
+        resp = Response(output_data, status=status.HTTP_201_CREATED, mimetype='application/json')
+
+        # Add ids to rsponse header if they were sent
+        if 'ids' in request.headers:
+            resp.headers['ids'] = request.headers['ids']
+
+        return resp
 
     # Add ui endpoint if ui_function is defined by framework
     @app.route("/html/<fw>", methods=['GET'])

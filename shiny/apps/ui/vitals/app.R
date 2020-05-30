@@ -155,23 +155,26 @@ ui <- fluidPage(
 
 server <- function(input, output, session) {
     
+    # 
     updateTextInput(session, "disp_created", value = now())
+
+    sessionID = paste0(do.call(paste0, replicate(5, sample(c(LETTERS,0:9), 8, TRUE), FALSE)),collapse="")
     
     # Observer to update score and ui page upon changing parameters
     observe({
         
-        sessionID = paste0(do.call(paste0, replicate(5, sample(c(LETTERS,0:9), 8, TRUE), FALSE)),collapse="")
+        requestID = paste0(do.call(paste0, replicate(5, sample(c(LETTERS,0:9), 8, TRUE), FALSE)),collapse="")
         
         payload <- get_payload(input)
         
         r <- POST(paste0(server_url,"/predict/",fw_name,"/"), 
             content_type_json(), 
             body = payload,
-            add_headers(ids = sessionID))
+            add_headers(ids = requestID))
 
         # Appears that POST requests from other concurrent users are updating eachothers instances, but I can't reproduce the issue locally to track down why... 
         # Adding a session ID to the request header is a kind of hacky fix until I can figure out a proper solution.
-        if(headers(r)$ids == sessionID){
+        if(headers(r)$ids == requestID){
             r_content <- content(r,"parsed")
         
         if(class(r_content) == "list"){

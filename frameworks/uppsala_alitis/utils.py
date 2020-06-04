@@ -240,6 +240,7 @@ def parse_json_categories(categories,model,log):
     # Get possible key combinations
     key_table = model['key']
 
+    # Set ids corresponding to negative question group answers
     missreason_ids = [
         "8D122CF6-9CCC-4FBD-949F-16481917F5D3", 
         "D3815AD4-017E-4AAA-8B29-34918F2C94E6", 
@@ -800,7 +801,16 @@ def generate_mbs_dicts(answers,neg_groups,key_table,filter_str):
     out_dict = recur_update(out_dict, answer_dict)
 
     return out_dict, unparsed_dict
- 
+
+def na_before_first(series):
+    """ Function to replace all values prior to a positive value with NAs """
+    ind = series.index.get_loc((series > 0).idxmax())
+    print(series.name, ind, np.sum(series))
+    
+    if ind > 0:
+        series.at[0:ind-1] = np.NaN
+    return series
+
 def parse_export_data(code_dir, raw_data_paths,inclusion_criteria, label_dict, predictors, key_table, filter_str, log):
 
     """ Parse raw export data into a clean format for further processing """
@@ -844,9 +854,16 @@ def parse_export_data(code_dir, raw_data_paths,inclusion_criteria, label_dict, p
     with open(f'{code_dir}/data/clean/unparsed_dict.json', 'w') as f:
         json.dump(unparsed_dict, f, indent=4)
 
-    mbs_df = pd.DataFrame(mbs_dict, dtype='int8').transpose()
-    log.info(f'Joining {len(mbs_df.index)} mbs {len(data_df.index)} flat data entries...')
-    data_df = data_df.join(mbs_df,how='left') 
+    mbs_df = pd.DataFrame(mbs_dict).transpose()
+
+    # To avoid considering newly added MBS questions as negative in historical data, set answers prior to first documented positive answers to NA
+    # Might want to do this during MBS answer parsing, but the ways I can think of all involve major refactoring or disgusting function side effects.
+
+    qcols = [col for col in mbs_df if col.startswith('disp_q') and not col.endswith('_Ja')]
+    mbs_df[qcols] = mbs_df[qcols].apply(na_before_first)  
+
+    log.info(f'Joining {len(mbs_df.index)} mbs and {len(data_df.index)} flat data entries...')
+    data_df = data_df.join(mbs_df,how='inner') 
 
     # A bit of feature engineering
     case_dt = pd.to_datetime(data_df['CreatedOn'],format='%Y/%m/%d %H:%M:%S')
@@ -857,6 +874,7 @@ def parse_export_data(code_dir, raw_data_paths,inclusion_criteria, label_dict, p
         disp_month = case_dt.dt.month.astype(int),
         IsValid = [1 if x and not np.isnan(x) else 0 for x in data_df.IsValid])
     data_df = data_df.drop('CreatedOn',axis=1)
+    data_df.index.rename('caseid',inplace=True)
 
     return data_df, label_df, text_df
 
@@ -908,7 +926,6 @@ def split_data(data, test_cutoff_ymd, test_sample, test_criteria, inclusion_crit
 
     for i in inclusion_criteria:
         inclobs = data['data'][i].eq(1)
-        print(inclobs)
         print("excluding",len(data['data'].index)-np.sum(inclobs),i)
         data['data'] = data['data'][inclobs]
         data['labels'] = data['labels'][inclobs]

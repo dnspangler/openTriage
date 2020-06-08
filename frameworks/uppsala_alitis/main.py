@@ -92,7 +92,6 @@ class Main:
         },
         instrument_trans = 'logit',
         filter_str = '_Bedmt_tillstnd_|_Nej',
-        randomize = False,
         # Data parsing stuff
         overwrite_models = False,
         overwrite_data = False,
@@ -131,7 +130,6 @@ class Main:
         self.out_weights = out_weights
         self.filter_str = filter_str
         self.instrument_trans = instrument_trans
-        self.randomize = randomize
         self.parse_text = parse_text
         self.max_ngram = max_ngram
         self.text_prefix = text_prefix
@@ -311,10 +309,13 @@ class Main:
             out_dict[id] = {'score':value,'trialID':trialID}
 
         # Apply randomization procedure (i.e., generate a 0/1 randomly with equal likelihoods) if desired
-        if self.randomize:
+        self.log.debug(os.environ['RANDOMIZE'])
+        if os.environ['RANDOMIZE'] == 'True':
             group = round(np.random.uniform()) # Randomize
+            self.log.debug(f'Randomized to {group}')
         else:
             group = 1 # Don't Randomize
+            self.log.debug(f'Not randomized')
 
         if group == 0:
             # Add control arm output data to dict

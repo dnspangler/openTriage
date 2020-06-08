@@ -34,6 +34,7 @@ services:
     environment:
      - FRAMEWORK=${FRAMEWORK}
      - DEV_MODE=${DEV_MODE}
+     - RANDOMIZE=${RANDOMIZE}
      - SECRET=${SECRET}
      - DEFAULT_FRAMEWORK=news_adhoc
      - DEFAULT_DEV_MODE=True

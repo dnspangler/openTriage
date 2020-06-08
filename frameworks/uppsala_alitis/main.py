@@ -309,7 +309,6 @@ class Main:
             out_dict[id] = {'score':value,'trialID':trialID}
 
         # Apply randomization procedure (i.e., generate a 0/1 randomly with equal likelihoods) if desired
-        self.log.debug(os.environ['RANDOMIZE'])
         if os.environ['RANDOMIZE'] == 'True':
             group = round(np.random.uniform()) # Randomize
             self.log.debug(f'Randomized to {group}')
@@ -328,14 +327,26 @@ class Main:
         else:
                 
             for id,value in ranks.items():
+
                 # Mark the highest ranked call with a red color (This is the one that should get an ambulance first!), and grey for all others
                 if value == 1: 
                     col = '#ff0000'
                 else:
                     col = '#c0c0c0'
+
+                if os.environ['RANDOMIZE'] == 'True':
+                    # Display 1 for highest risk call, but doen't display order of other calls (can unblind dispatch order for qubsequent dispatches if more than 2 calls are in dispatch queue)
+                    if value == 1: 
+                        text = '1'
+                    else:
+                        text = '-'
+                else:
+                    text = value
+
+                
                 
                 # Add output data to be displayed in intervention arm
-                out_dict[id]['text'] = str(value)
+                out_dict[id]['text'] = text
                 out_dict[id]['color'] = col
                 out_dict[id]['link'] = f'/html/uppsala_alitis?id={store_ids[id]}'
                 out_dict[id]['group'] = 'intervention'

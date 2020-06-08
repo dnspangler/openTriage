@@ -39,7 +39,7 @@ def render_densplot(pred,dist,other_preds):
     fig, ax = plt.subplots(figsize=(6,3))
     d.plot.kde(bw_method=1)
     ax.axes.get_yaxis().set_visible(False)
-    
+
     for i in other_preds:
         plt.axvline(i, color = 'grey', dashes = [10,10])
 
@@ -60,8 +60,10 @@ def generate_ui_data(store,other_scores,feat_imp_cols,text_prefix,model,log):
 
     """ Generate the graphs and tables used by the UI from cached prediction data """
 
+    score = store['score']
+
     # Render figure
-    fig = render_densplot(store['score'],model['model_props']['scores'],other_scores)
+    fig = render_densplot(score,model['model_props']['scores'],other_scores)
     fig_encode = fig_to_base64(fig)
     fig_base64 = fig_encode.decode('utf-8')
 

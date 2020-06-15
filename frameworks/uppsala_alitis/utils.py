@@ -63,7 +63,7 @@ def generate_ui_data(store,other_scores,feat_imp_cols,text_prefix,model,log):
     score = store['score']
 
     # Render figure
-    fig = render_densplot(score,model['model_props']['scores'],other_scores)
+    fig = render_densplot(score,list(model['model_props']['scores'].values()),other_scores)
     fig_encode = fig_to_base64(fig)
     fig_base64 = fig_encode.decode('utf-8')
 
@@ -511,11 +511,27 @@ def bayes_opt_xgb(
     
     return log_params
 
+def generate_cms(preds,labels,thresholds):
+    """
+    Generate confusion matrices for a list of threshold values and returns a dict
+    of arrays, for a 2 by 2 matrix, this is in the format [[TN,FP],[FN,TP]]
+    """
+    from sklearn.metrics import confusion_matrix
+
+    cm = {}
+    for i in thresholds:
+        pred_bin = [p>=i for p in preds]
+        cm[i] = confusion_matrix(labels,pred_bin).tolist()
+
+    return cm
+
 def get_model_props(
     fits,
     data,
     out_weights,
-    instrument_trans
+    instrument_trans,
+    log,
+    threshold_digits = 2
     ):
 
     """ Function to generate a dict containing the properties of a given set of model fits """
@@ -525,10 +541,17 @@ def get_model_props(
     scale_preds = {}
     scale = {}
     feat_gains = {}
+    confusion_matrices = {}
 
-    for name, values in data['test']['labels'].items(): 
+    if len(data['test']['labels'].index) == 0:
+        log.warn("Warning! No test data found! Generating model properties on training data, very likely to over-estimate model performance.")
+        eval_data = data['train']
+    else:
+        eval_data = data['test']
+
+    for name, values in eval_data['labels'].items(): 
         # For each label....
-        test_dmatrix = xgboost.DMatrix(data['test']['data'], label = values)
+        test_dmatrix = xgboost.DMatrix(eval_data['data'], label = values)
         # Predict raw score
         preds[name] = [float(i) for i in list(fits[name].predict(test_dmatrix))]
         
@@ -550,6 +573,7 @@ def get_model_props(
             p.append(scale_preds[key][i])
         scores.append(np.average(p, weights=list(out_weights.values())))
 
+    # Generate feature importance and median value df
     feat_name_lists = [list(v.keys()) for v in feat_gains.values()]
     feat_gain_lists = [list(v.values()) for v in feat_gains.values()]
 
@@ -561,6 +585,21 @@ def get_model_props(
     median_values_df = pd.DataFrame({'median' : data['train']['data'].median(axis = 0, skipna = True)})
     feat_props = median_values_df.join(gainsum_df).dropna()
 
+    threshold_value = 10**-threshold_digits
+    # Generate confusion matrices for various score thresholds
+    threshold_list = list(np.arange(
+            min(scores),
+            max(scores),
+            threshold_value))
+    
+    threshold_list = [round(i,threshold_digits) for i in threshold_list]
+
+    confusion_matrices = {}
+
+    for name, values in eval_data['labels'].items():
+        confusion_matrices[name] = generate_cms(scores,values,threshold_list)
+
+    # Generate dictionary to be returned
     model_props = {
         'names': list(data['train']['labels'].columns),
         'feat_props': feat_props.to_dict(),
@@ -569,9 +608,9 @@ def get_model_props(
             'trans': instrument_trans,
             'out_weights': out_weights
         },
-        #Add some noise here... Just to be safe.
-        'scores': list(np.add(scores,np.random.normal(0,0.0001,len(scores)))),
-        'sub_preds': {k: list(np.add(v,np.random.normal(0,0.0001,len(v)))) for k, v in preds.items()}
+        'confusion_matrices': confusion_matrices,
+        'scores': dict(zip(eval_data['labels'].index, scores)),
+        'sub_preds': {k: v for k, v in preds.items()}
             }
 
     return model_props
@@ -592,8 +631,8 @@ def join_flat_data(qs_df,alit_df):
     """ Function to join outcome data from qliksense with predictor data from Alitis db """
 
     # Check for duplicate IDs
-    assert len(qs_df.index) == qs_df.index.nunique()
-    assert len(alit_df.index) == alit_df.index.nunique()
+    assert len(qs_df.index) == qs_df.index.nunique(), 'Duplicate IDs in Qliksense data'
+    assert len(alit_df.index) == alit_df.index.nunique(), 'Duplicate IDs in Alitis data'
 
     full_df = qs_df.join(alit_df,how='inner')
     print("alitis:",len(alit_df.index),"qliksense:",len(qs_df.index),"final:",len(full_df.index))

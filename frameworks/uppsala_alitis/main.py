@@ -56,6 +56,7 @@ class Main:
             'train_labels':'data/train/labels.csv',
             'train_data':'data/train/data.csv',
             'train_text':'data/train/text.csv',
+            'train_weights':'data/train/weights.csv',
             'test_labels':'data/test/labels.csv',
             'test_data':'data/test/data.csv',
             'test_text':'data/test/text.csv'
@@ -112,7 +113,8 @@ class Main:
         # Test/train sample splitting
         test_cutoff_ymd = '20200319',
         test_sample = 0.3,
-        test_criteria = ['IsValid'],
+        test_criteria = ['IsValid','LowPrio'],
+        test_criteria_weight = 5,
         # UI stuff
         prod_ui_cols = ['value','mean_shap']
         ):
@@ -179,6 +181,7 @@ class Main:
                     full_name_path=full_name_path, 
                     overwrite_data=overwrite_data, 
                     update_data=update_data, 
+                    test_criteria=test_criteria, 
                     inclusion_criteria=inclusion_criteria, 
                     label_dict=label_dict, 
                     predictors=predictors,
@@ -191,7 +194,8 @@ class Main:
                     data = data_clean, 
                     test_cutoff_ymd = self.test_cutoff_ymd, 
                     test_sample = self.test_sample, 
-                    test_criteria = self.test_criteria, 
+                    inclusion_criteria=inclusion_criteria,
+                    test_criteria_weight=test_criteria_weight)
                     inclusion_criteria=inclusion_criteria)
 
                 self._save_data(data_split, full_data_paths) # Write data to disk
@@ -391,6 +395,7 @@ class Main:
         self.log.info("Loading data...")
         train_data = pd.read_csv(data_path_dict['train_data'],index_col='caseid')
         train_labels = pd.read_csv(data_path_dict['train_labels'],index_col='caseid')
+        train_weights = pd.read_csv(data_path_dict['train_weights'],index_col='caseid')
 
         test_data = pd.read_csv(data_path_dict['test_data'],index_col='caseid')
         test_labels = pd.read_csv(data_path_dict['test_labels'],index_col='caseid')
@@ -427,7 +432,7 @@ class Main:
                 stopword_set,
                 term_list=list(train_bow.columns))
 
-            assert len(train_bow.columns) == len(test_bow.columns)
+            assert len(train_bow.columns) == len(test_bow.columns), "Bow embedding mismatch!"
 
             train_data = train_data.join(train_bow)
             test_data = test_data.join(test_bow)
@@ -454,6 +459,7 @@ class Main:
         data['train']['data'].to_csv(data_paths['train_data'])
         data['train']['labels'].to_csv(data_paths['train_labels'])
         data['train']['text'].to_csv(data_paths['train_text'])
+        data['train']['weights'].to_csv(data_paths['train_weights'])
 
     def _load_key(self, key_path):
         
@@ -509,11 +515,6 @@ class Main:
 
         self.log.info("Training models...")
 
-        date_min = min(self.data['train']['data']['disp_date'])
-        date_max = max(self.data['train']['data']['disp_date'])
-        span = date_max - date_min
-        obs_weights = [(i - date_min)/span for i in self.data['train']['data']['disp_date']]
-
         # Tune Hyperparameters ----------------------------------------------------------------
 
         if not os.path.exists(f"{self.code_dir}/models/tune_logs.json"):
@@ -524,7 +525,7 @@ class Main:
             # For each label in the training dataset...
             for name, values in self.data['train']['labels'].iteritems(): 
                 # Generate dmatrix for xgb model
-                train_dmatrix = xgboost.DMatrix(self.data['train']['data'], label = values, weight=obs_weights)
+                train_dmatrix = xgboost.DMatrix(self.data['train']['data'], label = values, weight=self.data['train']['weights'])
                 # Optomiz parameters and save to log
                 log_params[name] = bayes_opt_xgb(
                     dmatrix=train_dmatrix, 
@@ -553,7 +554,7 @@ class Main:
             train_dmatrix = xgboost.DMatrix(
                 self.data['train']['data'], 
                 label = values, 
-                weight=obs_weights, 
+                weight=self.data['train']['weights'], 
                 feature_names=self.data['train']['data'].columns)
 
             # Get best hyperparameters for label from log 

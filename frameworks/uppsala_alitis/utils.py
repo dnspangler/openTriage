@@ -380,6 +380,8 @@ def predict_instrument(model,new_data,log):
         new_dmatrix = xgboost.DMatrix(new_data)
         # Estimate probability
         pred = float(v.predict(new_dmatrix))
+
+        # Get SHAP values
         shap = v.predict(new_dmatrix, pred_contribs=True)
         shap = dict(zip(v.feature_names,shap[0][:-1])) # remove bias term
         shap = pd.DataFrame(shap,index=[f'shap_{k}']).transpose()
@@ -487,7 +489,7 @@ def bayes_opt_xgb(
     
     # Manually loop through opimization process (wanted better logs than the built-in funtion)
     for _ in range(opt_rounds):
-        # Start selecting non-random points after 10 rounds
+        # Start selecting non-random points after n rounds
         if _ < init_rounds: 
             np.random.seed()
             next_point = {key: np.random.uniform(value[0],value[1]) for key, value in params_ranges.items()}
@@ -627,7 +629,7 @@ def load_alitis_cases_data(alitis_cases_path):
 
     return alit_df
 
-def separate_flat_data(full_df,label_dict,predictor_list,inclusion_list,text_col = "FreeText"):
+def separate_flat_data(full_df,label_dict,predictor_list,test_list,inclusion_list,text_col = "FreeText"):
 
     """ generate composite labels and separate flat data """
 
@@ -636,7 +638,7 @@ def separate_flat_data(full_df,label_dict,predictor_list,inclusion_list,text_col
     for lab, comps in label_dict.items():
         label_df[lab] = full_df[comps].max(axis=1)
 
-    data_df = full_df[predictor_list + inclusion_list]
+    data_df = full_df[predictor_list + test_list + inclusion_list]
 
     text_df = pd.DataFrame(full_df[text_col]) # Make sure this doesn't get saved as a series
 
@@ -644,11 +646,9 @@ def separate_flat_data(full_df,label_dict,predictor_list,inclusion_list,text_col
 
 def parse_flat_data(
     qs_excel_path,
-    alitis_cases_path,
-    incl_vars
+    alitis_cases_path
     ):
     """ Load flat data from Qliksense and Alitis """
-    #qs_df = load_qliksense_data(qs_excel_path,incl_vars)
     qs_df = pd.read_excel(qs_excel_path,index_col='caseid',na_values='-')
     alit_df = load_alitis_cases_data(alitis_cases_path)
 

@@ -638,7 +638,7 @@ def separate_flat_data(full_df,label_dict,predictor_list,inclusion_list,text_col
 
     data_df = full_df[predictor_list + inclusion_list]
 
-    text_df = full_df[text_col]
+    text_df = pd.DataFrame(full_df[text_col]) # Make sure this doesn't get saved as a series
 
     return label_df, data_df, text_df
 
@@ -807,8 +807,7 @@ def generate_mbs_dicts(answers,neg_groups,key_table,filter_str):
 def na_before_first(series):
     """ Function to replace all values prior to a positive value with NAs """
     ind = series.index.get_loc((series > 0).idxmax())
-    print(series.name, ind, np.sum(series))
-    
+
     if ind > 0:
         series.at[0:ind-1] = np.NaN
     return series
@@ -880,7 +879,7 @@ def parse_export_data(code_dir, raw_data_paths,inclusion_criteria, label_dict, p
 
     return data_df, label_df, text_df
 
-def clean_data(code_dir, raw_data_paths, clean_data_paths, full_name_path, overwrite_data, inclusion_criteria, label_dict, predictors, key_table, filter_str, log):
+def clean_data(code_dir, raw_data_paths, clean_data_paths, full_name_path, overwrite_data, update_data, inclusion_criteria, label_dict, predictors, key_table, filter_str, log):
     
     """ Try to load clean data or parse raw export data if necessary. """
 
@@ -889,13 +888,13 @@ def clean_data(code_dir, raw_data_paths, clean_data_paths, full_name_path, overw
 
     if all(paths_exist.values()) and not overwrite_data:
         log.info("Clean data found! Loading...")
-        label_df = pd.read_csv(full_paths['clean_labels'], index_col='caseid')
         data_df = pd.read_csv(full_paths['clean_data'], index_col='caseid')
+        label_df = pd.read_csv(full_paths['clean_labels'], index_col='caseid')
         text_df = pd.read_csv(full_paths['clean_text'], index_col='caseid')
 
-    else:
+    if overwrite_data or update_data:
         log.warning("Parsing export data....")
-        data_df, label_df, text_df = parse_export_data(
+        new_data_df, new_label_df, new_text_df = parse_export_data(
             code_dir, 
             raw_data_paths, 
             inclusion_criteria, 
@@ -905,9 +904,22 @@ def clean_data(code_dir, raw_data_paths, clean_data_paths, full_name_path, overw
             filter_str, 
             log
             )
+        
+        if update_data:
+            log.warning("Updating data....")
+            data_df = new_data_df.combine_first(data_df)
+            label_df = new_label_df.combine_first(label_df)
+            text_df = new_text_df.combine_first(text_df)
+        
+        if overwrite_data:
+            log.warning("Overwriting data....")
+            data_df = new_data_df
+            label_df = new_label_df
+            text_df = new_text_df
 
-        label_df.to_csv(full_paths['clean_labels'])
+        # Save new data to disk
         data_df.to_csv(full_paths['clean_data'])
+        label_df.to_csv(full_paths['clean_labels'])
         text_df.to_csv(full_paths['clean_text'])
 
     # Generate dict of pretty names of predictors and labels for display in ui

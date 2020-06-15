@@ -95,6 +95,7 @@ class Main:
         # Data parsing stuff
         overwrite_models = False,
         overwrite_data = False,
+        update_data = False,
         # Define inclusion criteria for qs data
         inclusion_criteria = ["valid_pin","valid_geo_dest","exists_amb"],
         # Define composite measures defined as any one of several variables:
@@ -164,13 +165,12 @@ class Main:
 
         # Otherwise, try to load data
         else:
-            if all(data_paths_exist.values()) and not overwrite_data:
+            if all(data_paths_exist.values()) and not (overwrite_data or update_data):
                 self.log.info("Data found! Loading...")
                 self.data = self._load_data(full_data_paths,full_stopword_path)
 
             # If no clean data is available, try to parse clean data
             else:
-                self.log.warning("Missing data file(s)! Cleaning data...")
 
                 data_clean = clean_data(
                     code_dir=code_dir, 
@@ -178,6 +178,7 @@ class Main:
                     clean_data_paths=clean_data_path_dict, 
                     full_name_path=full_name_path, 
                     overwrite_data=overwrite_data, 
+                    update_data=update_data, 
                     inclusion_criteria=inclusion_criteria, 
                     label_dict=label_dict, 
                     predictors=predictors,
@@ -575,7 +576,8 @@ class Main:
             fits,
             data = self.data,
             out_weights = self.out_weights,
-            instrument_trans = self.instrument_trans)
+            instrument_trans = self.instrument_trans,
+            log = self.log)
 
         model_dict = {
             'models':fits,

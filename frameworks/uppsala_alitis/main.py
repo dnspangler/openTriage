@@ -105,7 +105,7 @@ class Main:
             "amb_prio" : ["amb_prio"],
             "hosp_critcare" : ["hosp_icu","hosp_30daymort"]},
         # Define predictors to extract
-        predictors = ["disp_age","disp_gender","disp_lon","disp_lat","CreatedOn","Priority","RecomendedPriority","IsValid"],
+        predictors = ["disp_age","disp_gender","disp_lon","disp_lat","CreatedOn","Priority","RecomendedPriority"],
         parse_text = 'FreeText',
         max_ngram = 2, 
         text_prefix = 'text_', 
@@ -194,6 +194,7 @@ class Main:
                     data = data_clean, 
                     test_cutoff_ymd = self.test_cutoff_ymd, 
                     test_sample = self.test_sample, 
+                    test_criteria = self.test_criteria, 
                     inclusion_criteria=inclusion_criteria,
                     test_criteria_weight=test_criteria_weight)
                     inclusion_criteria=inclusion_criteria)
@@ -441,6 +442,7 @@ class Main:
             'train':{
                 'data':train_data,
                 'labels':train_labels,
+                'weights':train_weights
             },
             'test':{
                 'data':test_data,

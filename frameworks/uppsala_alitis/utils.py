@@ -851,7 +851,7 @@ def na_before_first(series):
         series.at[0:ind-1] = np.NaN
     return series
 
-def parse_export_data(code_dir, raw_data_paths,inclusion_criteria, label_dict, predictors, key_table, filter_str, log):
+def parse_export_data(code_dir, raw_data_paths, test_criteria, inclusion_criteria, label_dict, predictors, key_table, filter_str, log):
 
     """ Parse raw export data into a clean format for further processing """
 
@@ -859,10 +859,9 @@ def parse_export_data(code_dir, raw_data_paths,inclusion_criteria, label_dict, p
 
     full_df = parse_flat_data(
         f"{data_paths['qliksense_export']}",
-        f"{data_paths['mbs_cases']}",
-        inclusion_criteria)
+        f"{data_paths['mbs_cases']}")
         
-    label_df, data_df, text_df = separate_flat_data(full_df,label_dict,predictors,inclusion_criteria)
+    label_df, data_df, text_df = separate_flat_data(full_df,label_dict,predictors,test_criteria,inclusion_criteria)
 
     # Check for intermediate dictionary of mbs tokens
     unparsed_dict = {}
@@ -918,7 +917,7 @@ def parse_export_data(code_dir, raw_data_paths,inclusion_criteria, label_dict, p
 
     return data_df, label_df, text_df
 
-def clean_data(code_dir, raw_data_paths, clean_data_paths, full_name_path, overwrite_data, update_data, inclusion_criteria, label_dict, predictors, key_table, filter_str, log):
+def clean_data(code_dir, raw_data_paths, clean_data_paths, full_name_path, overwrite_data, update_data, test_criteria, inclusion_criteria, label_dict, predictors, key_table, filter_str, log):
     
     """ Try to load clean data or parse raw export data if necessary. """
 
@@ -936,6 +935,7 @@ def clean_data(code_dir, raw_data_paths, clean_data_paths, full_name_path, overw
         new_data_df, new_label_df, new_text_df = parse_export_data(
             code_dir, 
             raw_data_paths, 
+            test_criteria,
             inclusion_criteria, 
             label_dict, 
             predictors,
@@ -973,7 +973,7 @@ def clean_data(code_dir, raw_data_paths, clean_data_paths, full_name_path, overw
             'labels':label_df,
             'text':text_df}
 
-def split_data(data, test_cutoff_ymd, test_sample, test_criteria, inclusion_criteria):
+def split_data(data, test_cutoff_ymd, test_sample, test_criteria, inclusion_criteria, test_criteria_weight):
     
     # Apply inclusion criteria before splitting
 
@@ -986,13 +986,25 @@ def split_data(data, test_cutoff_ymd, test_sample, test_criteria, inclusion_crit
     
     data['data'] = data['data'].drop(inclusion_criteria,axis=1)
 
-    # A major update to the user interface was implemented in May 2019 which 
-    # substantially impacted the structure of the collected data (primarily 
-    # by reducing the rate of missingness). These changes included a validation 
-    # system to indicate whether a record is complete or not, and risk prediction
-    # tools will only be available for complete calls per IsValid.
-
     cutoff_date_epoch = calendar.timegm(time.strptime(test_cutoff_ymd, "%Y%m%d")) / 86400
+
+    train_ids = data['data'].index[data['data'].disp_date < cutoff_date_epoch]
+    print(f"{len(train_ids)} observations before {test_cutoff_ymd}")
+
+    if test_criteria_weight:
+        print("Gererating weights for training")
+
+        date_min = min(data['data'][data['data'].index.isin(train_ids)]['disp_date'])
+        date_max = max(data['data'][data['data'].index.isin(train_ids)]['disp_date'])
+        span = date_max - date_min
+        date_weights = [(i - date_min)/span for i in data['data'][data['data'].index.isin(train_ids)]['disp_date']]
+
+        criteria_weights = data['data'][data['data'].index.isin(train_ids)][test_criteria].sum(axis=1)
+        criteria_weights = criteria_weights.apply(lambda x: max(1,x))
+        train_weights = criteria_weights * test_criteria_weight * date_weights
+    else:
+        train_weights = data['data'][data['data'].index.isin(train_ids)][:,0]
+        train_weights = train_weights.apply(lambda x: 1)
 
     valid_ids = data['data'].index[data['data'].disp_date >= cutoff_date_epoch]
     print(f"{len(valid_ids)} observations after {test_cutoff_ymd}")
@@ -1001,15 +1013,20 @@ def split_data(data, test_cutoff_ymd, test_sample, test_criteria, inclusion_crit
         crit_incl = data['data'][i].eq(1)
         criteria_ids = data['data'].index[crit_incl]
         valid_ids = [j for j in valid_ids if j in criteria_ids]
-        print(f"{len(valid_ids)} observations after excluding {i}")
+        print(f"{len(valid_ids)} observations with {i}")
 
     test_ids = list(random.sample(list(valid_ids),int(len(valid_ids)*test_sample)))
 
+    print(f"{len(test_ids)} observations included in test set")
+
+    data['data'] = data['data'].drop(test_criteria,axis=1)
+
     out_data = {
         'train':{
-            'data':data['data'][~data['data'].index.isin(test_ids)],
-            'labels':data['labels'][~data['labels'].index.isin(test_ids)],
-            'text':data['text'][~data['text'].index.isin(test_ids)]
+            'data':data['data'][data['data'].index.isin(train_ids)],
+            'labels':data['labels'][data['labels'].index.isin(train_ids)],
+            'text':data['text'][data['text'].index.isin(train_ids)],
+            'weights':train_weights
         },
         'test':{
             'data':data['data'][data['data'].index.isin(test_ids)],

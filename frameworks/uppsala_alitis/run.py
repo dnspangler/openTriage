@@ -22,8 +22,8 @@ if __name__ == '__main__':
         init_rounds = 5, #NOTE: Low for testing, use maybe 10/40/400
         opt_rounds = 20,
         max_estimators = 400,
-        overwrite_models = True,
-        update_data = True,
-        test_cutoff_ymd='20200401',
-        test_sample=1
+        update_models = True,
+        test_cutoff_ymd='20200501',
+        test_sample=1,
+        test_criteria_weight=False
         )

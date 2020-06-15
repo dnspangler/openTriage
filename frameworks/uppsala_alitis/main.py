@@ -95,6 +95,7 @@ class Main:
         filter_str = '_Bedmt_tillstnd_|_Nej',
         # Data parsing stuff
         overwrite_models = False,
+        update_models = False,
         overwrite_data = False,
         update_data = False,
         # Define inclusion criteria for qs data
@@ -161,7 +162,7 @@ class Main:
         
         # If a serialized model is available, load it
 
-        if all(model_paths_exist.values()) and not overwrite_models:
+        if all(model_paths_exist.values()) and not (overwrite_models or update_models):
             self.log.info("Models found! Loading...")
             self.model = self._load_model(full_model_paths)
 
@@ -197,7 +198,6 @@ class Main:
                     test_criteria = self.test_criteria, 
                     inclusion_criteria=inclusion_criteria,
                     test_criteria_weight=test_criteria_weight)
-                    inclusion_criteria=inclusion_criteria)
 
                 self._save_data(data_split, full_data_paths) # Write data to disk
                 # Load it from disk (to avoid making stupid mistakes)
@@ -205,12 +205,20 @@ class Main:
             
             # Once data has (hopefully) been loaded, train a model on it.
             try:
-                self.log.info("No models found! Training...")
+                if all(model_paths_exist.values()) and update_models:
+                    self.log.info("Testing/saving old models...")
+                    self.model = self._load_model(full_model_paths)
+                    self._test_model()
+
+                    old_model_paths = {k:f'{self.code_dir}/logs/{datetime.date(datetime.now())}/{v}' for k,v in model_path_dict.items()}
+                    self._save_model(self.model, old_model_paths)
+
+                self.log.info("Training new models...")
                 model = self._train_model()
                 self._save_model(model, full_model_paths) # Write model to disk
                 self.model = model
                 #TODO: Implement nicer reports on model performance to be provided upon training a new model
-                #test_model(model, data)
+                self._test_model()
 
             # If no data or models are available, crash the server.
             except NameError:
@@ -506,12 +514,35 @@ class Main:
         # Note that we save these seperately instead of just pickling 
         # everything to make the model properties human-readable 
         # for debugging purposes
+        
+        # Make directory if non-existant
+        save_dir = os.path.dirname(list(model_paths.values())[0])
+        if not os.path.exists(save_dir):
+            try:
+                os.makedirs(save_dir)
+            except OSError as exc: # Guard against race condition
+                if exc.errno != errno.EEXIST:
+                    raise
 
         with open(model_paths['model_props'], "w", encoding='utf-8') as f:
             json.dump(model['model_props'],f,ensure_ascii=False,indent=4)
 
         with open(model_paths['models'], "wb") as f:
             pickle.dump(model['models'],f)
+
+    def _test_model(self):
+
+        self.log.info("Testing models...")
+
+        for name, values in self.data['test']['labels'].iteritems(): 
+        # Print some quick "sanity check" results
+            test_dmatrix = xgboost.DMatrix(self.data['test']['data'], label = values)
+            self.log.info(name + " Mean pred: "+
+                    str(np.mean(self.model['models'][name].predict(test_dmatrix))) +
+                    " (" + str(np.mean(values)) + ") Individual Test AUC: " +
+                    str(metrics.roc_auc_score(values,
+                        self.model['models'][name].predict(test_dmatrix)))) 
+
 
     def _train_model(self):
 
@@ -566,14 +597,6 @@ class Main:
             fits[name] = xgboost.train(best_params,
                                 train_dmatrix,
                                 num_boost_round=log_best['fit_props']['n_estimators'])
-
-            # Print some quick "sanity check" results
-            test_dmatrix = xgboost.DMatrix(self.data['test']['data'], label = self.data['test']['labels'][name])
-            self.log.info("Mean pred: "+
-                str(np.mean(fits[name].predict(test_dmatrix))) +
-                " Test AUC: " +
-                str(metrics.roc_auc_score(self.data['test']['labels'][name],
-                    fits[name].predict(test_dmatrix))))
 
         model_props = get_model_props(
             fits,

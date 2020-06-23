@@ -394,7 +394,7 @@ class Main:
 
         return render_template(
             "testui.html", 
-            title = f"Övergripande risk: {np.round(store['score'],2)}", 
+            title = f"Bedömningsdetaljer", 
             fig_base64 = ui_data['fig_base64'], 
             components = ui_data['components'].render(), 
             feat_imp = ui_data['feat_imp_table'].render())

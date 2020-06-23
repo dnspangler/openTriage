@@ -43,7 +43,7 @@ def render_densplot(pred,dist,other_preds):
     for i in other_preds:
         plt.axvline(i, color = 'grey', dashes = [10,10])
 
-    plt.axvline(pred)
+    plt.axvline(pred, color = 'red')
 
     return fig
 
@@ -61,6 +61,12 @@ def generate_ui_data(store,other_scores,feat_imp_cols,text_prefix,model,log):
     """ Generate the graphs and tables used by the UI from cached prediction data """
 
     score = store['score']
+
+    # For the randomized trial, we need to blind dispatchers to the order of the calls not selected for first dispatch in case these recur in further comparisons
+    # This code ensures that the plot is identical regardless of which specific prediction is examined, and the score with the highest risk is always highlighted
+
+    other_scores = [score] + other_scores
+    score = max(other_scores)
 
     # Render figure
     fig = render_densplot(score,list(model['model_props']['scores'].values()),other_scores)

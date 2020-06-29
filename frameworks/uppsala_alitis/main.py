@@ -116,6 +116,8 @@ class Main:
         test_sample = 0.3,
         test_criteria = ['IsValid','LowPrio'],
         test_criteria_weight = 5,
+        # Randomization settings
+        check_repeats = True, #Assign observations which have already been evaluated to same randomization arm
         # UI stuff
         prod_ui_cols = ['value','mean_shap']
         ):
@@ -142,6 +144,7 @@ class Main:
         self.test_sample = test_sample
         self.test_criteria = test_criteria
         self.prod_ui_cols = prod_ui_cols
+        self.check_repeats = check_repeats
 
         # Make and check full paths
         full_key_path = f'{self.code_dir}/{key_path}'
@@ -245,7 +248,6 @@ class Main:
     def input_function(self, request):
         """input_function is a required function to parse incoming data"""
         request_data = request.data
-        self.log.debug(request_data)
         # Loop through each item sent through the API
         results = {}
         for id, value in request_data.items():
@@ -284,7 +286,6 @@ class Main:
             
             # Apply a prediction function to the parsed data
             prediction = predict_instrument(model = self.model,new_data = value, log = self.log)
-            # self.logdebug(prediction)
             # Add the score to a dictionary to be returned for further processing
             preds[id] = prediction
 
@@ -303,6 +304,7 @@ class Main:
             # Add info other included ids
             other_ids = list(store_ids.values())
             other_ids.remove(store_ids[id])
+            # Store 
             value['other_ids'] = other_ids
 
             # Store the prediction
@@ -325,19 +327,52 @@ class Main:
         # Apply randomization procedure (i.e., generate a 0/1 randomly with equal likelihoods) if desired
         if os.environ['RANDOMIZE'] == 'True':
             group = round(np.random.uniform()) # Randomize
-            self.log.debug(f'Randomized to {group}')
+            if self.check_repeats == True:
+                # Check to see if any observation in group has been randomized previously. If so, assign all observations in this group to the same trial arm.
+                # Use cache for this - Since we're only saving trial arm assignment, can use actual ids
+                group_arms = []
+                for id in prediction.keys():
+                    if self.cache.exists(id): 
+                        group_arms.append(int(self.cache.get(id)))
+                        self.log.debug(f'{id} previously randomized to {group_arms[-1]}')
+
+                self.log.debug(group_arms)
+                if len(group_arms) > 0:
+                    # set group to previous study arm
+                    if all(x == group_arms[0] for x in group_arms):
+                        group = group_arms[0]
+                    else:
+                        # This shouldn't really ever happen in practice, but it is *technically* possible
+                        self.log.warning(f'Mismatched prior randomization arms, marked for exclusion')
+                        group = None
+                else:
+                    self.log.debug(f'Randomized to {group}')
+
+                if group is not None:
+                    # cache study arm assigment for 8 hours
+                    for id in prediction.keys():
+                        self.cache.set(id,group)
+                        self.cache.expire(id,60*60*8)
+            else:
+                self.log.debug(f'Randomized to {group}')
         else:
             group = 1 # Don't Randomize
             self.log.debug(f'Not randomized')
 
-        if group == 0:
+        if group is None:
+            # Display as control, output error to dict
+            for id,value in prediction.items():
+                out_dict[id]['text'] = '-'
+                out_dict[id]['color'] = '#c0c0c0'
+                out_dict[id]['link'] = f'/html/uppsala_alitis?id=control'
+                out_dict[id]['group'] = 'randomization_error'
+        elif group == 0:
             # Add control arm output data to dict
             for id,value in prediction.items():
                 out_dict[id]['text'] = '-'
                 out_dict[id]['color'] = '#c0c0c0'
                 out_dict[id]['link'] = f'/html/uppsala_alitis?id=control'
                 out_dict[id]['group'] = 'control'
-
         else:
                 
             for id,value in ranks.items():
@@ -349,7 +384,7 @@ class Main:
                     col = '#c0c0c0'
 
                 if os.environ['RANDOMIZE'] == 'True':
-                    # Display 1 for highest risk call, but doen't display order of other calls (can unblind dispatch order for qubsequent dispatches if more than 2 calls are in dispatch queue)
+                    # Display 1 for highest risk call, but doen't display order of other calls (can unblind dispatch order for subsequent dispatches if more than 2 calls are in dispatch queue)
                     if value == 1: 
                         text = '1'
                     else:

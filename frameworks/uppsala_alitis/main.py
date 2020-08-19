@@ -99,6 +99,7 @@ class Main:
         update_models = False,
         overwrite_data = False,
         update_data = False,
+        return_payload = True,
         # Define inclusion criteria for qs data
         inclusion_criteria = ["valid_pin","valid_geo_dest","exists_amb"],
         # Define composite measures defined as any one of several variables:
@@ -118,7 +119,7 @@ class Main:
         test_criteria = ['IsValid','LowPrio'],
         test_criteria_weight = 5,
         # Randomization settings
-        check_repeats = True, #Assign observations which have already been evaluated to same randomization arm
+        check_repeats = False, #Assign observations which have already been evaluated to same randomization arm
         # UI stuff
         prod_ui_cols = ['value','mean_shap']
         ):
@@ -136,6 +137,7 @@ class Main:
         self.max_estimators = max_estimators
         self.out_weights = out_weights
         self.filter_str = filter_str
+        self.return_payload = return_payload
         self.instrument_trans = instrument_trans
         self.parse_text = parse_text
         self.max_ngram = max_ngram
@@ -246,6 +248,10 @@ class Main:
         else:
             self.log.info("No stopwords found!")
 
+        
+        if self.return_payload:
+            self.payload = {}
+
     def input_function(self, request):
         """input_function is a required function to parse incoming data"""
         request_data = request.data
@@ -254,6 +260,9 @@ class Main:
         for id, value in request_data.items():
             # Apply a parsing function (from functions.py) to each item
             results[id] = parse_json_data(value,self.model,log = self.log)
+
+            if self.return_payload:
+                self.payload[id] = value
 
             if self.parse_text:
                 
@@ -324,6 +333,8 @@ class Main:
         for id,value in scores.items():
             # Add items which should be returned regardless of inclusion in control/intervention arm
             out_dict[id] = {'score':value,'trialID':trialID}
+            if self.return_payload:
+                out_dict[id]['payload'] = self.payload[id]
 
         # Apply randomization procedure (i.e., generate a 0/1 randomly with equal likelihoods) if desired
         if os.environ['RANDOMIZE'] == 'True':

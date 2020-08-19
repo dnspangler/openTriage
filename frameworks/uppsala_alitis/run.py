@@ -23,7 +23,7 @@ if __name__ == '__main__':
         opt_rounds = 20,
         max_estimators = 400,
         update_models = True,
-        test_cutoff_ymd='20200501',
+        test_cutoff_ymd='20200701',
         test_sample=1,
-        test_criteria_weight=False
+        test_criteria_weight=True
         )

@@ -99,6 +99,7 @@ class Main:
         update_models = False,
         overwrite_data = False,
         update_data = False,
+        test_on_load = True,
         return_payload = True,
         # Define inclusion criteria for qs data
         inclusion_criteria = ["valid_pin","valid_geo_dest","exists_amb"],
@@ -248,6 +249,12 @@ class Main:
         else:
             self.log.info("No stopwords found!")
 
+        if test_on_load:
+            if all(data_paths_exist.values()):
+                self.data = self._load_data(full_data_paths,full_stopword_path)
+                self._test_model()
+            else:
+                log.warning("No parsed data found, can't test models!")
         
         if self.return_payload:
             self.payload = {}

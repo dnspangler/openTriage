@@ -936,7 +936,7 @@ def clean_data(code_dir, raw_data_paths, clean_data_paths, full_name_path, overw
         label_df = pd.read_csv(full_paths['clean_labels'], index_col='caseid')
         text_df = pd.read_csv(full_paths['clean_text'], index_col='caseid')
 
-    if overwrite_data or update_data:
+    if overwrite_data or update_data or not all(paths_exist.values()):
         log.warning("Parsing export data....")
         new_data_df, new_label_df, new_text_df = parse_export_data(
             code_dir, 
@@ -956,7 +956,7 @@ def clean_data(code_dir, raw_data_paths, clean_data_paths, full_name_path, overw
             label_df = new_label_df.combine_first(label_df)
             text_df = new_text_df.combine_first(text_df)
         
-        if overwrite_data:
+        if overwrite_data or not all(paths_exist.values()):
             log.warning("Overwriting data....")
             data_df = new_data_df
             label_df = new_label_df

@@ -1142,3 +1142,18 @@ def parse_text_to_bow(text_df, max_ngram, text_prefix = None, min_terms = None, 
     bow_df = pd.DataFrame(full_term_dict).fillna(0).transpose()
 
     return bow_df
+
+def generate_old_test_feats(df,old_names,log):
+
+    names_add = np.setdiff1d(old_names,list(df.columns))
+    names_remove = np.setdiff1d(list(df.columns),old_names)
+    names_final = [x for x in old_names if x not in names_remove]
+
+    log.warning("Features added/removed:")
+    log.warning(names_add)
+    log.warning(names_remove)
+
+    df_out = df.drop(names_remove,axis=1)
+    df_out = df_out.reindex(columns=names_final, fill_value=0)
+
+    return df_out

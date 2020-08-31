@@ -36,7 +36,8 @@ from frameworks.uppsala_alitis.utils import (
     generate_ui_data,
     generate_names,
     parse_text_to_bow,
-    get_stopword_set
+    get_stopword_set,
+    generate_old_test_feats
     )
 
 class Main:
@@ -588,14 +589,33 @@ class Main:
 
         self.log.info("Testing models...")
 
+        test_df = self.data['test']['data']
+        feat_names = list(self.model['model_props']['feat_props']['median'].keys())
+        
+        # TODO: For now, this will fail if testing models in data with different sets of features. 
+        # Given the use of text data, features are likely to vary from one test dataset to another. 
+        # This is handled fine when parsing payloads for real-time prediction, but needs to be handled
+        # here for the purposes of comparing new and old models. Something like this:
+
+        # if(list(test_df.columns) != feat_names):
+        #    test_df = generate_old_test_feats(test_df,feat_names,self.log)
+
         for name, values in self.data['test']['labels'].iteritems(): 
         # Print some quick "sanity check" results
-            test_dmatrix = xgboost.DMatrix(self.data['test']['data'], label = values)
+
+            test_dmatrix = xgboost.DMatrix(test_df, label = values)
+
             self.log.info(name + " Mean pred: "+
                     str(np.mean(self.model['models'][name].predict(test_dmatrix))) +
                     " (" + str(np.mean(values)) + ") Individual Test AUC: " +
                     str(metrics.roc_auc_score(values,
-                        self.model['models'][name].predict(test_dmatrix)))) 
+                        self.model['models'][name].predict(test_dmatrix))) + 
+                        " Score AUC: " +
+                    str(metrics.roc_auc_score(values,
+                        list(self.model['model_props']['scores'].values())))
+                    ) 
+        
+
 
 
     def _train_model(self):

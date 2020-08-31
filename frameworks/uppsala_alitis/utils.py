@@ -39,11 +39,11 @@ def render_densplot(pred,dist,other_preds):
     fig, ax = plt.subplots(figsize=(6,3))
     d.plot.kde(bw_method=1)
     ax.axes.get_yaxis().set_visible(False)
-    
+
     for i in other_preds:
         plt.axvline(i, color = 'grey', dashes = [10,10])
 
-    plt.axvline(pred)
+    plt.axvline(pred, color = 'red')
 
     return fig
 
@@ -60,8 +60,16 @@ def generate_ui_data(store,other_scores,feat_imp_cols,text_prefix,model,log):
 
     """ Generate the graphs and tables used by the UI from cached prediction data """
 
+    score = store['score']
+
+    # For the randomized trial, we need to blind dispatchers to the order of the calls not selected for first dispatch in case these recur in further comparisons
+    # This code ensures that the plot is identical regardless of which specific prediction is examined, and the score with the highest risk is always highlighted
+
+    other_scores = [score] + other_scores
+    score = max(other_scores)
+
     # Render figure
-    fig = render_densplot(store['score'],model['model_props']['scores'],other_scores)
+    fig = render_densplot(score,list(model['model_props']['scores'].values()),other_scores)
     fig_encode = fig_to_base64(fig)
     fig_base64 = fig_encode.decode('utf-8')
 
@@ -240,6 +248,7 @@ def parse_json_categories(categories,model,log):
     # Get possible key combinations
     key_table = model['key']
 
+    # Set ids corresponding to negative question group answers
     missreason_ids = [
         "8D122CF6-9CCC-4FBD-949F-16481917F5D3", 
         "D3815AD4-017E-4AAA-8B29-34918F2C94E6", 
@@ -377,6 +386,8 @@ def predict_instrument(model,new_data,log):
         new_dmatrix = xgboost.DMatrix(new_data)
         # Estimate probability
         pred = float(v.predict(new_dmatrix))
+
+        # Get SHAP values
         shap = v.predict(new_dmatrix, pred_contribs=True)
         shap = dict(zip(v.feature_names,shap[0][:-1])) # remove bias term
         shap = pd.DataFrame(shap,index=[f'shap_{k}']).transpose()
@@ -484,7 +495,7 @@ def bayes_opt_xgb(
     
     # Manually loop through opimization process (wanted better logs than the built-in funtion)
     for _ in range(opt_rounds):
-        # Start selecting non-random points after 10 rounds
+        # Start selecting non-random points after n rounds
         if _ < init_rounds: 
             np.random.seed()
             next_point = {key: np.random.uniform(value[0],value[1]) for key, value in params_ranges.items()}
@@ -506,11 +517,27 @@ def bayes_opt_xgb(
     
     return log_params
 
+def generate_cms(preds,labels,thresholds):
+    """
+    Generate confusion matrices for a list of threshold values and returns a dict
+    of arrays, for a 2 by 2 matrix, this is in the format [[TN,FP],[FN,TP]]
+    """
+    from sklearn.metrics import confusion_matrix
+
+    cm = {}
+    for i in thresholds:
+        pred_bin = [p>=i for p in preds]
+        cm[i] = confusion_matrix(labels,pred_bin).tolist()
+
+    return cm
+
 def get_model_props(
     fits,
     data,
     out_weights,
-    instrument_trans
+    instrument_trans,
+    log,
+    threshold_digits = 2
     ):
 
     """ Function to generate a dict containing the properties of a given set of model fits """
@@ -520,10 +547,17 @@ def get_model_props(
     scale_preds = {}
     scale = {}
     feat_gains = {}
+    confusion_matrices = {}
 
-    for name, values in data['test']['labels'].items(): 
+    if len(data['test']['labels'].index) == 0:
+        log.warn("Warning! No test data found! Generating model properties on training data, very likely to over-estimate model performance.")
+        eval_data = data['train']
+    else:
+        eval_data = data['test']
+
+    for name, values in eval_data['labels'].items(): 
         # For each label....
-        test_dmatrix = xgboost.DMatrix(data['test']['data'], label = values)
+        test_dmatrix = xgboost.DMatrix(eval_data['data'], label = values)
         # Predict raw score
         preds[name] = [float(i) for i in list(fits[name].predict(test_dmatrix))]
         
@@ -545,6 +579,7 @@ def get_model_props(
             p.append(scale_preds[key][i])
         scores.append(np.average(p, weights=list(out_weights.values())))
 
+    # Generate feature importance and median value df
     feat_name_lists = [list(v.keys()) for v in feat_gains.values()]
     feat_gain_lists = [list(v.values()) for v in feat_gains.values()]
 
@@ -556,6 +591,21 @@ def get_model_props(
     median_values_df = pd.DataFrame({'median' : data['train']['data'].median(axis = 0, skipna = True)})
     feat_props = median_values_df.join(gainsum_df).dropna()
 
+    threshold_value = 10**-threshold_digits
+    # Generate confusion matrices for various score thresholds
+    threshold_list = list(np.arange(
+            min(scores),
+            max(scores),
+            threshold_value))
+    
+    threshold_list = [round(i,threshold_digits) for i in threshold_list]
+
+    confusion_matrices = {}
+
+    for name, values in eval_data['labels'].items():
+        confusion_matrices[name] = generate_cms(scores,values,threshold_list)
+
+    # Generate dictionary to be returned
     model_props = {
         'names': list(data['train']['labels'].columns),
         'feat_props': feat_props.to_dict(),
@@ -564,9 +614,9 @@ def get_model_props(
             'trans': instrument_trans,
             'out_weights': out_weights
         },
-        #Add some noise here... Just to be safe.
-        'scores': list(np.add(scores,np.random.normal(0,0.0001,len(scores)))),
-        'sub_preds': {k: list(np.add(v,np.random.normal(0,0.0001,len(v)))) for k, v in preds.items()}
+        'confusion_matrices': confusion_matrices,
+        'scores': dict(zip(eval_data['labels'].index, scores)),
+        'sub_preds': {k: v for k, v in preds.items()}
             }
 
     return model_props
@@ -587,8 +637,8 @@ def join_flat_data(qs_df,alit_df):
     """ Function to join outcome data from qliksense with predictor data from Alitis db """
 
     # Check for duplicate IDs
-    assert len(qs_df.index) == qs_df.index.nunique()
-    assert len(alit_df.index) == alit_df.index.nunique()
+    assert len(qs_df.index) == qs_df.index.nunique(), 'Duplicate IDs in Qliksense data'
+    assert len(alit_df.index) == alit_df.index.nunique(), 'Duplicate IDs in Alitis data'
 
     full_df = qs_df.join(alit_df,how='inner')
     print("alitis:",len(alit_df.index),"qliksense:",len(qs_df.index),"final:",len(full_df.index))
@@ -624,7 +674,7 @@ def load_alitis_cases_data(alitis_cases_path):
 
     return alit_df
 
-def separate_flat_data(full_df,label_dict,predictor_list,inclusion_list,text_col = "FreeText"):
+def separate_flat_data(full_df,label_dict,predictor_list,test_list,inclusion_list,text_col = "FreeText"):
 
     """ generate composite labels and separate flat data """
 
@@ -633,19 +683,17 @@ def separate_flat_data(full_df,label_dict,predictor_list,inclusion_list,text_col
     for lab, comps in label_dict.items():
         label_df[lab] = full_df[comps].max(axis=1)
 
-    data_df = full_df[predictor_list + inclusion_list]
+    data_df = full_df[predictor_list + test_list + inclusion_list]
 
-    text_df = full_df[text_col]
+    text_df = pd.DataFrame(full_df[text_col]) # Make sure this doesn't get saved as a series
 
     return label_df, data_df, text_df
 
 def parse_flat_data(
     qs_excel_path,
-    alitis_cases_path,
-    incl_vars
+    alitis_cases_path
     ):
     """ Load flat data from Qliksense and Alitis """
-    #qs_df = load_qliksense_data(qs_excel_path,incl_vars)
     qs_df = pd.read_excel(qs_excel_path,index_col='caseid',na_values='-')
     alit_df = load_alitis_cases_data(alitis_cases_path)
 
@@ -800,8 +848,16 @@ def generate_mbs_dicts(answers,neg_groups,key_table,filter_str):
     out_dict = recur_update(out_dict, answer_dict)
 
     return out_dict, unparsed_dict
- 
-def parse_export_data(code_dir, raw_data_paths,inclusion_criteria, label_dict, predictors, key_table, filter_str, log):
+
+def na_before_first(series):
+    """ Function to replace all values prior to a positive value with NAs """
+    ind = series.index.get_loc((series > 0).idxmax())
+
+    if ind > 0:
+        series.at[0:ind-1] = np.NaN
+    return series
+
+def parse_export_data(code_dir, raw_data_paths, test_criteria, inclusion_criteria, label_dict, predictors, key_table, filter_str, log):
 
     """ Parse raw export data into a clean format for further processing """
 
@@ -809,10 +865,9 @@ def parse_export_data(code_dir, raw_data_paths,inclusion_criteria, label_dict, p
 
     full_df = parse_flat_data(
         f"{data_paths['qliksense_export']}",
-        f"{data_paths['mbs_cases']}",
-        inclusion_criteria)
+        f"{data_paths['mbs_cases']}")
         
-    label_df, data_df, text_df = separate_flat_data(full_df,label_dict,predictors,inclusion_criteria)
+    label_df, data_df, text_df = separate_flat_data(full_df,label_dict,predictors,test_criteria,inclusion_criteria)
 
     # Check for intermediate dictionary of mbs tokens
     unparsed_dict = {}
@@ -844,9 +899,16 @@ def parse_export_data(code_dir, raw_data_paths,inclusion_criteria, label_dict, p
     with open(f'{code_dir}/data/clean/unparsed_dict.json', 'w') as f:
         json.dump(unparsed_dict, f, indent=4)
 
-    mbs_df = pd.DataFrame(mbs_dict, dtype='int8').transpose()
-    log.info(f'Joining {len(mbs_df.index)} mbs {len(data_df.index)} flat data entries...')
-    data_df = data_df.join(mbs_df,how='left') 
+    mbs_df = pd.DataFrame(mbs_dict).transpose()
+
+    # To avoid considering newly added MBS questions as negative in historical data, set answers prior to first documented positive answers to NA
+    # Might want to do this during MBS answer parsing, but the ways I can think of all involve major refactoring or disgusting function side effects.
+
+    qcols = [col for col in mbs_df if col.startswith('disp_q') and not col.endswith('_Ja')]
+    mbs_df[qcols] = mbs_df[qcols].apply(na_before_first)  
+
+    log.info(f'Joining {len(mbs_df.index)} mbs and {len(data_df.index)} flat data entries...')
+    data_df = data_df.join(mbs_df,how='inner') 
 
     # A bit of feature engineering
     case_dt = pd.to_datetime(data_df['CreatedOn'],format='%Y/%m/%d %H:%M:%S')
@@ -857,10 +919,11 @@ def parse_export_data(code_dir, raw_data_paths,inclusion_criteria, label_dict, p
         disp_month = case_dt.dt.month.astype(int),
         IsValid = [1 if x and not np.isnan(x) else 0 for x in data_df.IsValid])
     data_df = data_df.drop('CreatedOn',axis=1)
+    data_df.index.rename('caseid',inplace=True)
 
     return data_df, label_df, text_df
 
-def clean_data(code_dir, raw_data_paths, clean_data_paths, full_name_path, overwrite_data, inclusion_criteria, label_dict, predictors, key_table, filter_str, log):
+def clean_data(code_dir, raw_data_paths, clean_data_paths, full_name_path, overwrite_data, update_data, test_criteria, inclusion_criteria, label_dict, predictors, key_table, filter_str, log):
     
     """ Try to load clean data or parse raw export data if necessary. """
 
@@ -869,15 +932,16 @@ def clean_data(code_dir, raw_data_paths, clean_data_paths, full_name_path, overw
 
     if all(paths_exist.values()) and not overwrite_data:
         log.info("Clean data found! Loading...")
-        label_df = pd.read_csv(full_paths['clean_labels'], index_col='caseid')
         data_df = pd.read_csv(full_paths['clean_data'], index_col='caseid')
+        label_df = pd.read_csv(full_paths['clean_labels'], index_col='caseid')
         text_df = pd.read_csv(full_paths['clean_text'], index_col='caseid')
 
-    else:
+    if overwrite_data or update_data or not all(paths_exist.values()):
         log.warning("Parsing export data....")
-        data_df, label_df, text_df = parse_export_data(
+        new_data_df, new_label_df, new_text_df = parse_export_data(
             code_dir, 
             raw_data_paths, 
+            test_criteria,
             inclusion_criteria, 
             label_dict, 
             predictors,
@@ -885,9 +949,22 @@ def clean_data(code_dir, raw_data_paths, clean_data_paths, full_name_path, overw
             filter_str, 
             log
             )
+        
+        if update_data:
+            log.warning("Updating data....")
+            data_df = new_data_df.combine_first(data_df)
+            label_df = new_label_df.combine_first(label_df)
+            text_df = new_text_df.combine_first(text_df)
+        
+        if overwrite_data or not all(paths_exist.values()):
+            log.warning("Overwriting data....")
+            data_df = new_data_df
+            label_df = new_label_df
+            text_df = new_text_df
 
-        label_df.to_csv(full_paths['clean_labels'])
+        # Save new data to disk
         data_df.to_csv(full_paths['clean_data'])
+        label_df.to_csv(full_paths['clean_labels'])
         text_df.to_csv(full_paths['clean_text'])
 
     # Generate dict of pretty names of predictors and labels for display in ui
@@ -902,13 +979,12 @@ def clean_data(code_dir, raw_data_paths, clean_data_paths, full_name_path, overw
             'labels':label_df,
             'text':text_df}
 
-def split_data(data, test_cutoff_ymd, test_sample, test_criteria, inclusion_criteria):
+def split_data(data, test_cutoff_ymd, test_sample, test_criteria, inclusion_criteria, test_criteria_weight):
     
     # Apply inclusion criteria before splitting
 
     for i in inclusion_criteria:
         inclobs = data['data'][i].eq(1)
-        print(inclobs)
         print("excluding",len(data['data'].index)-np.sum(inclobs),i)
         data['data'] = data['data'][inclobs]
         data['labels'] = data['labels'][inclobs]
@@ -916,13 +992,25 @@ def split_data(data, test_cutoff_ymd, test_sample, test_criteria, inclusion_crit
     
     data['data'] = data['data'].drop(inclusion_criteria,axis=1)
 
-    # A major update to the user interface was implemented in May 2019 which 
-    # substantially impacted the structure of the collected data (primarily 
-    # by reducing the rate of missingness). These changes included a validation 
-    # system to indicate whether a record is complete or not, and risk prediction
-    # tools will only be available for complete calls per IsValid.
-
     cutoff_date_epoch = calendar.timegm(time.strptime(test_cutoff_ymd, "%Y%m%d")) / 86400
+
+    train_ids = data['data'].index[data['data'].disp_date < cutoff_date_epoch]
+    print(f"{len(train_ids)} observations before {test_cutoff_ymd}")
+
+    if test_criteria_weight:
+        print("Gererating weights for training")
+
+        date_min = min(data['data'][data['data'].index.isin(train_ids)]['disp_date'])
+        date_max = max(data['data'][data['data'].index.isin(train_ids)]['disp_date'])
+        span = date_max - date_min
+        date_weights = [(i - date_min)/span for i in data['data'][data['data'].index.isin(train_ids)]['disp_date']]
+
+        criteria_weights = data['data'][data['data'].index.isin(train_ids)][test_criteria].sum(axis=1)
+        criteria_weights = criteria_weights.apply(lambda x: max(1,x))
+        train_weights = criteria_weights * test_criteria_weight * date_weights
+    else:
+        train_weights = data['data'][data['data'].index.isin(train_ids)][:,0]
+        train_weights = train_weights.apply(lambda x: 1)
 
     valid_ids = data['data'].index[data['data'].disp_date >= cutoff_date_epoch]
     print(f"{len(valid_ids)} observations after {test_cutoff_ymd}")
@@ -931,15 +1019,20 @@ def split_data(data, test_cutoff_ymd, test_sample, test_criteria, inclusion_crit
         crit_incl = data['data'][i].eq(1)
         criteria_ids = data['data'].index[crit_incl]
         valid_ids = [j for j in valid_ids if j in criteria_ids]
-        print(f"{len(valid_ids)} observations after excluding {i}")
+        print(f"{len(valid_ids)} observations with {i}")
 
     test_ids = list(random.sample(list(valid_ids),int(len(valid_ids)*test_sample)))
 
+    print(f"{len(test_ids)} observations included in test set")
+
+    data['data'] = data['data'].drop(test_criteria,axis=1)
+
     out_data = {
         'train':{
-            'data':data['data'][~data['data'].index.isin(test_ids)],
-            'labels':data['labels'][~data['labels'].index.isin(test_ids)],
-            'text':data['text'][~data['text'].index.isin(test_ids)]
+            'data':data['data'][data['data'].index.isin(train_ids)],
+            'labels':data['labels'][data['labels'].index.isin(train_ids)],
+            'text':data['text'][data['text'].index.isin(train_ids)],
+            'weights':train_weights
         },
         'test':{
             'data':data['data'][data['data'].index.isin(test_ids)],
@@ -1049,3 +1142,18 @@ def parse_text_to_bow(text_df, max_ngram, text_prefix = None, min_terms = None, 
     bow_df = pd.DataFrame(full_term_dict).fillna(0).transpose()
 
     return bow_df
+
+def generate_old_test_feats(df,old_names,log):
+
+    names_add = np.setdiff1d(old_names,list(df.columns))
+    names_remove = np.setdiff1d(list(df.columns),old_names)
+    names_final = [x for x in old_names if x not in names_remove]
+
+    log.warning("Features added/removed:")
+    log.warning(names_add)
+    log.warning(names_remove)
+
+    df_out = df.drop(names_remove,axis=1)
+    df_out = df_out.reindex(columns=names_final, fill_value=0)
+
+    return df_out

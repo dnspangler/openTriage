@@ -8,6 +8,7 @@ import itertools
 import xgboost
 import time
 import csv
+import errno
 
 import numpy as np
 import pandas as pd
@@ -35,7 +36,8 @@ from frameworks.uppsala_alitis.utils import (
     generate_ui_data,
     generate_names,
     parse_text_to_bow,
-    get_stopword_set
+    get_stopword_set,
+    generate_old_test_feats
     )
 
 class Main:
@@ -56,6 +58,7 @@ class Main:
             'train_labels':'data/train/labels.csv',
             'train_data':'data/train/data.csv',
             'train_text':'data/train/text.csv',
+            'train_weights':'data/train/weights.csv',
             'test_labels':'data/test/labels.csv',
             'test_data':'data/test/data.csv',
             'test_text':'data/test/text.csv'
@@ -92,10 +95,13 @@ class Main:
         },
         instrument_trans = 'logit',
         filter_str = '_Bedmt_tillstnd_|_Nej',
-        randomize = False,
         # Data parsing stuff
         overwrite_models = False,
+        update_models = False,
         overwrite_data = False,
+        update_data = False,
+        test_on_load = True,
+        return_payload = True,
         # Define inclusion criteria for qs data
         inclusion_criteria = ["valid_pin","valid_geo_dest","exists_amb"],
         # Define composite measures defined as any one of several variables:
@@ -104,7 +110,7 @@ class Main:
             "amb_prio" : ["amb_prio"],
             "hosp_critcare" : ["hosp_icu","hosp_30daymort"]},
         # Define predictors to extract
-        predictors = ["disp_age","disp_gender","disp_lon","disp_lat","CreatedOn","Priority","RecomendedPriority","IsValid"],
+        predictors = ["disp_age","disp_gender","disp_lon","disp_lat","CreatedOn","Priority","RecomendedPriority"],
         parse_text = 'FreeText',
         max_ngram = 2, 
         text_prefix = 'text_', 
@@ -112,7 +118,10 @@ class Main:
         # Test/train sample splitting
         test_cutoff_ymd = '20200319',
         test_sample = 0.3,
-        test_criteria = ['IsValid'],
+        test_criteria = ['IsValid','LowPrio'],
+        test_criteria_weight = 5,
+        # Randomization settings
+        check_repeats = False, #Assign observations which have already been evaluated to same randomization arm
         # UI stuff
         prod_ui_cols = ['value','mean_shap']
         ):
@@ -130,8 +139,8 @@ class Main:
         self.max_estimators = max_estimators
         self.out_weights = out_weights
         self.filter_str = filter_str
+        self.return_payload = return_payload
         self.instrument_trans = instrument_trans
-        self.randomize = randomize
         self.parse_text = parse_text
         self.max_ngram = max_ngram
         self.text_prefix = text_prefix
@@ -140,6 +149,7 @@ class Main:
         self.test_sample = test_sample
         self.test_criteria = test_criteria
         self.prod_ui_cols = prod_ui_cols
+        self.check_repeats = check_repeats
 
         # Make and check full paths
         full_key_path = f'{self.code_dir}/{key_path}'
@@ -160,19 +170,18 @@ class Main:
         
         # If a serialized model is available, load it
 
-        if all(model_paths_exist.values()) and not overwrite_models:
+        if all(model_paths_exist.values()) and not (overwrite_models or update_models):
             self.log.info("Models found! Loading...")
             self.model = self._load_model(full_model_paths)
 
         # Otherwise, try to load data
         else:
-            if all(data_paths_exist.values()) and not overwrite_data:
+            if all(data_paths_exist.values()) and not (overwrite_data or update_data):
                 self.log.info("Data found! Loading...")
                 self.data = self._load_data(full_data_paths,full_stopword_path)
 
             # If no clean data is available, try to parse clean data
             else:
-                self.log.warning("Missing data file(s)! Cleaning data...")
 
                 data_clean = clean_data(
                     code_dir=code_dir, 
@@ -180,6 +189,8 @@ class Main:
                     clean_data_paths=clean_data_path_dict, 
                     full_name_path=full_name_path, 
                     overwrite_data=overwrite_data, 
+                    update_data=update_data, 
+                    test_criteria=test_criteria, 
                     inclusion_criteria=inclusion_criteria, 
                     label_dict=label_dict, 
                     predictors=predictors,
@@ -193,7 +204,8 @@ class Main:
                     test_cutoff_ymd = self.test_cutoff_ymd, 
                     test_sample = self.test_sample, 
                     test_criteria = self.test_criteria, 
-                    inclusion_criteria=inclusion_criteria)
+                    inclusion_criteria=inclusion_criteria,
+                    test_criteria_weight=test_criteria_weight)
 
                 self._save_data(data_split, full_data_paths) # Write data to disk
                 # Load it from disk (to avoid making stupid mistakes)
@@ -201,12 +213,20 @@ class Main:
             
             # Once data has (hopefully) been loaded, train a model on it.
             try:
-                self.log.info("No models found! Training...")
+                if all(model_paths_exist.values()) and update_models:
+                    self.log.info("Testing/saving old models...")
+                    self.model = self._load_model(full_model_paths)
+                    self._test_model()
+
+                    old_model_paths = {k:f'{self.code_dir}/logs/{datetime.date(datetime.now())}/{v}' for k,v in model_path_dict.items()}
+                    self._save_model(self.model, old_model_paths)
+
+                self.log.info("Training new models...")
                 model = self._train_model()
                 self._save_model(model, full_model_paths) # Write model to disk
                 self.model = model
                 #TODO: Implement nicer reports on model performance to be provided upon training a new model
-                #test_model(model, data)
+                self._test_model()
 
             # If no data or models are available, crash the server.
             except NameError:
@@ -230,15 +250,27 @@ class Main:
         else:
             self.log.info("No stopwords found!")
 
+        if test_on_load:
+            if all(data_paths_exist.values()):
+                self.data = self._load_data(full_data_paths,full_stopword_path)
+                self._test_model()
+            else:
+                log.warning("No parsed data found, can't test models!")
+        
+        if self.return_payload:
+            self.payload = {}
+
     def input_function(self, request):
         """input_function is a required function to parse incoming data"""
         request_data = request.data
-        self.log.debug(request_data)
         # Loop through each item sent through the API
         results = {}
         for id, value in request_data.items():
             # Apply a parsing function (from functions.py) to each item
             results[id] = parse_json_data(value,self.model,log = self.log)
+
+            if self.return_payload:
+                self.payload[id] = value
 
             if self.parse_text:
                 
@@ -272,7 +304,6 @@ class Main:
             
             # Apply a prediction function to the parsed data
             prediction = predict_instrument(model = self.model,new_data = value, log = self.log)
-            # self.logdebug(prediction)
             # Add the score to a dictionary to be returned for further processing
             preds[id] = prediction
 
@@ -291,6 +322,7 @@ class Main:
             # Add info other included ids
             other_ids = list(store_ids.values())
             other_ids.remove(store_ids[id])
+            # Store 
             value['other_ids'] = other_ids
 
             # Store the prediction
@@ -309,32 +341,81 @@ class Main:
         for id,value in scores.items():
             # Add items which should be returned regardless of inclusion in control/intervention arm
             out_dict[id] = {'score':value,'trialID':trialID}
+            if self.return_payload:
+                out_dict[id]['payload'] = self.payload[id]
 
         # Apply randomization procedure (i.e., generate a 0/1 randomly with equal likelihoods) if desired
-        if self.randomize:
+        if os.environ['RANDOMIZE'] == 'True':
             group = round(np.random.uniform()) # Randomize
+            if self.check_repeats == True:
+                # Check to see if any observation in group has been randomized previously. If so, assign all observations in this group to the same trial arm.
+                # Use cache for this - Since we're only saving trial arm assignment, can use actual ids
+                group_arms = []
+                for id in prediction.keys():
+                    if self.cache.exists(id): 
+                        group_arms.append(int(self.cache.get(id)))
+                        self.log.debug(f'{id} previously randomized to {group_arms[-1]}')
+
+                self.log.debug(group_arms)
+                if len(group_arms) > 0:
+                    # set group to previous study arm
+                    if all(x == group_arms[0] for x in group_arms):
+                        group = group_arms[0]
+                    else:
+                        # This shouldn't really ever happen in practice, but it is *technically* possible
+                        self.log.warning(f'Mismatched prior randomization arms, marked for exclusion')
+                        group = None
+                else:
+                    self.log.debug(f'Randomized to {group}')
+
+                if group is not None:
+                    # cache study arm assigment for 8 hours
+                    for id in prediction.keys():
+                        self.cache.set(id,group)
+                        self.cache.expire(id,60*60*8)
+            else:
+                self.log.debug(f'Randomized to {group}')
         else:
             group = 1 # Don't Randomize
+            self.log.debug(f'Not randomized')
 
-        if group == 0:
+        if group is None:
+            # Display as control, output error to dict
+            for id,value in prediction.items():
+                out_dict[id]['text'] = '-'
+                out_dict[id]['color'] = '#c0c0c0'
+                out_dict[id]['link'] = f'/html/uppsala_alitis?id=control'
+                out_dict[id]['group'] = 'randomization_error'
+        elif group == 0:
             # Add control arm output data to dict
             for id,value in prediction.items():
                 out_dict[id]['text'] = '-'
                 out_dict[id]['color'] = '#c0c0c0'
                 out_dict[id]['link'] = f'/html/uppsala_alitis?id=control'
                 out_dict[id]['group'] = 'control'
-
         else:
                 
             for id,value in ranks.items():
+
                 # Mark the highest ranked call with a red color (This is the one that should get an ambulance first!), and grey for all others
                 if value == 1: 
                     col = '#ff0000'
                 else:
                     col = '#c0c0c0'
+
+                if os.environ['RANDOMIZE'] == 'True':
+                    # Display 1 for highest risk call, but doen't display order of other calls (can unblind dispatch order for subsequent dispatches if more than 2 calls are in dispatch queue)
+                    if value == 1: 
+                        text = '1'
+                    else:
+                        text = '-'
+                else:
+                    text = value
+
+                
                 
                 # Add output data to be displayed in intervention arm
-                out_dict[id]['text'] = str(value)
+                out_dict[id]['text'] = text
                 out_dict[id]['color'] = col
                 out_dict[id]['link'] = f'/html/uppsala_alitis?id={store_ids[id]}'
                 out_dict[id]['group'] = 'intervention'
@@ -368,7 +449,7 @@ class Main:
 
         return render_template(
             "testui.html", 
-            title = f"Övergripande risk: {np.round(store['score'],2)}", 
+            title = f"Bedömningsdetaljer", 
             fig_base64 = ui_data['fig_base64'], 
             components = ui_data['components'].render(), 
             feat_imp = ui_data['feat_imp_table'].render())
@@ -378,6 +459,7 @@ class Main:
         self.log.info("Loading data...")
         train_data = pd.read_csv(data_path_dict['train_data'],index_col='caseid')
         train_labels = pd.read_csv(data_path_dict['train_labels'],index_col='caseid')
+        train_weights = pd.read_csv(data_path_dict['train_weights'],index_col='caseid')
 
         test_data = pd.read_csv(data_path_dict['test_data'],index_col='caseid')
         test_labels = pd.read_csv(data_path_dict['test_labels'],index_col='caseid')
@@ -414,7 +496,7 @@ class Main:
                 stopword_set,
                 term_list=list(train_bow.columns))
 
-            assert len(train_bow.columns) == len(test_bow.columns)
+            assert len(train_bow.columns) == len(test_bow.columns), "Bow embedding mismatch!"
 
             train_data = train_data.join(train_bow)
             test_data = test_data.join(test_bow)
@@ -423,6 +505,7 @@ class Main:
             'train':{
                 'data':train_data,
                 'labels':train_labels,
+                'weights':train_weights
             },
             'test':{
                 'data':test_data,
@@ -441,6 +524,7 @@ class Main:
         data['train']['data'].to_csv(data_paths['train_data'])
         data['train']['labels'].to_csv(data_paths['train_labels'])
         data['train']['text'].to_csv(data_paths['train_text'])
+        data['train']['weights'].to_csv(data_paths['train_weights'])
 
     def _load_key(self, key_path):
         
@@ -485,6 +569,15 @@ class Main:
         # Note that we save these seperately instead of just pickling 
         # everything to make the model properties human-readable 
         # for debugging purposes
+        
+        # Make directory if non-existant
+        save_dir = os.path.dirname(list(model_paths.values())[0])
+        if not os.path.exists(save_dir):
+            try:
+                os.makedirs(save_dir)
+            except OSError as exc: # Guard against race condition
+                if exc.errno != errno.EEXIST:
+                    raise
 
         with open(model_paths['model_props'], "w", encoding='utf-8') as f:
             json.dump(model['model_props'],f,ensure_ascii=False,indent=4)
@@ -492,14 +585,42 @@ class Main:
         with open(model_paths['models'], "wb") as f:
             pickle.dump(model['models'],f)
 
+    def _test_model(self):
+
+        self.log.info("Testing models...")
+
+        test_df = self.data['test']['data']
+        feat_names = list(self.model['model_props']['feat_props']['median'].keys())
+        
+        # TODO: For now, this will fail if testing models in data with different sets of features. 
+        # Given the use of text data, features are likely to vary from one test dataset to another. 
+        # This is handled fine when parsing payloads for real-time prediction, but needs to be handled
+        # here for the purposes of comparing new and old models. Something like this:
+
+        # if(list(test_df.columns) != feat_names):
+        #    test_df = generate_old_test_feats(test_df,feat_names,self.log)
+
+        for name, values in self.data['test']['labels'].iteritems(): 
+        # Print some quick "sanity check" results
+
+            test_dmatrix = xgboost.DMatrix(test_df, label = values)
+
+            self.log.info(name + " Mean pred: "+
+                    str(np.mean(self.model['models'][name].predict(test_dmatrix))) +
+                    " (" + str(np.mean(values)) + ") Individual Test AUC: " +
+                    str(metrics.roc_auc_score(values,
+                        self.model['models'][name].predict(test_dmatrix))) + 
+                        " Score AUC: " +
+                    str(metrics.roc_auc_score(values,
+                        list(self.model['model_props']['scores'].values())))
+                    ) 
+        
+
+
+
     def _train_model(self):
 
         self.log.info("Training models...")
-
-        date_min = min(self.data['train']['data']['disp_date'])
-        date_max = max(self.data['train']['data']['disp_date'])
-        span = date_max - date_min
-        obs_weights = [(i - date_min)/span for i in self.data['train']['data']['disp_date']]
 
         # Tune Hyperparameters ----------------------------------------------------------------
 
@@ -511,7 +632,7 @@ class Main:
             # For each label in the training dataset...
             for name, values in self.data['train']['labels'].iteritems(): 
                 # Generate dmatrix for xgb model
-                train_dmatrix = xgboost.DMatrix(self.data['train']['data'], label = values, weight=obs_weights)
+                train_dmatrix = xgboost.DMatrix(self.data['train']['data'], label = values, weight=self.data['train']['weights'])
                 # Optomiz parameters and save to log
                 log_params[name] = bayes_opt_xgb(
                     dmatrix=train_dmatrix, 
@@ -540,7 +661,7 @@ class Main:
             train_dmatrix = xgboost.DMatrix(
                 self.data['train']['data'], 
                 label = values, 
-                weight=obs_weights, 
+                weight=self.data['train']['weights'], 
                 feature_names=self.data['train']['data'].columns)
 
             # Get best hyperparameters for label from log 
@@ -551,19 +672,12 @@ class Main:
                                 train_dmatrix,
                                 num_boost_round=log_best['fit_props']['n_estimators'])
 
-            # Print some quick "sanity check" results
-            test_dmatrix = xgboost.DMatrix(self.data['test']['data'], label = self.data['test']['labels'][name])
-            self.log.info("Mean pred: "+
-                str(np.mean(fits[name].predict(test_dmatrix))) +
-                " Test AUC: " +
-                str(metrics.roc_auc_score(self.data['test']['labels'][name],
-                    fits[name].predict(test_dmatrix))))
-
         model_props = get_model_props(
             fits,
             data = self.data,
             out_weights = self.out_weights,
-            instrument_trans = self.instrument_trans)
+            instrument_trans = self.instrument_trans,
+            log = self.log)
 
         model_dict = {
             'models':fits,

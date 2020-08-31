@@ -132,10 +132,10 @@ if __name__ == "__main__":
                 logger.info(f"Reinitializing framework {fw}...")
 
                 Main[i] = import_module(f"frameworks.{fw}.main").Main(
-            code_dir = f'frameworks/{fw}',
-            log = logger,
-            cache = r
-            )
+                    code_dir = f'frameworks/{fw}',
+                    log = logger,
+                    cache = r
+                    )
                 return "Done!"
 
             except Exception as e:

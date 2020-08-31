@@ -382,14 +382,14 @@ class Main:
         if group is None:
             # Display as control, output error to dict
             for id,value in prediction.items():
-                out_dict[id]['text'] = '-'
+                out_dict[id]['text'] = 'kontroll'
                 out_dict[id]['color'] = '#c0c0c0'
                 out_dict[id]['link'] = f'/html/uppsala_alitis?id=control'
                 out_dict[id]['group'] = 'randomization_error'
         elif group == 0:
             # Add control arm output data to dict
             for id,value in prediction.items():
-                out_dict[id]['text'] = '-'
+                out_dict[id]['text'] = 'kontroll'
                 out_dict[id]['color'] = '#c0c0c0'
                 out_dict[id]['link'] = f'/html/uppsala_alitis?id=control'
                 out_dict[id]['group'] = 'control'

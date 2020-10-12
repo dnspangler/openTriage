@@ -1,0 +1,190 @@
+
+{"1041145":
+  {
+    "expected_score": 0.7, 
+    "Age": 32,
+    "Gender": "Female",
+    "CaseID": "20190101-100-10",
+    "FreeText": "Test Förvirrad, vet ej var han är. vill avvakta Tid. cancer",
+    "Priority":1,
+    "RecomendedPriority":1,
+    "CreatedOn": "2020-11-24 13:56:00",
+    "Coord_n":59.582,
+    "Coord_e":17.135,
+    "NoLastContacts": 0,
+    "LastContactTime": "2020-12-10 12:00:00",
+    "MainAnswers":[
+      {
+        "QuestionID": "1526DC58-EA74-42EE-AB67-C3CAE7B7D66B",
+        "AnswerID": "97432B1D-9C79-4ED9-A6D9-1ECDA14DD86C"
+      },
+      {
+        "QuestionID": "798E1376-FB56-4270-A71E-B3E9069757AA",
+        "AnswerID": "E8580439-6475-49C1-9DF4-83416EE57EB9"
+      },
+      {
+        "QuestionID": "F2532A13-D74B-4616-B585-B7711CF69502",
+        "AnswerID": "B9563FEE-8BCD-4F5E-939D-842DF51E28DD"
+      }
+    ],
+    "Categories": [
+      {
+        "CategoryID": "04B6DB59-6F8F-4951-9E4F-4553CEC7883B",
+        "IsPrimary": true,
+        "MissingReasons": [
+          {
+            "QuestionGroupID": "C07756F2-36F5-4E2B-9DC2-79A5AC8CA38B",
+            "MissingReasonID": "1CE64C75-2025-41F3-A4AD-43AE6CFFAB66"
+          }
+        ],
+        "Questions": [
+          {
+            "QuestionID": "ACE0C7E0-CD31-4D94-9380-EAEB09BCDDBF",
+            "Text": [],
+            "Answers": [
+              {
+                "AnswerID": "CA71DFD1-9E30-42A1-A9F3-EEC5B8EA7FBA",
+                "MultipleChoiceID": ""
+              }
+            ]
+          },
+          {
+            "QuestionID": "855718E1-3167-4473-8611-07FC0B0DCD7D",
+            "Text": [],
+            "Answers": [
+              {
+                "AnswerID": "5862F5E7-F145-4FCF-BE41-C1FD94DFE27E",
+                "MultipleChoiceID": ""
+              }
+            ]
+          },
+          {
+            "QuestionID": "607A2275-CDB1-4403-A1ED-8AE5D669A803",
+            "Text": [],
+            "Answers": [
+              {
+                "AnswerID": "6EB82EFA-F955-470D-A0C5-E8A961EDC0C1",
+                "MultipleChoiceID": ""
+              }
+            ]
+          },
+          {
+            "QuestionID": "0A38A6C2-64FE-41F8-9A7C-9AC17C7491DF",
+            "Text": [],
+            "Answers": [
+              {
+                "AnswerID": "5FCB199A-ED20-4A53-8B56-0F04F94A2DD2",
+                "MultipleChoiceID": ""
+              }
+            ]
+          },
+          {
+            "QuestionID": "9482A8E0-4B6C-46BB-8540-62D4F8C9853D",
+            "Text": [],
+            "Answers": [
+              {
+                "AnswerID": "DA1F0E36-F270-4053-884F-00064E752699",
+                "MultipleChoiceID": ""
+              }
+            ]
+          },
+          {
+            "QuestionID": "170994DB-A0BE-4DE8-B795-54741E1CE3B8",
+            "Text": [],
+            "Answers": [
+              {
+                "AnswerID": "E3081C3F-ED98-41D8-BDC0-08F42DCD75AB",
+                "MultipleChoiceID": ""
+              }
+            ]
+          },
+          {
+            "QuestionID": "775D9F8A-DB02-4190-87C5-ABF9EA9C9CB8",
+            "Text": [],
+            "Answers": [
+              {
+                "AnswerID": "AC3F3DCE-5E71-4827-ABF9-9FEE8374C860",
+                "MultipleChoiceID": ""
+              }
+            ]
+          },
+          {
+            "QuestionID": "1A08E991-5D38-4071-9749-6BA4C96D340D",
+            "Text": [],
+            "Answers": [
+              {
+                "AnswerID": "DDF3893A-201E-4813-9FB4-A4EF9EF77F48",
+                "MultipleChoiceID": ""
+              }
+            ]
+          },
+          {
+            "QuestionID": "453A61DD-55C4-451D-BFB3-8CB7FBED458B",
+            "Text": [],
+            "Answers": [
+              {
+                "AnswerID": "25BCA6D5-C245-4648-BBFE-FFDD476828E9",
+                "MultipleChoiceID": "493C4FAF-6903-468A-ADB0-BBE40D133C0E"
+              }
+            ]
+          },
+          {
+            "QuestionID": "B51B99CE-16A2-4C34-B4B5-B102E3D3609B",
+            "Text": [],
+            "Answers": [
+              {
+                "AnswerID": "FB8424D9-FA1E-4F3F-940E-D4718F6EA5DF",
+                "MultipleChoiceID": ""
+              }
+            ]
+          },
+          {
+            "QuestionID": "3D29FB25-8C89-4310-8CFE-FC8858F9D220",
+            "Text": ["Nej"],
+            "Answers": []
+          },
+          {
+            "QuestionID": "97EA0734-B9D3-4A0B-B95D-2094303547AC",
+            "Text": ["oklart"],
+            "Answers": []
+          },
+          {
+            "QuestionID": "DF5C939B-0DC4-4EC0-BC0D-3DF8E1BE732C",
+            "Text": ["nej"],
+            "Answers": []
+          },
+          {
+            "QuestionID": "9EAD8B34-0F94-47AE-9360-679E989ED48F",
+            "Text": ["nej"],
+            "Answers": []
+          },
+          {
+            "QuestionID": "6EDBB23E-3AD3-4E50-B42E-CECE798D38D3",
+            "Text": ["Hypertoni"],
+            "Answers": []
+          },
+          {
+            "QuestionID": "9331E710-1621-4A45-BAF0-F9DFC8454BEA",
+            "Text": ["nej"],
+            "Answers": []
+          },
+          {
+            "QuestionID": "6D2BD003-ED16-4692-8029-DF27B84B753E",
+            "Text": ["nej"],
+            "Answers": []
+          },
+          {
+            "QuestionID": "F7BA8621-ACD6-41CC-8CFD-028BF8FC9F5A",
+            "Text": ["nej"],
+            "Answers": []
+          },
+          {
+            "QuestionID": "D76308C0-D424-4D21-8414-5019B9D44F5E",
+            "Text": ["nej"],
+            "Answers": []
+          }
+        ]
+      }
+    ]
+  }
+}

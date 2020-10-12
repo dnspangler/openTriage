@@ -55,7 +55,7 @@ ui <- fluidPage(
                          selected = model_props$feat_props$median$disp_prio),
             radioButtons("eval_avpu",
                          "Level of Consciousness (AVPU)",
-                         choices = list("Alert"="A","Verbal"="V","Conscious"="P","Unconscious"="U"),
+                         choices = list("Alert"="A","Verbal"="V","Pain"="P","Unconscious"="U"),
                          selected = "A"),
             sliderInput("eval_breaths",
                         "Breathing rate",

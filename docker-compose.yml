@@ -9,6 +9,7 @@ services:
   nginx:
     container_name: nginx
     image: nginx
+    restart: always
     volumes:
       - ./lib/nginx.conf:/etc/nginx/nginx.conf.temp
       - ./lib/ssl/.:/etc/nginx/ssl/

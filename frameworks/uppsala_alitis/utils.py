@@ -690,11 +690,14 @@ def separate_flat_data(full_df,label_dict,predictor_list,test_list,inclusion_lis
     return label_df, data_df, text_df
 
 def parse_flat_data(
-    qs_excel_path,
+    qs_path,
     alitis_cases_path
     ):
     """ Load flat data from Qliksense and Alitis """
-    qs_df = pd.read_excel(qs_excel_path,index_col='caseid',na_values='-')
+    if qs_path.endswith('.csv'):
+        qs_df = pd.read_csv(qs_path,index_col='caseid',na_values='NA',encoding = "utf-8")
+    elif qs_path.endswith('.xlsx'):
+        qs_df = pd.read_excel(qs_path,index_col='caseid',na_values='-')
     alit_df = load_alitis_cases_data(alitis_cases_path)
 
     return join_flat_data(qs_df,alit_df)

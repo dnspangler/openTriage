@@ -72,7 +72,7 @@ class Main:
             'mbs_answers':'data/raw/mbs_answers.csv',
             'mbs_cases':'data/raw/mbs_cases.csv',
             'mbs_neg_groups':'data/raw/mbs_neg_groups.csv',
-            'qliksense_export':'data/raw/qliksense_export.xlsx',
+            'qliksense_export':'data/raw/qliksense_export.csv',
             'mbs_dict':'data/raw/mbs_dict.json'
             },
         # Hyperparameter tuning stuff

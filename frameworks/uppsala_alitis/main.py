@@ -122,6 +122,7 @@ class Main:
         test_criteria_weight = 5,
         # Randomization settings
         check_repeats = False, #Assign observations which have already been evaluated to same randomization arm
+        default_arm = 0, # When not randomizing, what study arm should be assigned? (1=intervention, 0=control)
         # UI stuff
         prod_ui_cols = ['value','mean_shap']
         ):
@@ -150,6 +151,7 @@ class Main:
         self.test_criteria = test_criteria
         self.prod_ui_cols = prod_ui_cols
         self.check_repeats = check_repeats
+        self.default_arm = default_arm
 
         # Make and check full paths
         full_key_path = f'{self.code_dir}/{key_path}'
@@ -376,8 +378,8 @@ class Main:
             else:
                 self.log.debug(f'Randomized to {group}')
         else:
-            group = 1 # Don't Randomize
-            self.log.debug(f'Not randomized')
+            group = self.default_arm # Don't Randomize
+            self.log.debug(f'Not randomized, assigned to {group}')
 
         if group is None:
             # Display as control, output error to dict

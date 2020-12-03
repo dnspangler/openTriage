@@ -354,31 +354,31 @@ news_calc <- function(data){
   # From https://www.rcplondon.ac.uk/file/9434/download?token=kf8WbPib
   
   out <- data %>%
-    mutate(news_rr = ifelse(amb_v_br <= 8, 3,
-                            ifelse(amb_v_br <= 11,1,
-                                   ifelse(amb_v_br <= 20,0,
-                                          ifelse(amb_v_br <=24,2, 3)))),
+    mutate(news_rr = ifelse(eval_breaths <= 8, 3,
+                            ifelse(eval_breaths <= 11,1,
+                                   ifelse(eval_breaths <= 20,0,
+                                          ifelse(eval_breaths <= 24,2, 3)))),
            # We'll use scale 1 of the NEWS scoring chart
-           news_spo2 = ifelse(amb_v_spo2 <= 91, 3,
-                              ifelse(amb_v_spo2 <= 93,2,
-                                     ifelse(amb_v_spo2 <= 95,1, 0))),
-           news_o2 = ifelse(amb_int_o2 > 0,2,0),
-           news_sbp = ifelse(amb_v_bp <= 90, 3,
-                             ifelse(amb_v_bp <= 100,2,
-                                    ifelse(amb_v_bp <= 110,1,
-                                           ifelse(amb_v_bp <= 219,0, 3)))),
-           news_pr = ifelse(amb_v_pr <= 40, 3,
-                            ifelse(amb_v_pr <= 50,1,
-                                   ifelse(amb_v_pr <= 90,0,
-                                          ifelse(amb_v_pr <= 110,1,
-                                                 ifelse(amb_v_pr <= 130,2, 3))))),
+           news_spo2 = ifelse(eval_spo2 <= 91, 3,
+                              ifelse(eval_spo2 <= 93,2,
+                                     ifelse(eval_spo2 <= 95,1, 0))),
+           news_o2 = ifelse(amb_o2 > 0,2,0),
+           news_sbp = ifelse(eval_sbp <= 90, 3,
+                             ifelse(eval_sbp <= 100,2,
+                                    ifelse(eval_sbp <= 110,1,
+                                           ifelse(eval_sbp <= 219,0, 3)))),
+           news_pr = ifelse(eval_pulse <= 40, 3,
+                            ifelse(eval_pulse <= 50,1,
+                                   ifelse(eval_pulse <= 90,0,
+                                          ifelse(eval_pulse <= 110,1,
+                                                 ifelse(eval_pulse <= 130,2, 3))))),
            
-           news_con = ifelse(amb_v_avpu == 4,0,3),
+           news_con = ifelse(eval_avpu == "(A) Alert",0,3),
            
-           news_temp = ifelse(amb_v_temp <= 35, 3,
-                              ifelse(amb_v_temp <= 36,1,
-                                     ifelse(amb_v_temp <= 38,0,
-                                            ifelse(amb_v_temp <= 39,1, 2))))) %>%
+           news_temp = ifelse(eval_temp <= 35, 3,
+                              ifelse(eval_temp <= 36,1,
+                                     ifelse(eval_temp <= 38,0,
+                                            ifelse(eval_temp <= 39,1, 2))))) %>%
     mutate(news_full = rowSums(dplyr::select(., starts_with("news_"))))
   return(out)
 }

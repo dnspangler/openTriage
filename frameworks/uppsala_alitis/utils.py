@@ -241,7 +241,7 @@ def parse_json_mainanswers(mainanswers,model,log):
     
     return out_dict, unparsed_list
 
-def parse_json_categories(categories,model,log):
+def parse_json_categories(categories,model,log,neg_name = "Bedömt utan fynd"):
     
     """ Function to parse question/answer data sent by the Alitis dispatch system into a dict. """
 
@@ -249,19 +249,19 @@ def parse_json_categories(categories,model,log):
     key_table = model['key']
 
     # Set ids corresponding to negative question group answers
-    missreason_ids = [
-        "8D122CF6-9CCC-4FBD-949F-16481917F5D3", 
-        "D3815AD4-017E-4AAA-8B29-34918F2C94E6", 
-        "1CE64C75-2025-41F3-A4AD-43AE6CFFAB66",
-        "1AD17679-AD80-410C-B231-9774B70D5B6E", 
-        "9233922A-5195-49E4-9282-A91A0D63E76E"
-        ]
+    missreason_ids = key_table[key_table['answer_name'] == neg_name].answerID.tolist()
 
     unparsed_list = []
 
     # Generate dict of categories to be updated with quesion/answer combos, and number of answers for each category
     cat_list = list(key_table.cat_token.drop_duplicates())
     out_dict = dict(zip(cat_list,[0] * (len(cat_list))))
+
+    # Generate dict of missing reasons to be updated
+    miss_null = key_table[key_table['CategoryID'] == 'Missreason'].qa_token.unique()
+    miss_dict = dict(zip(miss_null,[0] * (len(miss_null)+1)))
+
+    out_dict.update(miss_dict)
 
     # Loop over each catagory selected by the dispatcher
     for category in categories:
@@ -271,36 +271,51 @@ def parse_json_categories(categories,model,log):
         # Track number of questions answered for use as feature
         nqs = 0
 
-        # First we have to handle adding implied negative answers. 
-        # Implied negative answers are drawn from two sources: The 
-        # documentation of haing reviewed all questions in a group and 
-        # identifying no positive answers, or documenting an answer to 
-        # a question, in which case we assume that all non-documented 
-        # answers are negative.
-
         # Loop over each documented reason for missing answers
         for missingReason in category['MissingReasons']:
+            
+            miss_list = key_table[(key_table['AnswerID'] == missingReason['MissingReasonID']) & 
+                            (key_table['QuestionGroupID'] == missingReason['QuestionGroupID'])].qa_token.tolist()
+
+            if len(miss_list) == 1:
+                out_dict[miss_list[0]] = 1
+            else:
+                unparsed = {
+                    'CategoryID':categoryID,
+                    'QuestionGroupID':questionGroupID
+                }
+                log.warn("Uparsed missing reason!")
+                log.warn(unparsed)
+                unparsed_list.append(unparsed)
+            
+            # Here we handle adding implied negative answers. 
+            # Implied negative answers are drawn from two sources: The 
+            # documentation of having reviewed all questions in a group and 
+            # identifying no positive answers, or documenting an answer to 
+            # a question, in which case we assume that all non-documented 
+            # answers are negative.
+
             # if question group marked as investigated with only negative answers...
             if any(missingReason['MissingReasonID'] == id for id in missreason_ids): 
                 questionGroupID = missingReason['QuestionGroupID'].upper()
                 # Identify all matching tokens in category/question group
-                miss_list = key_table[(key_table['CategoryID'] == categoryID) & 
+                neg_list = key_table[(key_table['CategoryID'] == categoryID) & 
                                        (key_table['QuestionGroupID'] == questionGroupID)].qa_token
                 #log.debug("neg group:")
                 #log.debug(miss_list)
-                if len(miss_list) > 0:
+                if len(neg_list) > 0:
                     # Add all qas in group to intermidiate table with 0 as the documented value
-                    miss_dict = dict(zip(miss_list,[0] * (len(miss_list))))
+                    neg_dict = dict(zip(neg_list,[0] * (len(neg_list))))
                     # We don't want to overwrite postitive answers, so remove already documented tokens from this list
-                    miss_dict = {key: miss_dict[key] for key in miss_dict.keys() if key not in out_dict.keys()}
+                    neg_dict = {key: neg_dict[key] for key in neg_dict.keys() if key not in out_dict.keys()}
                     # Add all missing answers to main table
-                    out_dict.update(miss_dict)
+                    out_dict.update(neg_dict)
                 else:
                     unparsed = {
                         'CategoryID':categoryID,
                         'QuestionGroupID':questionGroupID
                     }
-                    log.warn("Uparsed missing reason!")
+                    log.warn("Uparsed negative reason!")
                     log.warn(unparsed)
                     unparsed_list.append(unparsed)
 
@@ -740,28 +755,52 @@ def get_categories(df,key_table):
 
     return out_dict, unparsed_dict
 
-def get_neg_groups(df,key_table):
+def get_neg_groups(df,key_table,neg_name = "Bedömt utan fynd"):
 
     """ Get implied negative answers based on documentation in question groups """
 
     out_dict = {}
     unparsed_dict = {}
+    # Define null missing reasons
+    miss_null = key_table[key_table['CategoryID'] == 'Missreason'].qa_token.unique()
+    miss_null_dict = dict(zip(miss_null,[0] * (len(miss_null)+1)))
 
     for k,v in df.iterrows():
-        miss_list = key_table[(key_table['CategoryID'] == v['CategoryID']) & 
-                        (key_table['QuestionGroupID'] == v['QuestionGroupID'])].qa_token
-        if len(miss_list) > 0:
-            miss_dict = dict(zip(miss_list,[0] * (len(miss_list)+1)))
-            if k in out_dict:
-                out_dict[k].update(miss_dict)
-            else:
-                out_dict[k] = miss_dict
+        #Add missing reason to dict
+        miss_dict = {}
+        miss_val = key_table[(key_table['AnswerID'] == v['MissingReasonID']) & 
+                            (key_table['QuestionGroupID'] == v['QuestionGroupID'])].qa_token.tolist()
+        
+        if len(miss_val) == 1:
+            miss_dict[miss_val[0]] = 1
+        else:
+            print(k,v)
+            unparsed_dict[k] = {
+                'CategoryID':v['CategoryID'],
+                'MissingReasonID':v['MissingReasonID'],
+                'QuestionGroupID':v['QuestionGroupID']
+            }
+
+        # If reason implies negative answers, add them to dict
+        if key_table[(key_table['AnswerID'] == v['MissingReasonID'])].answer_name.eq(neg_name).all():
+            neg_list = key_table[(key_table['CategoryID'] == v['CategoryID']) & 
+                            (key_table['QuestionGroupID'] == v['QuestionGroupID'])].qa_token
+            if len(neg_list) > 0:
+                neg_dict = dict(zip(neg_list,[0] * (len(neg_list)+1)))
+                miss_dict.update(neg_dict)
         else:
             unparsed_dict[k] = {
                 'CategoryID':v['CategoryID'],
+                'MissingReasonID':v['MissingReasonID'],
                 'QuestionGroupID':v['QuestionGroupID']
             }
-    
+        
+        if k in out_dict:
+            out_dict[k].update(miss_dict)
+        else:
+            out_dict[k] = miss_null_dict.copy()
+            out_dict[k].update(miss_dict)
+
     return out_dict, unparsed_dict
 
 def get_questions(df,key_table,filter_str):
@@ -1009,11 +1048,12 @@ def split_data(data, test_cutoff_ymd, test_sample, test_criteria, inclusion_crit
         date_weights = [(i - date_min)/span for i in data['data'][data['data'].index.isin(train_ids)]['disp_date']]
 
         criteria_weights = data['data'][data['data'].index.isin(train_ids)][test_criteria].sum(axis=1)
-        criteria_weights = criteria_weights.apply(lambda x: max(1,x))
-        train_weights = criteria_weights * test_criteria_weight * date_weights
+        criteria_weights = criteria_weights.apply(lambda x: 1 if x == len(test_criteria) else 0)
+        train_weights = pd.Series(list(map(lambda x,y: max((x * test_criteria_weight),1) * y,criteria_weights,date_weights)), index = criteria_weights.index)
+
     else:
-        train_weights = data['data'][data['data'].index.isin(train_ids)][:,0]
-        train_weights = train_weights.apply(lambda x: 1)
+        print("Training weights not used")
+        train_weights = pd.Series([1] * len(train_ids), index = train_ids)
 
     valid_ids = data['data'].index[data['data'].disp_date >= cutoff_date_epoch]
     print(f"{len(valid_ids)} observations after {test_cutoff_ymd}")

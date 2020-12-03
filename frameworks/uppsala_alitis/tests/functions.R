@@ -585,6 +585,13 @@ generate_synthdata <- function(d,n){
   return(out)
 }
 
+trimvals <- function(x,q = c(0,0.9995)){
+  if(!is.numeric(x)) return(x)
+  trims <- quantile(x,q,na.rm = T)
+  out <- ifelse(x >= trims[1] & x <= trims[2],x,NA)
+  return(out)
+}
+
 boot_auc <- function(d,l, r = 2, type = "roc", boot = T,newline = T, print = T){
   
   # Bootstrap Area Under the Curve values using the PRROC package
@@ -1068,4 +1075,22 @@ pool_vals <- function(vals,labs,boot_type = "roc"){
   names(out) <- names(labs)
   
   return(out)
+}
+
+move_malformatted <- function(str){
+  split = str_split(str,pattern = "-")
+  out = ifelse(sapply(split, "[[", 1) == "100" & sapply(split,length)>= 3,
+               paste(sapply(split, "[[", 2),
+                     sapply(split, "[[", 1),
+                     sapply(split, "[[", 3),
+                     sep = "-"),
+               str)
+  return(out)
+}
+
+get_min_after <- function(ts,tl){
+  t_split = str_split(tl,"\\|",simplify = T)
+  t_split = ymd_hms(t_split)
+  t_split = t_split[which(t_split >= ts-minutes(1))]
+  return(min(t_split))
 }

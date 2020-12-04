@@ -290,8 +290,10 @@ class Main:
 
                 results[id].update(bow_df)
 
-            #with pd.option_context('display.max_rows', None, 'display.max_columns', None): 
-            #    self.log.debug(results[id].transpose())
+            # Print features for debugging
+            with pd.option_context('display.max_rows', None, 'display.max_columns', None): 
+                debug_print = results[id].transpose()
+                self.log.debug(debug_print[debug_print.iloc[:, 0]>0])
                 
         return results
 

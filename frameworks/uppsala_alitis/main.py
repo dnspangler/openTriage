@@ -94,21 +94,21 @@ class Main:
             'hosp_critcare':1
         },
         instrument_trans = 'logit',
-        filter_str = '_Bedmt_tillstnd_|_Nej',
+        filter_str = '_Bedmt_tillstnd_',
         # Data parsing stuff
         overwrite_models = False,
         update_models = False,
         overwrite_data = False,
         update_data = False,
-        test_on_load = True,
+        test_on_load = False,
         return_payload = True,
         # Define inclusion criteria for qs data
-        inclusion_criteria = ["valid_pin","valid_geo_dest","exists_amb"],
+        inclusion_criteria = ["valid_pin","valid_geo_dest"],
         # Define composite measures defined as any one of several variables:
         label_dict = {
-            "amb_intervention" : ["amb_meds", "amb_cpr", "amb_o2", "amb_immob", "amb_crit", "amb_alert", "amb_ecg"],
-            "amb_prio" : ["amb_prio"],
-            "hosp_critcare" : ["hosp_icu","hosp_30daymort"]},
+            "amb_intervention" : ["amb_meds", "amb_cpr", "amb_o2"],
+            "amb_prio" : ["amb_prio","amb_crit"],
+            "hosp_critcare" : ["hosp_admit","hosp_30daymort"]},
         # Define predictors to extract
         predictors = ["disp_age","disp_gender","disp_lon","disp_lat","CreatedOn","Priority","RecomendedPriority"],
         parse_text = 'FreeText',
@@ -119,7 +119,7 @@ class Main:
         test_cutoff_ymd = '20200319',
         test_sample = 0.3,
         test_criteria = ['IsValid','LowPrio'],
-        test_criteria_weight = 5,
+        test_criteria_weight = 10,
         # Randomization settings
         check_repeats = False, #Assign observations which have already been evaluated to same randomization arm
         default_arm = 0, # When not randomizing, what study arm should be assigned? (1=intervention, 0=control)

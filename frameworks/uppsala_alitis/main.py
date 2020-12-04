@@ -277,8 +277,9 @@ class Main:
             if self.parse_text:
                 
                 text_df = pd.DataFrame({self.parse_text:value[self.parse_text]}, index=[0])
-                term_list = results[id].loc[:,results[id].columns.str.startswith(self.text_prefix)]
-                
+                term_list = results[id].loc[:,results[id].columns.str.startswith(self.text_prefix)].columns
+                #self.log.debug(text_df)
+
                 bow_df = parse_text_to_bow(
                     text_df, 
                     max_ngram = self.max_ngram, 
@@ -288,6 +289,9 @@ class Main:
                     log = self.log)
 
                 results[id].update(bow_df)
+
+            #with pd.option_context('display.max_rows', None, 'display.max_columns', None): 
+            #    self.log.debug(results[id].transpose())
                 
         return results
 
@@ -488,7 +492,8 @@ class Main:
                 self.max_ngram, 
                 self.text_prefix, 
                 self.min_terms, 
-                stopword_set)
+                stopword_set,
+                log = self.log)
 
             test_bow = parse_text_to_bow(
                 test_text,
@@ -496,7 +501,8 @@ class Main:
                 self.text_prefix, 
                 self.min_terms, 
                 stopword_set,
-                term_list=list(train_bow.columns))
+                term_list=list(train_bow.columns),
+                log = self.log)
 
             assert len(train_bow.columns) == len(test_bow.columns), "Bow embedding mismatch!"
 

@@ -249,7 +249,10 @@ def parse_json_categories(categories,model,log,neg_name = "Bedömt utan fynd"):
     key_table = model['key']
 
     # Set ids corresponding to negative question group answers
-    missreason_ids = key_table[key_table['answer_name'] == neg_name].answerID.tolist()
+    missreason_ids = key_table[key_table['answer_name'] == neg_name].AnswerID.tolist()
+    missreason_ids = [x.lower() for x in missreason_ids]
+
+    #log.debug(missreason_ids)
 
     unparsed_list = []
 
@@ -273,16 +276,20 @@ def parse_json_categories(categories,model,log,neg_name = "Bedömt utan fynd"):
 
         # Loop over each documented reason for missing answers
         for missingReason in category['MissingReasons']:
+
+            questionGroupID = missingReason['QuestionGroupID'].upper()
+            missingReasonID = missingReason['MissingReasonID'].upper()
             
-            miss_list = key_table[(key_table['AnswerID'] == missingReason['MissingReasonID']) & 
-                            (key_table['QuestionGroupID'] == missingReason['QuestionGroupID'])].qa_token.tolist()
+            miss_list = key_table[(key_table['AnswerID'] == missingReasonID) & 
+                            (key_table['QuestionGroupID'] == questionGroupID)].qa_token.tolist()
 
             if len(miss_list) == 1:
                 out_dict[miss_list[0]] = 1
             else:
                 unparsed = {
                     'CategoryID':categoryID,
-                    'QuestionGroupID':questionGroupID
+                    'QuestionGroupID':questionGroupID,
+                    'MissingReasonID':missingReasonID
                 }
                 log.warn("Uparsed missing reason!")
                 log.warn(unparsed)
@@ -297,12 +304,12 @@ def parse_json_categories(categories,model,log,neg_name = "Bedömt utan fynd"):
 
             # if question group marked as investigated with only negative answers...
             if any(missingReason['MissingReasonID'] == id for id in missreason_ids): 
-                questionGroupID = missingReason['QuestionGroupID'].upper()
+
                 # Identify all matching tokens in category/question group
                 neg_list = key_table[(key_table['CategoryID'] == categoryID) & 
                                        (key_table['QuestionGroupID'] == questionGroupID)].qa_token
                 #log.debug("neg group:")
-                #log.debug(miss_list)
+                #log.debug(neg_list)
                 if len(neg_list) > 0:
                     # Add all qas in group to intermidiate table with 0 as the documented value
                     neg_dict = dict(zip(neg_list,[0] * (len(neg_list))))
@@ -313,7 +320,8 @@ def parse_json_categories(categories,model,log,neg_name = "Bedömt utan fynd"):
                 else:
                     unparsed = {
                         'CategoryID':categoryID,
-                        'QuestionGroupID':questionGroupID
+                        'QuestionGroupID':questionGroupID,
+                        'MissingReasonID':missingReasonID
                     }
                     log.warn("Uparsed negative reason!")
                     log.warn(unparsed)
@@ -374,6 +382,7 @@ def parse_json_categories(categories,model,log,neg_name = "Bedömt utan fynd"):
         cat = key_table[key_table['CategoryID'] == categoryID].cat_token.drop_duplicates().str.cat()
         out_dict.update({cat : nqs})
 
+    #log.debug(out_dict)
     return out_dict, unparsed_list
 
 # Modelling functions --------------------------------------------------

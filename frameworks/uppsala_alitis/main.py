@@ -272,7 +272,7 @@ class Main:
             results[id] = parse_json_data(value,self.model,log = self.log)
 
             if self.return_payload:
-                self.payload[id] = value
+                self.payload[id] = f'"{value}"'
 
             if self.parse_text:
                 

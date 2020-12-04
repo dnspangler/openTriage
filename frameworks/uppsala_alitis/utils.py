@@ -88,7 +88,7 @@ def generate_ui_data(store,other_scores,feat_imp_cols,text_prefix,model,log):
 
     # Feature importance tables using shapley values
     feat_imp = pd.DataFrame(store['feats'])
-    log.debug(feat_imp)
+    #log.debug(feat_imp)
     shaps = feat_imp.loc[:,feat_imp.columns.str.startswith("shap_")]
     feat_imp['mean_shap'] = shaps.mean(axis=1)
     feat_imp['mean_abs_shap'] = shaps.mean(axis=1).abs()
@@ -201,6 +201,8 @@ def parse_json_data(inputData,model,log):
     qa_wide = pd.DataFrame(qa_dict, index=[0])
     # update the full feature set
     data.update(qa_wide)
+
+    #log.debug(qa_wide.transpose())
 
     return data
 
@@ -1118,35 +1120,28 @@ def generate_names(code_dir, data, key_table):
 
 # Text parsng -------------------------------------------------------
 
-def ngrams(words, n):
-    # Nice solution https://stackoverflow.com/questions/17531684/n-grams-in-python-four-five-six-grams
-    d = collections.deque(maxlen=n)
-    d.extend(words[:n])
-    words = words[n:]
-    out_list = []
-    for window, word in zip(itertools.cycle((d,)), words):
-        out_list.append('_'.join(window))
-        d.append(word)
-    
-    return out_list
+# From: https://stackoverflow.com/questions/17531684/n-grams-in-python-four-five-six-grams
+def get_ngrams(input_list, n):
+    return zip(*[input_list[i:] for i in range(n)])
+
+def get_m_2_ngrams(input_list, min, max):
+    for s in itertools.chain(*[get_ngrams(input_list, k) for k in range(min, max+1)]):
+        yield '_'.join(s)
 
 def process_text_token(text,max_ngram,text_prefix,stopword_set = None):
-    out_tokens = []
-    for i in text:
-        t = ' '.join([word.lower() for word in re.findall(r"[\w]+", str(i))]).split()
-        t = [x for x in t if not x.isdigit()]
-        if stopword_set:
-            t = [x for x in t if x not in stopword_set]
 
-        allgrams = []
-        for i in range(max_ngram):
-            allgrams = allgrams + ngrams(t,i+1)
+    t = ' '.join([word.lower() for word in re.findall(r"[\w]+", str(text))]).split()
+    t = [x for x in t if not x.isdigit()]
 
-        if text_prefix:
-            allgrams = [text_prefix + i for i in allgrams]
+    if stopword_set:
+        t = [x for x in t if x not in stopword_set]
 
-        out_tokens.append(allgrams)
-    return out_tokens
+    allgrams = list(get_m_2_ngrams(t,1,max_ngram))
+
+    if text_prefix:
+        allgrams = [text_prefix + i for i in allgrams]
+
+    return allgrams
 
 def get_count_dict(in_list):
     out_dict = {}
@@ -1167,32 +1162,37 @@ def get_stopword_set(stopword_url,neg_set):
 
 def parse_text_to_bow(text_df, max_ngram, text_prefix = None, min_terms = None, stopword_set = None, term_list=None,log = None):
 
-    text_df['tokens'] = process_text_token(
-        text_df['FreeText'],
-        max_ngram, 
-        text_prefix,
-        stopword_set
-        )
-    
+    tokens = {}
+    for i, r in text_df.iterrows():
+        tokens[i] = process_text_token(
+            r['FreeText'],
+            max_ngram, 
+            text_prefix,
+            stopword_set
+            )
+
+    #log.debug(tokens)
+
     if term_list is not None:
         terms = term_list
     else:
-        corpus_list = list(itertools.chain.from_iterable(text_df['tokens']))
+        corpus_list = []
+        for v in tokens.values():
+            corpus_list.extend(v)
         corpus_dict = get_count_dict(corpus_list)
         if min_terms:
             corpus_dict = {k:v for k,v in corpus_dict.items() if v > min_terms}
         terms = corpus_dict.keys()
 
     full_term_dict = {}
-    for i in text_df.index:
-        term_list = text_df['tokens'][i]
+    for k,v in tokens.items():
         term_dict = dict(zip(terms,[0]*len(terms)))
-        term_dict.update(get_count_dict(term_list))
+        term_dict.update(get_count_dict(v))
         term_dict = {k:v for k,v in term_dict.items() if k in terms}
-        full_term_dict[i] = term_dict
+        full_term_dict[k] = term_dict
 
     bow_df = pd.DataFrame(full_term_dict).fillna(0).transpose()
-
+    
     return bow_df
 
 def generate_old_test_feats(df,old_names,log):

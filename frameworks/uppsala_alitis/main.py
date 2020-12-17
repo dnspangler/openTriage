@@ -116,7 +116,9 @@ class Main:
         text_prefix = 'text_', 
         min_terms = 500,
         # Test/train sample splitting
-        test_cutoff_ymd = '20200319',
+        train_start_ymd = '20160101',
+        test_cutoff_ymd = '20200601',
+        test_end_ymd = '20201201',
         test_sample = 0.3,
         test_criteria = ['IsValid','LowPrio'],
         test_criteria_weight = 10,
@@ -146,7 +148,9 @@ class Main:
         self.max_ngram = max_ngram
         self.text_prefix = text_prefix
         self.min_terms = min_terms
+        self.train_start_ymd = train_start_ymd
         self.test_cutoff_ymd = test_cutoff_ymd
+        self.test_end_ymd = test_end_ymd
         self.test_sample = test_sample
         self.test_criteria = test_criteria
         self.prod_ui_cols = prod_ui_cols
@@ -203,7 +207,9 @@ class Main:
 
                 data_split = split_data(
                     data = data_clean, 
+                    train_start_ymd = self.train_start_ymd, 
                     test_cutoff_ymd = self.test_cutoff_ymd, 
+                    test_end_ymd = self.test_end_ymd, 
                     test_sample = self.test_sample, 
                     test_criteria = self.test_criteria, 
                     inclusion_criteria=inclusion_criteria,

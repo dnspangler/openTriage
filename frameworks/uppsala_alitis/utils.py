@@ -1032,7 +1032,7 @@ def clean_data(code_dir, raw_data_paths, clean_data_paths, full_name_path, overw
             'labels':label_df,
             'text':text_df}
 
-def split_data(data, test_cutoff_ymd, test_sample, test_criteria, inclusion_criteria, test_criteria_weight):
+def split_data(data, train_start_ymd, test_cutoff_ymd, test_end_ymd, test_sample, test_criteria, inclusion_criteria, test_criteria_weight):
     
     # Apply inclusion criteria before splitting
 
@@ -1045,10 +1045,13 @@ def split_data(data, test_cutoff_ymd, test_sample, test_criteria, inclusion_crit
     
     data['data'] = data['data'].drop(inclusion_criteria,axis=1)
 
+    start_date_epoch = calendar.timegm(time.strptime(train_start_ymd, "%Y%m%d")) / 86400
     cutoff_date_epoch = calendar.timegm(time.strptime(test_cutoff_ymd, "%Y%m%d")) / 86400
+    end_date_epoch = calendar.timegm(time.strptime(test_end_ymd, "%Y%m%d")) / 86400
 
-    train_ids = data['data'].index[data['data'].disp_date < cutoff_date_epoch]
-    print(f"{len(train_ids)} observations before {test_cutoff_ymd}")
+    train_ids = data['data'].index[(data['data'].disp_date < cutoff_date_epoch) & (data['data'].disp_date >= start_date_epoch)]
+
+    print(f"{len(train_ids)} observations after {train_start_ymd} and before {test_cutoff_ymd}")
 
     if test_criteria_weight:
         print("Gererating weights for training")
@@ -1066,8 +1069,8 @@ def split_data(data, test_cutoff_ymd, test_sample, test_criteria, inclusion_crit
         print("Training weights not used")
         train_weights = pd.Series([1] * len(train_ids), index = train_ids)
 
-    valid_ids = data['data'].index[data['data'].disp_date >= cutoff_date_epoch]
-    print(f"{len(valid_ids)} observations after {test_cutoff_ymd}")
+    valid_ids = data['data'].index[(data['data'].disp_date >= cutoff_date_epoch) & (data['data'].disp_date < end_date_epoch)]
+    print(f"{len(valid_ids)} observations after {test_cutoff_ymd} and before {test_end_ymd}")
 
     for i in test_criteria:
         crit_incl = data['data'][i].eq(1)

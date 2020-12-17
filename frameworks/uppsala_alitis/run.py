@@ -12,7 +12,7 @@ if __name__ == '__main__':
     # Instantiate logger
     logger = logging.getLogger(__name__)
     logger.addHandler(logging.StreamHandler())
-    logger.setLevel(logging.INFO)
+    logger.setLevel(logging.DEBUG)
     
     # Instantiate the class to train and serialize models.
     Main(
@@ -23,7 +23,16 @@ if __name__ == '__main__':
         opt_rounds = 20,
         max_estimators = 400,
         update_models = True,
-        test_cutoff_ymd='20200701',
+        overwrite_data = True,
+        #parse_text = False,
+        train_start_ymd = '20160101',
+        test_cutoff_ymd = '20200901',
+        test_end_ymd = '20201201',
+        #label_dict = {
+        #    "hosp_critcare" : ["hosp_admit","hosp_30daymort"]},
+        #out_weights = {
+        #    'hosp_critcare':1
+        #},
         test_sample=1,
-        test_criteria_weight=True
+        test_criteria_weight = False,
         )

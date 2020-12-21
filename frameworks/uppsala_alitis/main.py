@@ -87,14 +87,17 @@ class Main:
         opt_rounds=40,
         init_rounds=10,
         max_estimators=400,
+        objective = 'binary:logistic',
+        metric='auc', # Also used for model testing. supported metrics are auc, rmse for now. Others will fail with "Eval metric not defined" error
         # Prediction instrument stuff
         out_weights = {
             'amb_intervention':1,
             'amb_prio':1,
             'hosp_critcare':1
         },
+        instrument_scale = True,
         instrument_trans = 'logit',
-        filter_str = '_Bedmt_tillstnd_',
+        filter_str = '_Bedmt_tillstnd_', # Not using this anymore - Filter out quesiton/answer combos with regex
         # Data parsing stuff
         overwrite_models = False,
         update_models = False,
@@ -140,9 +143,12 @@ class Main:
         self.opt_rounds = opt_rounds
         self.init_rounds = init_rounds
         self.max_estimators = max_estimators
+        self.objective = objective
+        self.metric = metric
         self.out_weights = out_weights
         self.filter_str = filter_str
         self.return_payload = return_payload
+        self.instrument_scale = instrument_scale
         self.instrument_trans = instrument_trans
         self.parse_text = parse_text
         self.max_ngram = max_ngram
@@ -621,13 +627,21 @@ class Main:
 
             test_dmatrix = xgboost.DMatrix(test_df, label = values)
 
+            if self.metric == 'auc':
+                eval_fun = metrics.roc_auc_score
+            elif self.metric == 'rmse':
+                eval_fun = metrics.mean_squared_error
+            else:
+                self.log.error("eval metric not defined!")
+                break
+
             self.log.info(name + " Mean pred: "+
                     str(np.mean(self.model['models'][name].predict(test_dmatrix))) +
-                    " (" + str(np.mean(values)) + ") Individual Test AUC: " +
-                    str(metrics.roc_auc_score(values,
+                    " (" + str(np.mean(values)) + f") Individual Test {self.metric}: " +
+                    str(eval_fun(values,
                         self.model['models'][name].predict(test_dmatrix))) + 
-                        " Score AUC: " +
-                    str(metrics.roc_auc_score(values,
+                        f" Score {self.metric}: " +
+                    str(eval_fun(values,
                         list(self.model['model_props']['scores'].values())))
                     ) 
         
@@ -649,7 +663,7 @@ class Main:
             for name, values in self.data['train']['labels'].iteritems(): 
                 # Generate dmatrix for xgb model
                 train_dmatrix = xgboost.DMatrix(self.data['train']['data'], label = values, weight=self.data['train']['weights'])
-                # Optomiz parameters and save to log
+                # Optimize parameters and save to log
                 log_params[name] = bayes_opt_xgb(
                     dmatrix=train_dmatrix, 
                     log = self.log, 
@@ -657,7 +671,9 @@ class Main:
                     opt_rounds = self.opt_rounds, 
                     init_rounds = self.init_rounds,
                     params_ranges = self.params_ranges,
-                    max_estimators = self.max_estimators
+                    max_estimators = self.max_estimators,
+                    objective = self.objective,
+                    metric = self.metric
                     )
             # Save log to file
             json.dump(log_params, open(f"{self.code_dir}/models/tune_logs.json", "w" ), indent = 4)
@@ -681,7 +697,14 @@ class Main:
                 feature_names=self.data['train']['data'].columns)
 
             # Get best hyperparameters for label from log 
-            log_best = log_params[name][max(log_params[name].keys())]
+            if self.metric == 'auc':
+                log_best = log_params[name][max(log_params[name].keys())]
+            elif self.metric == 'rmse':
+                log_best = log_params[name][min(log_params[name].keys())]
+            else:
+                self.log.error('Eval metric not defined!')
+                break
+            
             best_params = log_best['params']
 
             fits[name] = xgboost.train(best_params,
@@ -692,6 +715,7 @@ class Main:
             fits,
             data = self.data,
             out_weights = self.out_weights,
+            instrument_scale = self.instrument_scale,
             instrument_trans = self.instrument_trans,
             log = self.log)
 

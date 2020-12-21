@@ -420,7 +420,11 @@ def predict_instrument(model,new_data,log):
         feat_imp = feat_imp.join(shap)
 
         # Transform estimate as appropriate (logit for us by default)
-        trans_pred = trans_fun(pred, model['model_props']['scale_params']['trans'])
+        if model['model_props']['scale_params']['trans']:
+            trans_pred = trans_fun(pred, model['model_props']['scale_params']['trans'])
+        else:
+            trans_pred = pred
+
 
         # Extract scaling paramters from model object
         scale = model['model_props']['scale_params']['pre_trans'][k]['scale']
@@ -458,6 +462,8 @@ def trans_fun(p,trans):
 def xgb_cv_fun(
     dmatrix,
     max_estimators,
+    objective,
+    metric,
     subsample, 
     colsample_bytree,
     max_depth,
@@ -476,7 +482,7 @@ def xgb_cv_fun(
         'min_child_weight' : min_child_weight, 
         'learning_rate' : learning_rate,
         'gamma' : gamma,
-        'objective' : 'binary:logistic'
+        'objective' : objective
         }
 
     #Time process
@@ -489,15 +495,15 @@ def xgb_cv_fun(
         stratified = True,
         nfold = 5,
         early_stopping_rounds = 20,
-        metrics = 'auc'
+        metrics = metric
         )
 
     stop = time.time()
     #Generate dict for return
     fit_props = {}
     fit_props['train_time']  = stop - start
-    fit_props['train_score'] = fit['train-auc-mean'].iloc[-1]
-    fit_props['val_score'] = fit['test-auc-mean'].iloc[-1]
+    fit_props['train_score'] = fit[f'train-{metric}-mean'].iloc[-1]
+    fit_props['val_score'] = fit[f'test-{metric}-mean'].iloc[-1]
     fit_props['n_estimators'] = len(fit.index)
 
     return params, fit_props
@@ -509,7 +515,9 @@ def bayes_opt_xgb(
     opt_rounds,
     init_rounds,
     params_ranges,
-    max_estimators
+    max_estimators,
+    objective,
+    metric
     ):
 
     """ Function to perform bayesian optimization of model hyperparameters for xgboost models """
@@ -531,6 +539,8 @@ def bayes_opt_xgb(
         opt_params, fit_props = opt_fun(
             dmatrix = dmatrix,
             max_estimators = max_estimators,
+            objective = objective,
+            metric = metric,
             **next_point
             )
         
@@ -561,6 +571,7 @@ def get_model_props(
     fits,
     data,
     out_weights,
+    instrument_scale,
     instrument_trans,
     log,
     threshold_digits = 2
@@ -587,10 +598,18 @@ def get_model_props(
         # Predict raw score
         preds[name] = [float(i) for i in list(fits[name].predict(test_dmatrix))]
         
-        trans_preds[name] = [trans_fun(x, instrument_trans) for x in preds[name]]
+        if instrument_trans:
+            trans_preds[name] = [trans_fun(x, instrument_trans) for x in preds[name]]
+        else:
+            trans_preds[name] = preds[name]
 
-        scale[name] = {"center": float(np.mean(trans_preds[name])),
-                    "scale": float(np.std(trans_preds[name]))}
+
+        if instrument_scale:
+            scale[name] = {"center": float(np.mean(trans_preds[name])),
+                           "scale": float(np.std(trans_preds[name]))}
+        else:
+            scale[name] = {"center": 0,
+                           "scale": 1}
 
         scale_preds[name] = [(x-scale[name]['center'])/scale[name]['scale'] for x in trans_preds[name]]
 
@@ -627,9 +646,12 @@ def get_model_props(
     threshold_list = [round(i,threshold_digits) for i in threshold_list]
 
     confusion_matrices = {}
-
+    
     for name, values in eval_data['labels'].items():
-        confusion_matrices[name] = generate_cms(scores,values,threshold_list)
+        if values.nunique() == 2:
+            confusion_matrices[name] = generate_cms(scores,values,threshold_list)
+        else:
+            confusion_matrices[name] = 'More than 2 values'
 
     # Generate dictionary to be returned
     model_props = {

@@ -1054,9 +1054,9 @@ def clean_data(code_dir, raw_data_paths, clean_data_paths, full_name_path, overw
             'labels':label_df,
             'text':text_df}
 
-def split_data(data, train_start_ymd, test_cutoff_ymd, test_end_ymd, test_sample, test_criteria, inclusion_criteria, test_criteria_weight):
+def split_data(data, train_start_ymd, test_cutoff_ymd, test_end_ymd, test_sample, test_criteria, inclusion_criteria, criteria_weight, date_weight):
     
-    # Apply inclusion criteria before splitting
+    # Apply inclusion criteria
 
     for i in inclusion_criteria:
         inclobs = data['data'][i].eq(1)
@@ -1065,53 +1065,78 @@ def split_data(data, train_start_ymd, test_cutoff_ymd, test_end_ymd, test_sample
         data['labels'] = data['labels'][inclobs]
         data['text'] = data['text'][inclobs]
     
+    # Drop variables used to define inclusion criteria
     data['data'] = data['data'].drop(inclusion_criteria,axis=1)
 
+    # Generate training weights
+
+    if criteria_weight:
+        assert criteria_weight >= 0 and criteria_weight <= 1,"Criteria weight should be between 0 and 1"
+        print("Gererating criteria weights")
+        criteria_weights = data['data'][test_criteria].mean(axis=1)
+        criteria_weights = criteria_weights.apply(lambda x: (x * (1 - criteria_weight)) + criteria_weight) # weight the range based on the supplied value (date_weight:1)
+    else:
+        print("Criteria weights not used")
+        criteria_weights = pd.Series([1] * len(data['data'].index), index = data['data'].index)
+
+    if date_weight:
+        assert date_weight >= 0 and date_weight <= 1,"Date weight should be between 0 and 1"
+        print("Gererating date weights")
+        date_min = min(data['data']['disp_date'])
+        date_max = max(data['data']['disp_date'])
+        span = date_max - date_min
+        date_weights = data['data']['disp_date'].apply(lambda x:(x - date_min)/span) # transform values to 0-1 range
+        date_weights = date_weights.apply(lambda x:(x * (1 - date_weight)) + date_weight)
+
+        
+    else:
+        print("Date weights not used")
+        criteria_weights = pd.Series([1] * len(data['data'].index), index = data['data'].index)
+
+    train_weights = pd.Series(list(map(lambda x,y: x * y,criteria_weights,date_weights)), index = criteria_weights.index)
+
+    assert min(train_weights) >= criteria_weight * date_weight,"Training weights < lowest possible value"   
+    assert max(train_weights) <= 1,"Training weights > 1"
+    
+    # Generate test/training sets
+    
+    # Convert to unix epoch (start 19700101)
     start_date_epoch = calendar.timegm(time.strptime(train_start_ymd, "%Y%m%d")) / 86400
     cutoff_date_epoch = calendar.timegm(time.strptime(test_cutoff_ymd, "%Y%m%d")) / 86400
     end_date_epoch = calendar.timegm(time.strptime(test_end_ymd, "%Y%m%d")) / 86400
 
-    train_ids = data['data'].index[(data['data'].disp_date < cutoff_date_epoch) & (data['data'].disp_date >= start_date_epoch)]
+    # Get indexes of test/train observations
+    train_ids = list(data['data'].index[(data['data'].disp_date >= start_date_epoch) & (data['data'].disp_date < cutoff_date_epoch)])
+    print(f"{len(train_ids)} observations between {train_start_ymd} and {test_cutoff_ymd}")
 
-    print(f"{len(train_ids)} observations after {train_start_ymd} and before {test_cutoff_ymd}")
+    valid_test_ids = data['data'].index[(data['data'].disp_date >= cutoff_date_epoch) & (data['data'].disp_date < end_date_epoch)]
+    print(f"{len(valid_test_ids)} observations between {test_cutoff_ymd} and {test_end_ymd}")
 
-    if test_criteria_weight:
-        print("Gererating weights for training")
-
-        date_min = min(data['data'][data['data'].index.isin(train_ids)]['disp_date'])
-        date_max = max(data['data'][data['data'].index.isin(train_ids)]['disp_date'])
-        span = date_max - date_min
-        date_weights = [(i - date_min)/span for i in data['data'][data['data'].index.isin(train_ids)]['disp_date']]
-
-        criteria_weights = data['data'][data['data'].index.isin(train_ids)][test_criteria].sum(axis=1)
-        criteria_weights = criteria_weights.apply(lambda x: 1 if x == len(test_criteria) else 0)
-        train_weights = pd.Series(list(map(lambda x,y: max((x * test_criteria_weight),1) * y,criteria_weights,date_weights)), index = criteria_weights.index)
-
-    else:
-        print("Training weights not used")
-        train_weights = pd.Series([1] * len(train_ids), index = train_ids)
-
-    valid_ids = data['data'].index[(data['data'].disp_date >= cutoff_date_epoch) & (data['data'].disp_date < end_date_epoch)]
-    print(f"{len(valid_ids)} observations after {test_cutoff_ymd} and before {test_end_ymd}")
+    test_ids = list(random.sample(list(valid_test_ids),int(len(valid_test_ids)*test_sample)))
+    post_cutoff_train_ids = list([j for j in valid_test_ids if j not in test_ids])
+    print(f"Post cutoff observations split {len(test_ids)} test / {len(post_cutoff_train_ids)} train")
 
     for i in test_criteria:
         crit_incl = data['data'][i].eq(1)
         criteria_ids = data['data'].index[crit_incl]
-        valid_ids = [j for j in valid_ids if j in criteria_ids]
-        print(f"{len(valid_ids)} observations with {i}")
+        test_ids = [j for j in test_ids if j in criteria_ids]
+        print(f"{len(test_ids)} observations with {i}")
 
-    test_ids = list(random.sample(list(valid_ids),int(len(valid_ids)*test_sample)))
+    train_ids.extend(post_cutoff_train_ids)
 
+    print(f"{len(train_ids)} observations included in training set")
     print(f"{len(test_ids)} observations included in test set")
 
+    # drop variables used to define test criteria
     data['data'] = data['data'].drop(test_criteria,axis=1)
 
+    # Return a dict containing test and training data
     out_data = {
         'train':{
             'data':data['data'][data['data'].index.isin(train_ids)],
             'labels':data['labels'][data['labels'].index.isin(train_ids)],
             'text':data['text'][data['text'].index.isin(train_ids)],
-            'weights':train_weights
+            'weights':train_weights[train_weights.index.isin(train_ids)]
         },
         'test':{
             'data':data['data'][data['data'].index.isin(test_ids)],

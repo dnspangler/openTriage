@@ -124,7 +124,8 @@ class Main:
         test_end_ymd = '20201201',
         test_sample = 0.3,
         test_criteria = ['IsValid','LowPrio'],
-        test_criteria_weight = 10,
+        criteria_weight = 0.1, # Weight obs. notmeeting test criteria n:1
+        date_weight = 1, # Weight oldest obs. n:1 compared to newest (linear function)
         # Randomization settings
         check_repeats = False, #Assign observations which have already been evaluated to same randomization arm
         default_arm = 0, # When not randomizing, what study arm should be assigned? (1=intervention, 0=control)
@@ -219,7 +220,8 @@ class Main:
                     test_sample = self.test_sample, 
                     test_criteria = self.test_criteria, 
                     inclusion_criteria=inclusion_criteria,
-                    test_criteria_weight=test_criteria_weight)
+                    criteria_weight=criteria_weight,
+                    date_weight = date_weight)
 
                 self._save_data(data_split, full_data_paths) # Write data to disk
                 # Load it from disk (to avoid making stupid mistakes)

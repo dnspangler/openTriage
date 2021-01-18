@@ -9,6 +9,7 @@ import xgboost
 import time
 import csv
 import errno
+import re
 
 import numpy as np
 import pandas as pd
@@ -131,8 +132,10 @@ class Main:
         # Randomization settings
         check_repeats = False, #Assign observations which have already been evaluated to same randomization arm
         default_arm = 0, # When not randomizing, what study arm should be assigned? (1=intervention, 0=control)
+        pilot_id_str = "-150-", # Check caseid for regex match to assign to pilot study. A bit of a hack, but so it goes.
         # UI stuff
-        prod_ui_cols = ['value','mean_shap']
+        prod_ui_cols = ['value','mean_shap'],
+        pred_diff_cutoff = 0.36 # Cutoff value to define high/low confidence groups, defined as difference between maximum and mean values of all assessed patients. Our value was selected to reflect the median of 10000 simulated assessments based on pilot study parameters in the test dataset.
         ):
 
         """
@@ -162,9 +165,11 @@ class Main:
         self.test_end_ymd = test_end_ymd
         self.test_sample = test_sample
         self.test_criteria = test_criteria
-        self.prod_ui_cols = prod_ui_cols
         self.check_repeats = check_repeats
         self.default_arm = default_arm
+        self.pilot_id_str = pilot_id_str
+        self.prod_ui_cols = prod_ui_cols
+        self.pred_diff_cutoff = pred_diff_cutoff
 
         # Make and check full paths
         full_key_path = f'{self.code_dir}/{key_path}'
@@ -275,8 +280,7 @@ class Main:
             else:
                 log.warning("No parsed data found, can't test models!")
         
-        if self.return_payload:
-            self.payload = {}
+        self.payload = {}
 
     def input_function(self, request):
         """input_function is a required function to parse incoming data"""
@@ -287,8 +291,7 @@ class Main:
             # Apply a parsing function (from functions.py) to each item
             results[id] = parse_json_data(value,self.model,log = self.log)
 
-            if self.return_payload:
-                self.payload[id] = f'"{value}"'
+            self.payload[id] = value
 
             if self.parse_text:
                 
@@ -321,7 +324,7 @@ class Main:
         """    
         
         # Loop through each item returned by the input function
-
+        #self.log.debug(input_data)
         preds = {}
 
         for id,value in input_data.items():
@@ -335,7 +338,7 @@ class Main:
 
     def output_function(self, prediction):
         """output_function prepares predictions to be sent back in response"""
-
+        
         # Generate a trial ID to keep track of which records were compared with eachother
         trialID = generate_trialid(prediction.keys())
 
@@ -359,19 +362,39 @@ class Main:
         scores = {key : value['score'] for key, value in prediction.items()}
         # Compare the scores of each call and rank them (Highest score = 1)
         ranks = {key : rank for rank, key in enumerate(sorted(scores, key=scores.get, reverse=True), 1)}
+
+        # determine the confidence of the assessment as measured by the difference between the maximum predicted risk (the marked one), and the average value of all predicted risks (this is necessary because more than 2 )
+        max_mean_diff = max(scores.values()) - np.mean(list(scores.values()))
+        # Red if high confidece, yellow if low confidence
+        if max_mean_diff > self.pred_diff_cutoff:
+            conf_col = '#ff0000'
+        else:
+            conf_col = '#ffff00'
+
         # Loop through each score
         out_dict = {}
-
+        pilot_id_sum = 0
         for id,value in scores.items():
             # Add items which should be returned regardless of inclusion in control/intervention arm
             out_dict[id] = {'score':value,'trialID':trialID}
-            if self.return_payload:
-                out_dict[id]['payload'] = self.payload[id]
 
+            # Check for caseids from dispatch centers still in pilot phase
+            if re.search(self.pilot_id_str,self.payload[id]['CaseID']):
+                pilot_id_sum = pilot_id_sum + 1
+
+            # Serialize and attach payload to returned data if desired
+            if self.return_payload:
+                out_dict[id]['payload'] = f'"{self.payload[id]}"'
         # Apply randomization procedure (i.e., generate a 0/1 randomly with equal likelihoods) if desired
         if os.environ['RANDOMIZE'] == 'True':
             group = round(np.random.uniform()) # Randomize
-            if self.check_repeats == True:
+            
+            if pilot_id_sum > 0:
+                # If any caseids from a region not included in the ongoing study are found, exclude the assessment
+                group = 2
+                self.log.debug(f'Pilot study cases found, assigned to {group}')
+
+            elif self.check_repeats == True:
                 # Check to see if any observation in group has been randomized previously. If so, assign all observations in this group to the same trial arm.
                 # Use cache for this - Since we're only saving trial arm assignment, can use actual ids
                 group_arms = []
@@ -417,32 +440,39 @@ class Main:
                 out_dict[id]['color'] = '#c0c0c0'
                 out_dict[id]['link'] = f'/html/uppsala_alitis?id=control'
                 out_dict[id]['group'] = 'control'
-        else:
+        elif group == 1:
                 
             for id,value in ranks.items():
 
-                # Mark the highest ranked call with a red color (This is the one that should get an ambulance first!), and grey for all others
+                # Mark the highest ranked call with a color (This is the one that should get an ambulance first!), and grey for all others
                 if value == 1: 
-                    col = '#ff0000'
+                    col = conf_col
                 else:
                     col = '#c0c0c0'
 
                 if os.environ['RANDOMIZE'] == 'True':
-                    # Display 1 for highest risk call, but doen't display order of other calls (can unblind dispatch order for subsequent dispatches if more than 2 calls are in dispatch queue)
+                    # Display 1 for highest risk call, but don't display order of other calls (can unblind dispatch order for subsequent dispatches if more than 2 calls are in dispatch queue)
                     if value == 1: 
                         text = '1'
                     else:
                         text = '-'
                 else:
-                    text = value
-
-                
+                    text = value                
                 
                 # Add output data to be displayed in intervention arm
                 out_dict[id]['text'] = text
                 out_dict[id]['color'] = col
                 out_dict[id]['link'] = f'/html/uppsala_alitis?id={store_ids[id]}'
                 out_dict[id]['group'] = 'intervention'
+
+        elif group == 2:
+            # Add pilot study output data to dict
+            for id,value in prediction.items():
+                out_dict[id]['text'] = 'kontroll'
+                out_dict[id]['color'] = '#c0c0c0'
+                out_dict[id]['link'] = f'/html/uppsala_alitis?id=control'
+                out_dict[id]['group'] = 'pilot'
+
 
         self.log.debug(out_dict)
         # Return dict as a json file

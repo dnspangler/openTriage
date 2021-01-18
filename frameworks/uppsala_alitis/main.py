@@ -92,8 +92,9 @@ class Main:
         # Prediction instrument stuff
         out_weights = {
             'amb_intervention':1,
-            'amb_prio':1,
-            'hosp_critcare':1
+            'amb_prio':2,
+            'amb_eval':4,
+            'hosp_care':1
         },
         instrument_scale = True,
         instrument_trans = 'logit',
@@ -109,9 +110,10 @@ class Main:
         inclusion_criteria = ["valid_pin","valid_geo_dest"],
         # Define composite measures defined as any one of several variables:
         label_dict = {
-            "amb_intervention" : ["amb_meds", "amb_cpr", "amb_o2"],
+            "amb_intervention" : ["amb_meds","amb_iv","amb_cpr", "amb_o2","amb_alert"],
             "amb_prio" : ["amb_prio","amb_crit"],
-            "hosp_critcare" : ["hosp_admit","hosp_30daymort"]},
+            "amb_eval" : ["amb_airway","amb_breathing","amb_circulation","amb_consiousness"],
+            "hosp_care" : ["hosp_admit","hosp_30daymort"]},
         # Define predictors to extract
         predictors = ["disp_age","disp_gender","disp_lon","disp_lat","CreatedOn","Priority","RecomendedPriority"],
         parse_text = 'FreeText',

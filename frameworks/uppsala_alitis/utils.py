@@ -84,6 +84,8 @@ def generate_ui_data(store,other_scores,feat_imp_cols,text_prefix,model,log):
 
     components = components.style.format({'pct_risk': "{:.0%}", 'percentile': '{:.0f}'}).set_properties(**{'text-align': 'center'})
     
+    components.columns = ['Abs. Risk',"Percentil"]
+
     # Set colors
 
     # Feature importance tables using shapley values

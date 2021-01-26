@@ -502,8 +502,9 @@ class Main:
             )
 
         return render_template(
-            "testui.html", 
+            "ui_uppsala_alitis.html", 
             title = f"Bedömningsdetaljer", 
+            title2 = f"Ärendespecifika Bedömningsdetaljer", 
             fig_base64 = ui_data['fig_base64'], 
             components = ui_data['components'].render(), 
             feat_imp = ui_data['feat_imp_table'].render())

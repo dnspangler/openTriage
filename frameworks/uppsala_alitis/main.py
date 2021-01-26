@@ -369,7 +369,7 @@ class Main:
         if max_mean_diff > self.pred_diff_cutoff:
             conf_col = '#ff0000'
         else:
-            conf_col = '#ffff00'
+            conf_col = '#ffa500'
 
         # Loop through each score
         out_dict = {}

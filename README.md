@@ -1,5 +1,7 @@
 # openTriage
 
+**This branch is frozen and corresponds to software being run in an ongoing clinical trial (MADLAD)**
+
 openTriage is a platform for deploying machine learning models for use in Clinical Decision Support Systems (CDSS). This software is developed and maintained by the [Uppsala Center for Prehospital Research](http://ucpr.se/projects/emdai/) at Uppsala University, and was developed as part of a project funded by the [Swedish Agency for Innovation](https://www.vinnova.se/en/p/emdai-a-machine-learning-based-decision-support-tool-for-emergency-medical-dispatch/). The purpose of this software is to implement the methods described in the research paper [*A validation of machine learning-based risk scores in the prehospital setting*](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0226518) in an API for use in an upcoming randomized clinical trial in Uppsala, Sweden. The source code for this research may be found [here](https://github.com/dnspangler/openTriage_validation), and a demonstration app based on public-release versions of the models may be found [here](https://ucpr.shinyapps.io/openTriage_demo/). The software is designed to be:
 
 * Free

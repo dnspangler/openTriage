@@ -174,7 +174,10 @@ def parse_json_data(inputData,model,log):
     Returns a dictionary of features
     """
     # Load features with all missing values (uses features from first model, assumes all are built on the same dataset)
-    data = pd.DataFrame({k:np.nan for k in model['models'][next(iter(model['models']))].feature_names}, index=[0])
+
+    feats = model['model_props']['feature_names']
+    log.debug(len(feats))
+    data = pd.DataFrame({k:np.nan for k in feats}, index=[0])
 
 
     #log.debug(data)
@@ -417,7 +420,7 @@ def predict_instrument(model,new_data,log):
 
         # Get SHAP values
         shap = v.predict(new_dmatrix, pred_contribs=True)
-        shap = dict(zip(v.feature_names,shap[0][:-1])) # remove bias term
+        shap = dict(zip(model['model_props']['feature_names'],shap[0][:-1])) # remove bias term
         shap = pd.DataFrame(shap,index=[f'shap_{k}']).transpose()
         feat_imp = feat_imp.join(shap)
 
@@ -658,6 +661,7 @@ def get_model_props(
     # Generate dictionary to be returned
     model_props = {
         'names': list(data['train']['labels'].columns),
+        'feature_names': list(data['train']['data'].columns),
         'feat_props': feat_props.to_dict(),
         'scale_params': {
             'pre_trans':scale,
@@ -1089,8 +1093,6 @@ def split_data(data, train_start_ymd, test_cutoff_ymd, test_end_ymd, test_sample
         span = date_max - date_min
         date_weights = data['data']['disp_date'].apply(lambda x:(x - date_min)/span) # transform values to 0-1 range
         date_weights = date_weights.apply(lambda x:(x * (1 - date_weight)) + date_weight)
-
-        
     else:
         print("Date weights not used")
         criteria_weights = pd.Series([1] * len(data['data'].index), index = data['data'].index)

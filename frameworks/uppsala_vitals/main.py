@@ -63,7 +63,7 @@ class Main:
             'clean_data':'data/clean/data.csv'
             },
         raw_data_path_dict = {
-            'qliksense_export':'data/raw/qliksense_export.xlsx'
+            'qliksense_export':'data/raw/qliksense_export.csv'
             },
         # Hyperparameter tuning stuff
         params_ranges = {
@@ -105,8 +105,8 @@ class Main:
         text_prefix = 'text_', 
         min_terms = 500,
         # Test/train sample splitting and model training
-        test_cutoff_ymd = '20200319',
-        test_sample = 0.3,
+        test_cutoff_ymd = '20210901',
+        test_sample = 0.5,
         test_criteria = [],
         date_obs_weights = True, # Weight more recent observations more heavily in training?
         refit_full_model = False, # Refit model with training and test data after estimating performance (for production models)

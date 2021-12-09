@@ -19,20 +19,15 @@ if __name__ == '__main__':
         code_dir = code_dir,
         log = logger, 
         cache = None,
-        init_rounds = 5, #NOTE: Low for testing, use maybe 10/40/400
-        opt_rounds = 20,
+        init_rounds = 10,
+        opt_rounds = 40,
         max_estimators = 400,
         update_models = True,
-        overwrite_data = True,
-        #parse_text = False,
+        overwrite_data = False,
         train_start_ymd = '20160101',
-        test_cutoff_ymd = '20200901',
-        test_end_ymd = '20201201',
-        #label_dict = {
-        #    "hosp_critcare" : ["hosp_admit","hosp_30daymort"]},
-        #out_weights = {
-        #    'hosp_critcare':1
-        #},
-        test_sample=1,
-        test_criteria_weight = False,
+        test_cutoff_ymd = '20211201',
+        test_end_ymd = '20211209',
+        test_sample = 1,
+        criteria_weight = 0.1,
+        date_weight = 0.5
         )

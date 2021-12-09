@@ -114,7 +114,8 @@ class Main:
             "amb_intervention" : ["amb_meds","amb_iv","amb_cpr", "amb_o2","amb_alert"],
             "amb_prio" : ["amb_prio","amb_crit"],
             "amb_eval" : ["amb_airway","amb_breathing","amb_circulation","amb_consiousness"],
-            "hosp_care" : ["hosp_admit","hosp_30daymort"]},
+            "hosp_care" : ["hosp_admit","hosp_30daymort"]
+            },
         # Define predictors to extract
         predictors = ["disp_age","disp_gender","disp_lon","disp_lat","CreatedOn","Priority","RecomendedPriority"],
         parse_text = 'FreeText',
@@ -127,7 +128,7 @@ class Main:
         test_end_ymd = '20201201',
         test_sample = 0.3,
         test_criteria = ['IsValid','LowPrio'],
-        criteria_weight = 0.1, # Weight obs. notmeeting test criteria n:1
+        criteria_weight = 0.1, # Weight obs. not meeting test criteria n:1
         date_weight = 1, # Weight oldest obs. n:1 compared to newest (linear function)
         # Randomization settings
         check_repeats = False, #Assign observations which have already been evaluated to same randomization arm
@@ -647,12 +648,13 @@ class Main:
         self.log.info("Testing models...")
 
         test_df = self.data['test']['data']
-        feat_names = list(self.model['model_props']['feat_props']['median'].keys())
         
         # TODO: For now, this will fail if testing models in data with different sets of features. 
         # Given the use of text data, features are likely to vary from one test dataset to another. 
         # This is handled fine when parsing payloads for real-time prediction, but needs to be handled
         # here for the purposes of comparing new and old models. Something like this:
+        
+        # feat_names = list(self.model['model_props']['feat_props']['median'].keys())
 
         # if(list(test_df.columns) != feat_names):
         #    test_df = generate_old_test_feats(test_df,feat_names,self.log)

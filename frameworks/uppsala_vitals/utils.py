@@ -177,7 +177,7 @@ def parse_json_data(inputData,model,log):
     Returns a dictionary of features
     """
     # Load features with all missing values (uses features from first model, assumes all are built on the same dataset)
-    data = pd.DataFrame({k:np.nan for k in model['models'][next(iter(model['models']))].feature_names}, index=[0])
+    data = pd.DataFrame({k:np.nan for k in model['model_props']['feature_names']}, index=[0])
     input_df = pd.DataFrame(inputData, index=[0])
 
     data['disp_age'] = inputData['disp_age']
@@ -388,7 +388,7 @@ def predict_instrument(model,new_data,log):
         # Estimate probability
         pred = float(v.predict(new_dmatrix))
         shap = v.predict(new_dmatrix, pred_contribs=True)
-        shap = dict(zip(v.feature_names,shap[0][:-1])) # remove bias term
+        shap = dict(zip(model['model_props']['feature_names'],shap[0][:-1])) # remove bias term
         shap = pd.DataFrame(shap,index=[f'shap_{k}']).transpose()
         feat_imp = feat_imp.join(shap)
 
@@ -593,6 +593,7 @@ def get_model_props(
     # Generate dictionary to be returned
     model_props = {
         'names': list(data['train']['labels'].columns),
+        'feature_names': list(data['train']['data'].columns),
         'feat_props': feat_props.to_dict(),
         'scale_params': {
             'pre_trans':scale,
@@ -654,7 +655,7 @@ def parse_export_data(code_dir, raw_data_paths, inclusion_criteria,test_criteria
 
     data_paths = {k:f'{code_dir}/{v}' for k,v in raw_data_paths.items()}
 
-    full_df = pd.read_excel(data_paths['qliksense_export'],index_col='caseid',na_values='-')
+    full_df = pd.read_csv(data_paths['qliksense_export'],index_col='caseid',na_values='-')
     label_df, data_df, text_df = separate_flat_data(full_df,label_dict,predictors,inclusion_criteria,test_criteria,text_col)
 
     # A bit of feature engineering

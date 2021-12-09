@@ -24,6 +24,6 @@ if __name__ == '__main__':
         max_estimators = 400,
         overwrite_models = True,
         overwrite_data = True,
-        test_cutoff_ymd='20200401',
-        test_sample=1
+        test_cutoff_ymd='20210601',
+        test_sample=0.5
         )

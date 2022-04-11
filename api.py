@@ -26,11 +26,11 @@ if __name__ == "__main__":
 
     # Parse environment variables
     if os.environ['FRAMEWORK'] == '':
-        logger.warning("No framework defined, using default framework")
+        logger.warning("No framework defined, using default")
         os.environ['FRAMEWORK'] = os.environ['DEFAULT_FRAMEWORK']
 
     if os.environ['DEV_MODE'] == '':
-        logger.warning("No mode defined, defaulting to development")
+        logger.warning("Dev mode not defined, using default")
         os.environ['DEV_MODE'] = os.environ['DEFAULT_DEV_MODE']
     
     fw_names = os.environ['FRAMEWORK'].split(' ')
@@ -177,7 +177,7 @@ if __name__ == "__main__":
             ssl_cert_path = os.path.abspath(os.environ['SSL_CERT_PATH'])
             ssl_key_path = os.path.abspath(os.environ['SSL_KEY_PATH'])
         except Exception as e:
-            logger.exception("type error: " + str(e))
+            logger.exception("Error getting SSL keys: " + str(e))
             logger.exception("\n\tFor production use:\n\t\tPlease make sure environment variables 'SSL_CERT_PATH' and 'SSL_KEY_PATH' are set up correctly")
 
         http_server = WSGIServer(
@@ -187,5 +187,6 @@ if __name__ == "__main__":
             #keyfile=ssl_key_path,
             #certfile=ssl_cert_path
             )
+
         http_server.serve_forever()
             

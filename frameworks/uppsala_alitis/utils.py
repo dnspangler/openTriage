@@ -532,7 +532,7 @@ def bayes_opt_xgb(
     utility = UtilityFunction(kind="ei", kappa=2.5, xi=0.0)
     log_params = {}
     
-    # Manually loop through opimization process (wanted better logs than the built-in funtion)
+    # Manually loop through optimization process (wanted better logs than the built-in function)
     for _ in range(opt_rounds):
         # Start selecting non-random points after n rounds
         if _ < init_rounds: 

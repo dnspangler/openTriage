@@ -5,84 +5,121 @@ library(lubridate)
 library(httr)
 library(epiR)
 
-# Set this if you're using a different framework
-fw_name = "uppsala_vitals"
+# Set this if you want to use a different framework
+fw_name = "amb_refer"
 
 # Set this if you're not running this and the openTriage back-end on the same server
 server_url = "http://opentriage:5000"
+
+
 model_props = fromJSON(paste0("../../frameworks/",fw_name,"/models/model_props.json"))
 pretty_names = unlist(fromJSON(paste0("../../frameworks/",fw_name,"/models/pretty_names.json")))
+
 
 feats = data.frame(var = names(model_props$feat_props$gain),
                    gain = unlist(model_props$feat_props$gain),
                    stringsAsFactors = F)
 
-feats = merge(feats,
-              data.frame(var = names(pretty_names),
-                         name = pretty_names),
-              stringsAsFactors = F)
-
 feats = feats[rev(order(feats$gain)),]
 
-cat_names = gsub("disp_cats_","",feats$var)[grepl("disp_cats_",feats$var)]
-names(cat_names) = feats$name[grepl("disp_cats_",feats$var)]
+
+# Handle categorical variables
+complaint_names <- names(pretty_names)[grepl("complaint_group_",names(pretty_names))]
+names(complaint_names) <- pretty_names[match(complaint_names,names(pretty_names))]
+
+region_names <- names(pretty_names)[grepl("region_",names(pretty_names))]
+names(region_names) <- pretty_names[match(region_names,names(pretty_names))]
+
+
+# Define region specific variables
+region_variables = list('avpu' = list('region_Uppsala'),
+                        'gcs' = list('region_SU','region_SKAS','region_NU','region_SS','region_KUN','region_Uppsala'),
+                        'rls' = list('region_Halland'))
+
+
+
 
 ui <- fluidPage(
     
-    titlePanel("openTriage - Uppsala Vitals demo"),
+    titlePanel("openTriage - Ambulance referral risk"),
     
     sidebarLayout(
         #actionButton("predict","Predict"),
         sidebarPanel(
             selectInput("region",
                         "Region",
-                        choices = c("Uppsala")),
-            sliderInput("disp_age",
+                        choices = region_names,
+                        selected = "region_Uppsala"),
+            sliderInput("age",
                         "Patient Age",
                         min = 0,
                         max = 100,
-                        value = model_props$feat_props$median$disp_age),
-            radioButtons("disp_gender",
+                        value = model_props$feat_props$median$age),
+            radioButtons("female",
                          "Patient Gender",
                          choices = list("Male"=0,"Female"=1)),
-            selectInput("disp_cats",
-                        "Dispatch Categories",
-                        choices = cat_names,
-                        multiple = T),
-            radioButtons("disp_prio",
+
+            selectInput("complaint_group",
+                        "Complaint",
+                        choices = complaint_names,
+                        selected = "complaint_group_vrigt"),
+
+            radioButtons("disp_prio1",
                          "Dispatch Priority",
-                         choices = list("1A"=1,"1B"=2,"2A"=3,"2B"=4,"Referral"=7),
-                         selected = model_props$feat_props$median$disp_prio),
-            radioButtons("eval_avpu",
+                         choices = list("1"=1,"2-4"=0),
+                         selected = model_props$feat_props$median$disp_prio1),
+
+            conditionalPanel(
+                condition = "input.region == 'region_Uppsala'",
+                radioButtons("avpu",
                          "Level of Consciousness (AVPU)",
-                         choices = list("Alert"="A_Alert","Verbal"="V_Verbalt","Pain"="P_Smrta","Unconscious"="U_Reaktionsls"),
-                         selected = "A_Alert"),
-            sliderInput("eval_breaths",
+                         choices = list("Alert"=1,"Verbal"=2,"Pain"=3,"Unconscious"=4),
+                         selected = 1),
+            ),
+            
+            conditionalPanel(
+                condition = "['region_SU','region_SKAS','region_NU','region_SS','region_KUN','region_Uppsala'].includes(input.region)",
+                sliderInput("gcs",
+                        "Level of Consciousness (GCS)",
+                        min = 3,
+                        max = 15,
+                        value = model_props$feat_props$median$gcs),
+            ),
+            conditionalPanel(
+                condition = "input.region == 'region_Halland'",
+                sliderInput("rls",
+                        "Level of Consciousness (RLS)",
+                        min = 1,
+                        max = 8,
+                        value = model_props$feat_props$median$rls),
+            ),
+            
+            sliderInput("breaths",
                         "Breathing rate",
                         min = 0,
                         max = 50,
-                        value = model_props$feat_props$median$eval_breaths),
-            sliderInput("eval_spo2",
+                        value = model_props$feat_props$median$breaths),
+            sliderInput("spo2",
                         "Oxygen saturation (spo2)",
                         min = 50,
                         max = 100,
-                        value = model_props$feat_props$median$eval_spo2),
-            sliderInput("eval_sbp",
+                        value = model_props$feat_props$median$spo2),
+            sliderInput("sbp",
                         "Systolic blood pressure",
                         min = 0,
                         max = 400,
-                        value = model_props$feat_props$median$eval_sbp),
-            sliderInput("eval_pulse",
+                        value = model_props$feat_props$median$sbp),
+            sliderInput("pulse",
                         "Pulse rate",
                         min = 0,
                         max = 200,
-                        value = model_props$feat_props$median$eval_pulse),
-            sliderInput("eval_temp",
+                        value = model_props$feat_props$median$pulse),
+            sliderInput("temp",
                         "Temperature",
                         min = 30.5,
                         max = 42.5,
-                        value = model_props$feat_props$median$eval_temp),
-            textInput("disp_created",
+                        value = model_props$feat_props$median$temp),
+            textInput("disp_time",
                       "Call time",
                       value = now())
             
@@ -95,8 +132,8 @@ ui <- fluidPage(
                         tabPanel("About",
                                  tagList(
                                      p(),
-                                     "This app demonstrates the behaviour of a risk assessment instrument reflecting a
-                                   patient's risk for deterioration at the time of initial evaluation by an ambulans crew on scene. The insrument 
+                                     "This app demonstrates the behavior of a risk assessment instrument reflecting a
+                                   patient's risk for deterioration at the time of initial evaluation by an ambulance crew on scene. The instrument 
                                      is based on methods described in our research article", 
                                      a("A validation of machine learning-based risk scores in the prehospital setting", href="https://doi.org/10.1371/journal.pone.0226518"),
                                      ". This user inferface contains no code to estimate risk scores, but rather calls to", 
@@ -105,7 +142,7 @@ ui <- fluidPage(
                                      Please note that these scores have not been validated outside of Region Uppsala in Sweden, and 
                                      that this tool is provided for demonstation purposes only. The software is provided 'as is' under the terms of the", 
                                      a("GPLv3 license", href="https://www.gnu.org/licenses/gpl-3.0.en.html"),"
-                                      without assuption of liability or warranty of any kind. Put plainly: If you use this on actual patients outside of the 
+                                      without assumption of liability or warranty of any kind. Put plainly: If you use this on actual patients outside of the 
                                       context in which the models have been validated, you could kill people.",
                                      p(),
                                      "A patient with median values for each predictor included in the models
@@ -119,7 +156,7 @@ ui <- fluidPage(
                                      for each variable across the component outcomed are displayed to explain how the model arrived at the final 
                                      score.",
                                      p(),
-                                     "The API this front-end system employs may be accessed via a POST request to https://opentriage.net/predict/uppsala_vitals. 
+                                     "The API this front-end system employs may be accessed via a POST request to https://opentriage.net/predict/amb_refer. 
                                      The API expects a JSON file with a specific format. You can download a test payload based on the currently 
                                      selected predictors here:",
                                      p(),
@@ -152,7 +189,7 @@ ui <- fluidPage(
 server <- function(input, output, session) {
     
     # 
-    updateTextInput(session, "disp_created", value = format(now(tzone=Sys.timezone()),'%Y-%m-%d %H:%M:%S'))
+    updateTextInput(session, "disp_time", value = format(now(tzone=Sys.timezone()),'%Y-%m-%d %H:%M:%S'))
     
     # Observer to update score and ui page upon changing parameters
     
@@ -169,6 +206,7 @@ server <- function(input, output, session) {
         if(class(r_content) == "list"){
             
             updateSliderInput(session,"diag_score",value = round(r_content$gui$score,2))
+            updateSliderInput(session,"diag_percentile",value = round(r_content$gui$score))
             output$ui <- renderUI({
                 HTML(as.character(r_content$gui$html))
             })
@@ -185,28 +223,37 @@ server <- function(input, output, session) {
     
     get_payload <- function(input) {
 
-        out = toJSON(list("gui" = list(
-            "region"=input$region,
-            "disp_created"=input$disp_created,
-            "disp_age"=input$disp_age,
-            "disp_gender"=as.numeric(input$disp_gender),
-            "disp_cats"=paste(input$disp_cats,collapse="|"),
-            "disp_prio"=as.numeric(input$disp_prio),
-            "eval_breaths"= input$eval_breaths,
-            "eval_spo2"= input$eval_spo2,
-            "eval_sbp"= input$eval_sbp,
-            "eval_pulse"=input$eval_pulse,
-            "eval_avpu"=input$eval_avpu,
-            "eval_temp"=input$eval_temp
-        )),pretty = T)
-        
-        return(out)
+        out = list("gui" = list(
+            "region"=gsub("region_","",input$region),
+            "disp_time"=input$disp_time,
+            "age"=as.numeric(input$age),
+            "female"=as.numeric(input$female),
+            "complaint_group"=gsub("complaint_group_","",input$complaint_group),
+            "disp_prio1"=as.numeric(input$disp_prio1),
+            "breaths"= input$breaths,
+            "spo2"= input$spo2,
+            "sbp"= input$sbp,
+            "pulse"=input$pulse,
+            "temp"=input$temp
+        ))
+
+        if(input$region %in% region_variables[["avpu"]]){
+            out$gui$avpu <- as.numeric(input$avpu)
+        }
+        if(input$region %in% region_variables[["gcs"]]){
+            out$gui$gcs <- input$gcs
+        }
+        if(input$region %in% region_variables[["rls"]]){
+            out$gui$rls <- input$rls
+        }
+
+        return(toJSON(out,pretty = T))
     }
     
     output$download <- downloadHandler(
         
         filename = function() {
-            paste('test', Sys.Date(), '.json', sep='')
+            paste(fw_name,'-test-', Sys.Date(), '.json', sep='')
         },
         
         content = function(con) {
@@ -216,11 +263,11 @@ server <- function(input, output, session) {
     
     output$diag <- renderTable({
         
-        p <- input$diag_score
-        
+        s <- input$diag_score
+        p <- 
         
         tt <- lapply(model_props$confusion_matrices,function(x){
-            x[[which.min(abs(as.numeric(names(x)) - p))]]
+            x[[which.min(abs(as.numeric(names(x)) - s))]]
         } )
         
         tt_epi <- lapply(tt,function(x){

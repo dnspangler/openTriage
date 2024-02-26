@@ -12,14 +12,13 @@ dependencies:
   - scikit-learn
   - matplotlib
   - xmltodict
+  - xgboost
   - pip
   - pip:
     - flask-api
     - python-dotenv
     - gunicorn
     - watchdog
-    - fasttext
-    - xgboost
     - redis
     - bayesian-optimization
   

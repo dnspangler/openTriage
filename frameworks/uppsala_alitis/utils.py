@@ -930,14 +930,6 @@ def generate_mbs_dicts(answers,neg_groups,key_table,filter_str):
 
     return out_dict, unparsed_dict
 
-def na_before_first(series):
-    """ Function to replace all values prior to a positive value with NAs """
-    ind = series.index.get_loc((series > 0).idxmax())
-
-    if ind > 0:
-        series.at[0:ind-1] = np.NaN
-    return series
-
 def parse_export_data(code_dir, raw_data_paths, test_criteria, inclusion_criteria, label_dict, predictors, key_table, filter_str, log):
 
     """ Parse raw export data into a clean format for further processing """
@@ -981,12 +973,6 @@ def parse_export_data(code_dir, raw_data_paths, test_criteria, inclusion_criteri
         json.dump(unparsed_dict, f, indent=4)
 
     mbs_df = pd.DataFrame(mbs_dict).transpose()
-
-    # To avoid considering newly added MBS questions as negative in historical data, set answers prior to first documented positive answers to NA
-    # Might want to do this during MBS answer parsing, but the ways I can think of all involve major refactoring or disgusting function side effects.
-
-    qcols = [col for col in mbs_df if col.startswith('disp_q') and not col.endswith('_Ja')]
-    mbs_df[qcols] = mbs_df[qcols].apply(na_before_first)  
 
     log.info(f'Joining {len(mbs_df.index)} mbs and {len(data_df.index)} flat data entries...')
     data_df = data_df.join(mbs_df,how='inner') 

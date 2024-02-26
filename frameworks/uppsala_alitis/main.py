@@ -507,8 +507,8 @@ class Main:
             title = f"Bedömningsdetaljer", 
             title2 = f"Ärendespecifika Bedömningsdetaljer", 
             fig_base64 = ui_data['fig_base64'], 
-            components = ui_data['components'].render(), 
-            feat_imp = ui_data['feat_imp_table'].render())
+            components = ui_data['components']._render(), 
+            feat_imp = ui_data['feat_imp_table']._render())
 
     def _load_data(self,data_path_dict,stopword_path):
 
@@ -659,7 +659,7 @@ class Main:
         # if(list(test_df.columns) != feat_names):
         #    test_df = generate_old_test_feats(test_df,feat_names,self.log)
 
-        for name, values in self.data['test']['labels'].iteritems(): 
+        for name, values in self.data['test']['labels'].items(): 
         # Print some quick "sanity check" results
 
             test_dmatrix = xgboost.DMatrix(test_df, label = values)
@@ -697,7 +697,7 @@ class Main:
             # 
             log_params = {}
             # For each label in the training dataset...
-            for name, values in self.data['train']['labels'].iteritems(): 
+            for name, values in self.data['train']['labels'].items(): 
                 # Generate dmatrix for xgb model
                 train_dmatrix = xgboost.DMatrix(self.data['train']['data'], label = values, weight=self.data['train']['weights'])
                 # Optimize parameters and save to log
@@ -723,7 +723,7 @@ class Main:
         # Train models -------------------------------------------------------------------------
 
         fits = {}
-        for name, values in self.data['train']['labels'].iteritems(): 
+        for name, values in self.data['train']['labels'].items(): 
 
             self.log.info(f"Training {name}")
 

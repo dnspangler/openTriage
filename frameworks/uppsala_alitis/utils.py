@@ -992,10 +992,10 @@ def parse_export_data(code_dir, raw_data_paths, test_criteria, inclusion_criteri
     data_df = data_df.join(mbs_df,how='inner') 
 
     # A bit of feature engineering
-    case_dt = pd.to_datetime(data_df['CreatedOn'],format='%Y/%m/%d %H:%M:%S')
+    case_dt = pd.to_datetime(data_df['CreatedOn'],format='ISO8601')
     data_df = data_df.assign(
         # Number of days since jan 1 1970 (unix time)
-        disp_date = (case_dt.dt.date - dt.date(1970, 1, 1)).astype('timedelta64[D]').astype(int),
+        disp_date = (case_dt.dt.date - dt.date(1970, 1, 1)).astype('timedelta64[ns]').dt.days,
         disp_hour = case_dt.dt.hour.astype(int),
         disp_month = case_dt.dt.month.astype(int),
         IsValid = [1 if x and not np.isnan(x) else 0 for x in data_df.IsValid])

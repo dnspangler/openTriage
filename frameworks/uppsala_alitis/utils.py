@@ -945,7 +945,7 @@ def parse_export_data(code_dir, raw_data_paths, test_criteria, inclusion_criteri
     data_paths = {k:f'{code_dir}/{v}' for k,v in raw_data_paths.items()}
 
     full_df = parse_flat_data(
-        f"{data_paths['qliksense_export']}",
+        f"{data_paths['outcome_data']}",
         f"{data_paths['mbs_cases']}")
         
     label_df, data_df, text_df = separate_flat_data(full_df,label_dict,predictors,test_criteria,inclusion_criteria)

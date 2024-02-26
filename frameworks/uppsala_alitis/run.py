@@ -25,9 +25,9 @@ if __name__ == '__main__':
         update_models = True,
         overwrite_data = False,
         train_start_ymd = '20160101',
-        test_cutoff_ymd = '20211201',
-        test_end_ymd = '20211209',
-        test_sample = 1,
+        test_cutoff_ymd = '20230601',
+        test_end_ymd = '20240101',
+        test_sample = 0.5,
         criteria_weight = 0.1,
         date_weight = 0.5
         )

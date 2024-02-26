@@ -73,7 +73,7 @@ class Main:
             'mbs_answers':'data/raw/mbs_answers.csv',
             'mbs_cases':'data/raw/mbs_cases.csv',
             'mbs_neg_groups':'data/raw/mbs_neg_groups.csv',
-            'qliksense_export':'data/raw/qliksense_export.csv',
+            'outcome_data':'data/raw/outcome_data.csv',
             'mbs_dict':'data/raw/mbs_dict.json'
             },
         # Hyperparameter tuning stuff
@@ -113,7 +113,7 @@ class Main:
         label_dict = {
             "amb_intervention" : ["amb_meds","amb_iv","amb_cpr", "amb_o2","amb_alert"],
             "amb_prio" : ["amb_prio","amb_crit"],
-            "amb_eval" : ["amb_airway","amb_breathing","amb_circulation","amb_consiousness"],
+            "amb_eval" : ["amb_airway","amb_breathing","amb_circulation","amb_conscious"],
             "hosp_care" : ["hosp_admit","hosp_30daymort"]
             },
         # Define predictors to extract
@@ -124,8 +124,8 @@ class Main:
         min_terms = 500,
         # Test/train sample splitting
         train_start_ymd = '20160101',
-        test_cutoff_ymd = '20200601',
-        test_end_ymd = '20201201',
+        test_cutoff_ymd = '20230601',
+        test_end_ymd = '20240101',
         test_sample = 0.3,
         test_criteria = ['IsValid','LowPrio'],
         criteria_weight = 0.1, # Weight obs. not meeting test criteria n:1
@@ -133,7 +133,7 @@ class Main:
         # Randomization settings
         check_repeats = False, #Assign observations which have already been evaluated to same randomization arm
         default_arm = 0, # When not randomizing, what study arm should be assigned? (1=intervention, 0=control)
-        pilot_id_str = "-150-", # Check caseid for regex match to assign to pilot study. A bit of a hack, but so it goes.
+        pilot_id_str = "-140-", # Check caseid for regex match to assign to pilot study. A bit of a hack, but so it goes.
         # UI stuff
         prod_ui_cols = ['value','mean_shap'],
         pred_diff_cutoff = 0.36 # Cutoff value to define high/low confidence groups, defined as difference between maximum and mean values of all assessed patients. Our value was selected to reflect the median of 10000 simulated assessments based on pilot study parameters in the test dataset.

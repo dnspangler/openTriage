@@ -240,7 +240,7 @@ class Main:
                 if all(model_paths_exist.values()) and update_models:
                     self.log.info("Testing/saving old models...")
                     self.model = self._load_model(full_model_paths)
-                    self._test_model()
+                    #self._test_model()
 
                     old_model_paths = {k:f'{self.code_dir}/logs/{datetime.date(datetime.now())}/{v}' for k,v in model_path_dict.items()}
                     self._save_model(self.model, old_model_paths)
@@ -622,7 +622,7 @@ class Main:
         # Make sure predict_function handles 'model' correctly!
     
     def _save_model(self, model, model_paths):
-        self.log.info(f'Saving model to "{self.code_dir}"')
+        self.log.info(f'Saving models to "{self.code_dir}"')
 
         # Note that we save these seperately instead of just pickling 
         # everything to make the model properties human-readable 

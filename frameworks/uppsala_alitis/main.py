@@ -501,14 +501,13 @@ class Main:
             self.model,
             self.log
             )
-
         return render_template(
             "ui_uppsala_alitis.html", 
             title = f"Bedömningsdetaljer", 
             title2 = f"Ärendespecifika Bedömningsdetaljer", 
             fig_base64 = ui_data['fig_base64'], 
-            components = ui_data['components']._render(), 
-            feat_imp = ui_data['feat_imp_table']._render())
+            components = ui_data['components'].to_html(), 
+            feat_imp = ui_data['feat_imp_table'].to_html())
 
     def _load_data(self,data_path_dict,stopword_path):
 

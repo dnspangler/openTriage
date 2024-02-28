@@ -195,6 +195,8 @@ def parse_json_data(inputData,model,log):
     data['disp_month'] = date.today().month
     data['disp_lat'] = inputData['Coord_n']
     data['disp_lon'] = inputData['Coord_e']
+    data['reg_uppsala'] = int('-100-' in inputData['CaseID'])
+    data['reg_vastmanland'] = int('-150-' in inputData['CaseID'])
 
     # Process main answers
     ma_dict, unparsed_ma = parse_json_mainanswers(inputData['MainAnswers'],model,log)
@@ -944,10 +946,12 @@ def parse_export_data(code_dir, raw_data_paths, test_criteria, inclusion_criteri
 
     # Check for intermediate dictionary of mbs tokens
     unparsed_dict = {}
+
     try:
         with open(data_paths['mbs_dict']) as f:
             mbs_dict = json.load(f)
-    except:
+    except :
+        print("Cant load MBS dict, starting from scratch")
         mbs_dict = {}
 
     # Only new, unparsed ids
@@ -984,7 +988,9 @@ def parse_export_data(code_dir, raw_data_paths, test_criteria, inclusion_criteri
         disp_date = (case_dt.dt.date - dt.date(1970, 1, 1)).astype('timedelta64[ns]').dt.days,
         disp_hour = case_dt.dt.hour.astype(int),
         disp_month = case_dt.dt.month.astype(int),
-        IsValid = [1 if x and not np.isnan(x) else 0 for x in data_df.IsValid])
+        IsValid = [1 if x else 0 for x in data_df.IsValid],
+        reg_uppsala = [int('-100-' in s) for s in data_df.index],
+        reg_vastmanland = [int('-150-' in s) for s in data_df.index])
     data_df = data_df.drop('CreatedOn',axis=1)
     data_df.index.rename('caseid',inplace=True)
 

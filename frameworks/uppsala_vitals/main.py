@@ -63,7 +63,7 @@ class Main:
             'clean_data':'data/clean/data.csv'
             },
         raw_data_path_dict = {
-            'qliksense_export':'data/raw/qliksense_export.csv'
+            'qliksense_export':'data/raw/outcome_data.csv'
             },
         # Hyperparameter tuning stuff
         params_ranges = {
@@ -449,7 +449,7 @@ class Main:
             # 
             log_params = {}
             # For each label in the training dataset...
-            for name, values in self.data['train']['labels'].iteritems(): 
+            for name, values in self.data['train']['labels'].items(): 
                 # Generate dmatrix for xgb model
                 train_dmatrix = xgboost.DMatrix(self.data['train']['data'], label = values, weight=obs_weights)
                 # Optomiz parameters and save to log
@@ -473,7 +473,7 @@ class Main:
         # Train models -------------------------------------------------------------------------
 
         fits = {}
-        for name, values in self.data['train']['labels'].iteritems(): 
+        for name, values in self.data['train']['labels'].items(): 
 
             self.log.info(f"Training {name}")
 
@@ -517,7 +517,7 @@ class Main:
 
         if self.refit_full_model:
 
-            for name, values in self.data['train']['labels'].iteritems(): 
+            for name, values in self.data['train']['labels'].items(): 
 
                 self.log.info(f"Training {name} on training and test data")
 

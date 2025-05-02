@@ -327,8 +327,8 @@ class Main:
                 "basic.html", 
                 title = f"Overall risk {np.round(value['score'],2)}", 
                 fig_base64 = ui_data['fig_base64'], 
-                components = ui_data['components'].render(), 
-                feat_imp = ui_data['feat_imp_table'].render())
+                components = ui_data['components'].to_html(), 
+                feat_imp = ui_data['feat_imp_table'].to_html())
             
             
             out_dict[id] = {

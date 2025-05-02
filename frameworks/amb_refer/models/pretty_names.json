@@ -45,10 +45,13 @@
     "complaint_group_Yrsel": "Dizziness",
     "complaint_group_vrigt": "Other",
     "region_Halland": "Halland",
+    "region_Uppsala": "Uppsala",
     "region_KUN": "VGR - KUN",
     "region_NU": "VGR - NU",
     "region_SKAS": "VGR - SKAS",
     "region_SU": "VGR - SU",
     "region_SS": "VGR - SÄS",
-    "region_Uppsala": "Uppsala"
+    "region_Vrmland": "Värmland",
+    "region_Vstmanland": "Västmanland",
+    "region_rebro": "Örebro"
 }

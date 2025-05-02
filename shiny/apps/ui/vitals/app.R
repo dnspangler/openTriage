@@ -1,4 +1,4 @@
-
+﻿
 library(shiny)
 library(jsonlite)
 library(lubridate)
@@ -7,6 +7,9 @@ library(epiR)
 
 # Set this if you want to use a different framework
 fw_name = "amb_refer"
+
+# Set default region
+default_region = "region_Uppsala"
 
 # Set this if you're not running this and the openTriage back-end on the same server
 server_url = "http://opentriage:5000"
@@ -33,8 +36,8 @@ names(region_names) <- pretty_names[match(region_names,names(pretty_names))]
 
 # Define region specific variables
 region_variables = list('avpu' = list('region_Uppsala'),
-                        'gcs' = list('region_SU','region_SKAS','region_NU','region_SS','region_KUN','region_Uppsala'),
-                        'rls' = list('region_Halland'))
+                        'gcs' = list('region_SU','region_SKAS','region_NU','region_SS','region_KUN','region_Uppsala','region_rebro','region_vrmland','region_vstmanland'),
+                        'rls' = list('region_Halland','region_rebro','region_vrmland','region_vstmanland'))
 
 
 
@@ -49,10 +52,10 @@ ui <- fluidPage(
             selectInput("region",
                         "Region",
                         choices = region_names,
-                        selected = "region_Uppsala"),
+                  selected = default_region),
             sliderInput("age",
                         "Patient Age",
-                        min = 0,
+                        min = 18,
                         max = 100,
                         value = model_props$feat_props$median$age),
             radioButtons("female",
@@ -74,24 +77,24 @@ ui <- fluidPage(
                 radioButtons("avpu",
                          "Level of Consciousness (AVPU)",
                          choices = list("Alert"=1,"Verbal"=2,"Pain"=3,"Unconscious"=4),
-                         selected = 1),
+                     selected = 1)
             ),
             
             conditionalPanel(
-                condition = "['region_SU','region_SKAS','region_NU','region_SS','region_KUN','region_Uppsala'].includes(input.region)",
+        condition = "['region_SU','region_SKAS','region_NU','region_SS','region_KUN','region_Uppsala','region_rebro','region_vrmland','region_vstmanland'].includes(input.region)",
                 sliderInput("gcs",
                         "Level of Consciousness (GCS)",
                         min = 3,
                         max = 15,
-                        value = model_props$feat_props$median$gcs),
+                    value = model_props$feat_props$median$gcs)
             ),
             conditionalPanel(
-                condition = "input.region == 'region_Halland'",
+        condition = "['region_Halland','region_rebro','region_vrmland','region_vstmanland'].includes(input.region)",
                 sliderInput("rls",
                         "Level of Consciousness (RLS)",
                         min = 1,
                         max = 8,
-                        value = model_props$feat_props$median$rls),
+                    value = model_props$feat_props$median$rls)
             ),
             
             sliderInput("breaths",
@@ -264,7 +267,6 @@ server <- function(input, output, session) {
     output$diag <- renderTable({
         
         s <- input$diag_score
-        p <- 
         
         tt <- lapply(model_props$confusion_matrices,function(x){
             x[[which.min(abs(as.numeric(names(x)) - s))]]

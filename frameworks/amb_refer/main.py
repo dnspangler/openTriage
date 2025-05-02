@@ -116,10 +116,10 @@ class Main:
         text_prefix = 'text_', 
         min_terms = 500,
         # Test/train sample splitting and model training
-        test_cutoff_ymd = '20210101',
+        test_cutoff_ymd = '20200101',
         test_sample = 0.5,
         test_criteria = [],
-        date_obs_weights = True, # Weight more recent observations more heavily in training?
+        date_obs_weights = False, # Weight more recent observations more heavily in training?
         refit_full_model = False, # Refit model with training and test data after estimating performance (for production models)
         # Perhaps add functionality to weight observations meeting certain criteria more heavily
         # UI stuff

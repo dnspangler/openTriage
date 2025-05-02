@@ -353,7 +353,8 @@ def get_model_props(
     out_weights,
     instrument_trans,
     log,
-    threshold_digits = 2
+    threshold_digits = 2,
+    limit_gh = True,
     ):
 
     """ Function to generate a dict containing the properties of a given set of model fits """
@@ -436,6 +437,15 @@ def get_model_props(
         'scores': list(np.add(scores,np.random.normal(0,0.0001,len(scores)))),
         'sub_preds': {k: list(np.add(v,np.random.normal(0,0.0001,len(v)))) for k, v in preds.items()}
             }
+    
+    # 
+    if limit_gh and len(model_props['scores']) > 500000:
+        # Github as a 100 mb limit on filesizes which this exceed when there are about a million observations...
+        # Not necessary to have so much data for calculating percentiles and such, so subsample if necessary
+        log.warn("Limiting number of observations in model_props to reduce file size")
+        model_props['scores'] = random.sample(model_props['scores'], 500000)
+        model_props['sub_preds'] = {k: random.sample(v, 500000) for k, v in model_props['sub_preds'].items()}
+
 
     return model_props
 
@@ -466,10 +476,10 @@ def parse_export_data(code_dir, raw_data_paths, inclusion_criteria,test_criteria
 
     # A bit of feature engineering
     # dates
-    case_dt = pd.to_datetime(data_df['disp_time'],format='%Y-%m-%d %H:%M:%S')
+    case_dt = pd.to_datetime(data_df['disp_time'],format='ISO8601',utc = True)
     data_df = data_df.assign(
         # Number of days since jan 1 1970 (unix time)
-        disp_date = (case_dt.dt.date - dt.date(1970, 1, 1)).astype('timedelta64[D]').astype(int),
+        disp_date = (case_dt - pd.Timestamp("1970-01-01", tz='UTC')) // pd.Timedelta(days=1),
         disp_hour = case_dt.dt.hour.astype(int),
         disp_month = case_dt.dt.month.astype(int))
     data_df = data_df.drop('disp_time',axis=1)

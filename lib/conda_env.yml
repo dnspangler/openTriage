@@ -12,6 +12,7 @@ dependencies:
   - scikit-learn=1.2.2
   - matplotlib=3.8.0
   - xmltodict=0.13.0
+  - Werkzeug=2.3.7
   - pip=23.3
   - pip:
     - xgboost==1.6.2 # Old version of xgboost, will update this to 2.1 to silence FutureWarnings when it comes.

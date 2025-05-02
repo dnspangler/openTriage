@@ -1,5 +1,4 @@
-﻿
-library(shiny)
+﻿library(shiny)
 library(jsonlite)
 library(lubridate)
 library(httr)

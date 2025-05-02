@@ -174,7 +174,7 @@ def parse_json_data(inputData,model,cat_preds,log):
 
     # A bit of feature engineering
     # dates
-    case_dt = pd.to_datetime(input_df['disp_time'],format='%Y-%m-%d %H:%M:%S')
+    case_dt = pd.to_datetime(input_df['disp_time'],format='%Y-%m-%d %H:%M:%S',utc = True)
     data = data.assign(
         # Number of days since jan 1 1970 (unix time)
         disp_date = (case_dt - pd.Timestamp("1970-01-01", tz='UTC')) // pd.Timedelta(days=1),

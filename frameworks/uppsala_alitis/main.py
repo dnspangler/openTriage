@@ -96,6 +96,9 @@ class Main:
             'amb_prio':2,
             'amb_eval':4,
             'hosp_care':1
+            'amb_prio':2,
+            'amb_eval':4,
+            'hosp_care':1
         },
         instrument_scale = True,
         instrument_trans = 'logit',
@@ -128,6 +131,8 @@ class Main:
         test_end_ymd = '20240101',
         test_sample = 0.3,
         test_criteria = ['IsValid','LowPrio'],
+        criteria_weight = 0.1, # Weight obs. not meeting test criteria n:1
+        date_weight = 1, # Weight oldest obs. n:1 compared to newest (linear function)
         criteria_weight = 0.1, # Weight obs. not meeting test criteria n:1
         date_weight = 1, # Weight oldest obs. n:1 compared to newest (linear function)
         # Randomization settings

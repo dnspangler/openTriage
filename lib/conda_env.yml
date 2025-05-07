@@ -2,25 +2,25 @@ name: openTriage
 channels:
   - anaconda
 dependencies:
-  - python
-  - numpy
-  - pandas
-  - xlrd
-  - flask
-  - requests
-  - gevent
-  - scikit-learn
-  - matplotlib
-  - xmltodict
-  - pip
+  - python=3.11.5
+  - numpy=1.26.0
+  - pandas=2.1.1
+  - xlrd=2.0.1
+  - flask=2.2.2
+  - requests=2.31.0
+  - gevent=22.10.2
+  - scikit-learn=1.2.2
+  - matplotlib=3.8.0
+  - xmltodict=0.13.0
+  - Werkzeug=2.3.7
+  - pip=23.3
   - pip:
-    - flask-api
-    - python-dotenv
-    - gunicorn
-    - watchdog
-    - fasttext
-    - xgboost
-    - redis
-    - bayesian-optimization
+    - xgboost==1.6.2 # Old version of xgboost, will update this to 2.1 to silence FutureWarnings when it comes.
+    - flask-api==3.1
+    - python-dotenv==1.0.1
+    - gunicorn==21.2.0
+    - watchdog==4.0.0
+    - redis==5.0.1
+    - bayesian-optimization==1.4.3
   
 

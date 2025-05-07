@@ -1,0 +1,33 @@
+
+{
+"3141592":
+  {
+    "region":"Uppsala",
+    "disp_time":"2020-03-15 21:32:46",
+    "age":48,
+    "female":1,
+    "complaint_group":"Bröstsmärta",
+    "disp_prio1":0,
+    "breaths": 22,
+    "spo2": 96,
+    "sbp": 120,
+    "pulse":110,
+    "avpu":1,
+    "temp":35.8
+  },
+  "3141597":
+  {
+    "region":"Halland",
+    "disp_time":"2020-03-14 20:25:32",
+    "age":72,
+    "female":0,
+    "complaint_group":"Kramper",
+    "disp_prio1":1,
+    "breaths": 24,
+    "spo2": 92,
+    "sbp": 100,
+    "pulse":140,
+    "rls":2,
+    "temp":36.5
+  }
+}

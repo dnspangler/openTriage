@@ -9,13 +9,11 @@ services:
   nginx:
     container_name: nginx
     image: nginx
+    restart: always
     volumes:
       - ./lib/nginx.conf:/etc/nginx/nginx.conf.temp
       - ./lib/ssl/.:/etc/nginx/ssl/
       - ./lib/assets/index.html:/etc/nginx/html/index.html
-    links:
-      - opentriage
-      - shiny
     environment:
       - HOST_NAME=${HOST_NAME}
     ports:
@@ -29,8 +27,6 @@ services:
     restart: always
     ports:
      - 5000
-    links:
-     - redis_db
     environment:
      - FRAMEWORK=${FRAMEWORK}
      - DEV_MODE=${DEV_MODE}
